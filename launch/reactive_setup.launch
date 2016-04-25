@@ -1,0 +1,6 @@
+<!-- Loading parameters -->
+<rosparam command="load" file="$(find head_manager)/param/reactive_param.yaml" />
+<rosparam command="load" file="$(find head_manager)/param/object_offset.yaml" />
+<!-- Launching reactive nodes -->
+<node name="salient_stimuli_selection" pkg="head_manager" type="salient_stimuli_selection" output="screen" />
+<node name="head_driver" pkg="head_manager" type="head_driver" output="screen" />
