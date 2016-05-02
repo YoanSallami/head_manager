@@ -411,6 +411,16 @@ private:
         fact_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
       }
     }
+    try
+    {
+      updateSaliencyMap();
+      sendSalientStimuli();
+    }
+    catch (HeadManagerException& e )
+    {
+      ROS_ERROR("[head_manager] Exception was caught : %s",e.description().c_str());
+    }   
+    
   }
 
 public:
@@ -471,19 +481,8 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "salient_stimuli_selection");
   ros::NodeHandle n;
   SalientStimuliSelection * sss = new SalientStimuliSelection(n);
-  ros::Rate loop_rate(10);
   while(ros::ok())
   {
-    ros::spinOnce();
-    loop_rate.sleep();
-    try
-    {
-      sss->updateSaliencyMap();
-      sss->sendSalientStimuli();
-    }
-    catch (HeadManagerException& e )
-    {
-      ROS_ERROR("[head_manager] Exception was caught : %s",e.description().c_str());
-    }   
+    ros::spinOnce();    
   }
 }

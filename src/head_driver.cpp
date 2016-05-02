@@ -42,7 +42,7 @@ public:
     // Initialize action client for the action interface to the robot controller
     init_action_client_ = new InitActionClient("pr2motion/Init", true);
     // Initialize action client for the action interface to the head controller
-    head_action_client_ = new HeadActionClient("pr2motion/Head_Move", true);
+    head_action_client_ = new HeadActionClient("pr2motion/Head_Move_Target", true);
     // Connection to the pr2motion client
     ros::ServiceClient connect = node.serviceClient<pr2motion::connect_port>("pr2motion/connect_port");
     ROS_INFO("Waiting for pr2motion action server to start.");
@@ -64,11 +64,11 @@ public:
     if (!connect.call(srv)){
       ROS_ERROR("[head_manager] Failed to call service pr2motion/connect_port");
     }
-    srv.request.local = "traj";
-    srv.request.remote = "gtp_trajectory";
-    if (!connect.call(srv)){
-      ROS_ERROR("[head_manager] Failed to call service pr2motion/connect_port");
-    }
+    // srv.request.local = "traj";
+    // srv.request.remote = "gtp_trajectory";
+    // if (!connect.call(srv)){
+    //   ROS_ERROR("[head_manager] Failed to call service pr2motion/connect_port");
+    // }
   }
   /** 
    * Default destructor
