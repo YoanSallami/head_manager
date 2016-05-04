@@ -82,6 +82,7 @@ public:
     float objectSalienceFactor;
     float headSalienceFactor;
     float jointSalienceFactor;
+    float lookingSalienceFactor;
     SaliencyMap_t temp = saliency_map_;
     SaliencyMap_t::iterator subject;
     SaliencyMap_t::iterator subjectOwner;
@@ -114,6 +115,12 @@ public:
       node_.getParam("joint_salience_factor", jointSalienceFactor);
     } else {
       jointSalienceFactor = 1;
+    }
+    if(node_.hasParam("looking_salience_factor"))
+    {
+      node_.getParam("looking_salience_factor", lookingSalienceFactor);
+    } else {
+      lookingSalienceFactor= 1;
     }
     /**
     * Temporal filtering to reduce salience over time
@@ -148,6 +155,27 @@ public:
               target->second+=it_fl->doubleValue*objectSalienceFactor;
             } else {
               throw HeadManagerException ("Could not find "+it_fl->targetId+" in saliency map.");
+            }
+          }
+        }
+        if ( it_fl->property == "IsLookingToward" )
+        {
+          if (it_fl->targetId!="pr2")
+          {
+            target=saliency_map_.find(it_fl->targetId);
+              if ( target != saliency_map_.end() )
+            {
+              target->second+=it_fl->doubleValue*lookingSalienceFactor;
+            } else {
+              throw HeadManagerException ("Could not find "+it_fl->targetId+" in saliency map.");
+            }
+          }else{
+            subject=saliency_map_.find(it_fl->subjectId+"::head");
+            if ( subject != saliency_map_.end() )
+            {
+                subject->second+=it_fl->doubleValue*lookingSalienceFactor;
+            } else {
+              throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
             }
           }
         }
