@@ -78,11 +78,11 @@ public:
     float xPosition=0;
     float yPosition=0;
     float zPosition=0;
-    float stimuliDiscountFactor; // stimuli discount factor
-    float objectSalienceFactor;
-    float headSalienceFactor;
-    float jointSalienceFactor;
-    float lookingSalienceFactor;
+    double stimuliDiscountFactor; // stimuli discount factor
+    double objectSalienceFactor;
+    double headSalienceFactor;
+    double jointSalienceFactor;
+    double lookingSalienceFactor;
     SaliencyMap_t temp = saliency_map_;
     SaliencyMap_t::iterator subject;
     SaliencyMap_t::iterator subjectOwner;
@@ -94,31 +94,31 @@ public:
      **/
     if(node_.hasParam("stimuli_discount_factor"))
     {
-      node_.getParam(std::string("stimuli_discount_factor"), stimuliDiscountFactor);
+      node_.getParam((const string&)"stimuli_discount_factor", stimuliDiscountFactor);
     } else {
       stimuliDiscountFactor = 0.99;
     }
     if(node_.hasParam("object_salience_factor"))
     {
-      node_.getParam(std::string("object_salience_factor"), objectSalienceFactor);
+      node_.getParam((const string&)"object_salience_factor", objectSalienceFactor);
     } else {
       objectSalienceFactor = 1;
     }
     if(node_.hasParam("head_salience_factor"))
     {
-      node_.getParam(std::string("head_salience_factor"), headSalienceFactor);
+      node_.getParam((const string&)"head_salience_factor", headSalienceFactor);
     } else {
       headSalienceFactor = 10;
     }
     if(node_.hasParam("joint_salience_factor"))
     {
-      node_.getParam(std::string("joint_salience_factor"), jointSalienceFactor);
+      node_.getParam((const string&)"joint_salience_factor", jointSalienceFactor);
     } else {
       jointSalienceFactor = 1;
     }
     if(node_.hasParam("looking_salience_factor"))
     {
-      node_.getParam(std::string("looking_salience_factor"), lookingSalienceFactor);
+      node_.getParam((const string&)"looking_salience_factor", lookingSalienceFactor);
     } else {
       lookingSalienceFactor= 1;
     }
