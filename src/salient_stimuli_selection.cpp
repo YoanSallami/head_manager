@@ -94,31 +94,31 @@ public:
      **/
     if(node_.hasParam("stimuli_discount_factor"))
     {
-      node_.getParam((const string&)"stimuli_discount_factor", stimuliDiscountFactor);
+      node_.getParam("stimuli_discount_factor", stimuliDiscountFactor);
     } else {
       stimuliDiscountFactor = 0.99;
     }
     if(node_.hasParam("object_salience_factor"))
     {
-      node_.getParam((const string&)"object_salience_factor", objectSalienceFactor);
+      node_.getParam("object_salience_factor", objectSalienceFactor);
     } else {
       objectSalienceFactor = 1;
     }
     if(node_.hasParam("head_salience_factor"))
     {
-      node_.getParam((const string&)"head_salience_factor", headSalienceFactor);
+      node_.getParam("head_salience_factor", headSalienceFactor);
     } else {
       headSalienceFactor = 10;
     }
     if(node_.hasParam("joint_salience_factor"))
     {
-      node_.getParam((const string&)"joint_salience_factor", jointSalienceFactor);
+      node_.getParam("joint_salience_factor", jointSalienceFactor);
     } else {
       jointSalienceFactor = 1;
     }
     if(node_.hasParam("looking_salience_factor"))
     {
-      node_.getParam((const string&)"looking_salience_factor", lookingSalienceFactor);
+      node_.getParam("looking_salience_factor", lookingSalienceFactor);
     } else {
       lookingSalienceFactor= 1;
     }
@@ -286,7 +286,7 @@ private:
 
   toaster_msgs::Entity getObject(std::string id)
   {
-    float x,y,z;
+    double x,y,z;
     if(!object_list_.empty())
     {
       for (unsigned int i = 0; i < object_list_.size(); ++i)
@@ -296,11 +296,11 @@ private:
           std::string offset = "offset_"+object_list_[i].meEntity.id;
           if (node_.hasParam(offset))
           {
-            if (node_.getParam(offset+"/x",x))
+            if (node_.getParam((const string) offset+"/x",x))
               object_list_[i].meEntity.positionX+=x;
-            if (node_.getParam(offset+"/y",y))
+            if (node_.getParam((const string) offset+"/y",y))
               object_list_[i].meEntity.positionY+=y;
-            if (node_.getParam(offset+"/z",z))
+            if (node_.getParam((const string) offset+"/z",z))
               object_list_[i].meEntity.positionZ+=z;
           }
           return (object_list_[i].meEntity);
