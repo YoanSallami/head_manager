@@ -394,7 +394,7 @@ private:
 
         if( saliency_map_.find(msg->objectList[i].meEntity.id) == saliency_map_.end() )
         {
-          saliency_map_.emplace(msg->objectList[i].meEntity.id,0.0);
+          saliency_map_.insert(SaliencyPair_t(msg->objectList[i].meEntity.id,0.0));
         }
       }
     }
@@ -414,14 +414,13 @@ private:
         ownerId = msg->humanList[i].meAgent.meEntity.id;
         if( saliency_map_.find(ownerId) == saliency_map_.end() )
         {
-          //saliency_map_.emplace(msg->humanList[i].meAgent.meEntity.id,0.0);
           if ( !msg->humanList[i].meAgent.skeletonJoint.empty() )
           {
             for( unsigned int j = 0 ; j < msg->humanList[i].meAgent.skeletonJoint.size() ; ++j )
             {
                 jointId = msg->humanList[i].meAgent.skeletonJoint[j].meEntity.id;
                 if (jointId != "base")
-                  saliency_map_.emplace((ownerId+"::"+jointId),0.0);
+                  saliency_map_.insert(SaliencyPair_t((ownerId+"::"+jointId),0.0));
             }
           }
         }

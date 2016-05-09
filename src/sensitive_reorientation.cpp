@@ -18,8 +18,8 @@ class SensitiveReorientation
 private:
   ros::Subscriber salient_stim_sub_;
   ros::ServiceClient inhibition_client_ ;
-  InitActionClient * init_action_client_; //!< initialisation client
-  HeadActionClient * head_action_client_; //!< interface to head controller client
+  //InitActionClient * init_action_client_; //!< initialisation client
+  //HeadActionClient * head_action_client_; //!< interface to head controller client
 public:
   /**
    * Default constructor
@@ -29,18 +29,18 @@ public:
     inhibition_client_ = node.serviceClient<head_manager::InhibitionOfReturn>("head_manager/inhibition_of_return");
     salient_stim_sub_ = node.subscribe("/head_manager/salient_stimuli", 5, &SensitiveReorientation::salientStimuliCallback, this);
 
-    init_action_client_ = new InitActionClient("pr2motion/Init", true);
+    //init_action_client_ = new InitActionClient("pr2motion/Init", true);
     // Initialize action client for the action interface to the head controller
-    head_action_client_ = new HeadActionClient("pr2motion/Head_Move_Target", true);
+    //head_action_client_ = new HeadActionClient("pr2motion/Head_Move_Target", true);
     // Connection to the pr2motion client
     ros::ServiceClient connect = node.serviceClient<pr2motion::connect_port>("pr2motion/connect_port");
-    ROS_INFO("Waiting for pr2motion action server to start.");
-    init_action_client_->waitForServer(); //will wait for infinite time
-    head_action_client_->waitForServer(); //will wait for infinite time
-    ROS_INFO("pr2motion action server started.");
+    //ROS_INFO("Waiting for pr2motion action server to start.");
+    //init_action_client_->waitForServer(); //will wait for infinite time
+    //head_action_client_->waitForServer(); //will wait for infinite time
+    //ROS_INFO("pr2motion action server started.");
 
-    pr2motion::InitGoal goal_init;
-    init_action_client_->sendGoal(goal_init);
+    //pr2motion::InitGoal goal_init;
+    //init_action_client_->sendGoal(goal_init);
 
     pr2motion::connect_port srv;
     srv.request.local = "joint_state";
@@ -64,8 +64,8 @@ public:
    */
   ~SensitiveReorientation()
   {
-    delete(init_action_client_);
-    delete(head_action_client_);
+    // delete(init_action_client_);
+    // delete(head_action_client_);
   }
 private:
   void salientStimuliCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
