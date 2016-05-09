@@ -94,31 +94,31 @@ public:
      **/
     if(node_.hasParam("stimuli_discount_factor"))
     {
-      node_.getParam("stimuli_discount_factor", stimuliDiscountFactor);
+      node_.getParam(std::string("stimuli_discount_factor"), stimuliDiscountFactor);
     } else {
       stimuliDiscountFactor = 0.99;
     }
     if(node_.hasParam("object_salience_factor"))
     {
-      node_.getParam("object_salience_factor", objectSalienceFactor);
+      node_.getParam(std::string("object_salience_factor"), objectSalienceFactor);
     } else {
       objectSalienceFactor = 1;
     }
     if(node_.hasParam("head_salience_factor"))
     {
-      node_.getParam("head_salience_factor", headSalienceFactor);
+      node_.getParam(std::string("head_salience_factor"), headSalienceFactor);
     } else {
       headSalienceFactor = 10;
     }
     if(node_.hasParam("joint_salience_factor"))
     {
-      node_.getParam("joint_salience_factor", jointSalienceFactor);
+      node_.getParam(std::string("joint_salience_factor"), jointSalienceFactor);
     } else {
       jointSalienceFactor = 1;
     }
     if(node_.hasParam("looking_salience_factor"))
     {
-      node_.getParam("looking_salience_factor", lookingSalienceFactor);
+      node_.getParam(std::string("looking_salience_factor"), lookingSalienceFactor);
     } else {
       lookingSalienceFactor= 1;
     }

@@ -2,16 +2,16 @@
 #include <string>
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
-#include <pr2motion/InitAction.h>
+//#include <pr2motion/InitAction.h>
 #include <pr2motion/connect_port.h>
-#include <pr2motion/Head_MoveAction.h>
+//#include <pr2motion/Head_MoveAction.h>
 #include <geometry_msgs/PointStamped.h>
 #include "head_manager/InhibitionOfReturn.h"
 
 using namespace std;
 
-typedef actionlib::SimpleActionClient<pr2motion::InitAction> InitActionClient;
-typedef actionlib::SimpleActionClient<pr2motion::Head_MoveAction> HeadActionClient;
+//typedef actionlib::SimpleActionClient<pr2motion::InitAction> InitActionClient;
+//typedef actionlib::SimpleActionClient<pr2motion::Head_MoveAction> HeadActionClient;
 
 class SensitiveReorientation
 {
