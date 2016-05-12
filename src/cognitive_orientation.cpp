@@ -32,7 +32,7 @@ class CognitiveOrientation
 private:
   ros::NodeHandle node_;
   std::string my_id_;
-  SubscriberMap_t activity_state_sub_map_;
+  SubscriberMap_t agent_activity_sub_map_;
   std::vector<toaster_msgs::Object> object_list_; //!< object list from toaster
   std::vector<toaster_msgs::Human> human_list_; //!< human list from toaster
   std::vector<toaster_msgs::Robot> robot_list_; //!< robot list from toaster
@@ -239,9 +239,23 @@ private:
    * @brief : Update the activity state map
    * @param : object list
    ****************************************************/
-  void activityCallback(const supervisor_msgs::AgentActivity::ConstPtr& msg)
+  void activityCallback(const supervisor_msgs::AgentActivity::ConstPtr& msg,std::string id)
   {
+    bool succeed=false;
+    ActivityMap_t::iterator it = agent_activity_map_.begin();
 
+    while( it != agent_activity_map_.end()  && succeed==false)
+    {
+      if (it->first == id)
+      {
+        it->second=*msg;
+        succeed=true;
+      }
+    }
+    if (succeed==false)
+    {
+      agent_activity_map_.insert(ActivityPair_t(id,*msg));
+    }
   }
   /****************************************************
    * @brief : Update the object list
@@ -270,7 +284,13 @@ private:
       for (unsigned int i = 0; i < msg->robotList.size(); ++i)
       {
         robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
-
+        std::string id = msg->robotList[i].meAgent.meEntity.id;
+        std::string topicName = "/supervisor/activity_state/"+id;
+        if (agent_activity_sub_map_.find(id) == agent_activity_sub_map_.end())
+        {
+          ros::Subscriber sub = node_.subscribe<supervisor_msgs::AgentActivity>((const string)topicName, 1,boost::bind(&CognitiveOrientation::activityCallback,this,_1,id));
+          agent_activity_sub_map_.insert(SubscriberPair_t(id,sub));
+        }
       }
     }
   }
@@ -291,10 +311,11 @@ private:
       {
         human_list_.push_back(*(new toaster_msgs::Human(msg->humanList[i])));
         std::string id = msg->humanList[i].meAgent.meEntity.id;
-        if (activity_state_sub_map_.find(id) == activity_state_sub_map_.end())
+        std::string topicName = "/supervisor/activity_state/"+id;
+        if (agent_activity_sub_map_.find(id) == agent_activity_sub_map_.end())
         {
-          ros::Subscriber sub = node_.subscribe((const string)"/state_machines/activity_state/"+id, 1, &CognitiveOrientation::activityCallback, this);
-          activity_state_sub_map_.insert(SubscriberPair_t(id,sub));
+          ros::Subscriber sub = node_.subscribe<supervisor_msgs::AgentActivity>((const string)topicName, 1,boost::bind(&CognitiveOrientation::activityCallback,this,_1,id));
+          agent_activity_sub_map_.insert(SubscriberPair_t(id,sub));
         }
       }
     }

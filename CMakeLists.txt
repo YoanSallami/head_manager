@@ -13,6 +13,8 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+find_package(Boost REQUIRED COMPONENTS)
+
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   pr2_controllers_msgs
@@ -48,7 +50,7 @@ catkin_package(
   geometry_msgs
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 add_executable(salient_stimuli_selection src/salient_stimuli_selection.cpp)
 target_link_libraries(salient_stimuli_selection ${catkin_LIBRARIES})
