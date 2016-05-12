@@ -1,4 +1,4 @@
-stimuli_discount_factor : 0.99
+stimuli_discount_factor : 0.8
 object_salience_factor : 1.0
-head_salience_factor : 10.0
+head_salience_factor : 1.0
 joint_salience_factor : 1.0

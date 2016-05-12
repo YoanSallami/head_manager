@@ -12,6 +12,8 @@
 #include "toaster_msgs/RobotList.h"
 #include "toaster_msgs/FactList.h"
 #include "toaster_msgs/Object.h"
+#include "toaster_msgs/Robot.h"
+#include "toaster_msgs/Human.h"
 #include "toaster_msgs/Fact.h"
 #include "toaster_msgs/Entity.h"
 
@@ -20,9 +22,11 @@
 
 using namespace std;
 
+//for convinence
 typedef std::map < std::string, float > SaliencyMap_t;
 typedef std::pair < std::string, float > SaliencyPair_t;
 typedef std::vector < toaster_msgs::Object > ObjectList_t;
+typedef std::vector < toaster_msgs::Robot > RobotList_t;
 typedef std::vector < toaster_msgs::Human > HumanList_t;
 typedef std::vector < toaster_msgs::Fact > FactList_t;
 
@@ -30,17 +34,20 @@ class SalientStimuliSelection
 {
 public:
   SaliencyMap_t saliency_map_; //!< saliency map for stimuli selection
-  ObjectList_t object_list_;
-  HumanList_t human_list_;
-  FactList_t fact_list_;
+  ObjectList_t object_list_; //!< object list from pdg
+  HumanList_t human_list_; //!< human list from pdg
+  RobotList_t robot_list_; //!< robot list from pdg
+  FactList_t fact_list_; //!< fact list from agent_monitor
 private:
-  ros::NodeHandle node_;
+  string my_id_; //!< robot's id
+  ros::NodeHandle node_; //!< node handler
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
   ros::Subscriber object_list_sub_; //!< object list subscriber
   ros::Subscriber human_list_sub_; //!< human list subscriber
+  ros::Subscriber robot_list_sub_; //!< robot list subscriber
   ros::Publisher salient_stimuli_pub_; //!< sensitive goal publisher
-  ros::Publisher saliency_map_pub_;
-  ros::ServiceServer inhibition_of_return_srv_;
+  ros::Publisher saliency_map_pub_; //!< saliency map publisher
+  ros::ServiceServer inhibition_of_return_srv_; //!< inhibition of return service
 public:
   /****************************************************
    * @brief : Default constructor
@@ -48,29 +55,35 @@ public:
    ****************************************************/
   SalientStimuliSelection(ros::NodeHandle& node)
   {
-    /**
-     * Node setup
-     **/
     node_=node;
+    // Getting robot's id from ros param
+    if(node_.hasParam("my_robot_id"))
+    {
+      node_.getParam("my_robot_id",my_id_);
+    } else {
+      my_id_="pr2";
+    }
     // Advertise subscribers
     object_list_sub_ = node_.subscribe("/pdg/objectList", 5, &SalientStimuliSelection::objectListCallback, this);
     human_list_sub_ = node_.subscribe("/pdg/humanList", 5, &SalientStimuliSelection::humanListCallback, this);
+    robot_list_sub_ = node_.subscribe("/pdg/robotList", 5, &SalientStimuliSelection::robotListCallback, this);
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 5, &SalientStimuliSelection::factListCallback, this);
     // Advertise publishers
     salient_stimuli_pub_ = node_.advertise <geometry_msgs::PointStamped>("head_manager/salient_stimuli", 5);
     saliency_map_pub_ = node_.advertise <head_manager::StampedMap>("head_manager/saliency_map",5);
     // Advertise services
     inhibition_of_return_srv_ = node_.advertiseService("head_manager/inhibition_of_return", &SalientStimuliSelection::inhibitionOfReturn, this);
+    // Add a waiting attention zone to saliency map
+    saliency_map_.insert(SaliencyPair_t("Waiting",0.0));
   }
-  /**
-   * Default destructor
-   */
-  ~SalientStimuliSelection()
-  {
-    delete(&object_list_);
-    delete(&human_list_);
-  }
-
+  /****************************************************
+   * @brief : Default destructor
+   ****************************************************/
+  ~SalientStimuliSelection(){}
+  /****************************************************
+   * @brief : Update the saliency map using
+   *          agent_monitor facts
+   ****************************************************/
   void updateSaliencyMap()
   {
     toaster_msgs::Human human;
@@ -78,7 +91,7 @@ public:
     float xPosition=0;
     float yPosition=0;
     float zPosition=0;
-    double stimuliDiscountFactor; // stimuli discount factor
+    double stimuliDiscountFactor;
     double objectSalienceFactor;
     double headSalienceFactor;
     double jointSalienceFactor;
@@ -88,15 +101,12 @@ public:
     SaliencyMap_t::iterator subjectOwner;
     SaliencyMap_t::iterator target;
     SaliencyMap_t::iterator joint;
-
-    /**
-     * Getting ros parameters
-     **/
+    // Getting ros parameters
     if(node_.hasParam("stimuli_discount_factor"))
     {
       node_.getParam("stimuli_discount_factor", stimuliDiscountFactor);
     } else {
-      stimuliDiscountFactor = 0.99;
+      stimuliDiscountFactor = 0.8;
     }
     if(node_.hasParam("object_salience_factor"))
     {
@@ -108,7 +118,7 @@ public:
     {
       node_.getParam("head_salience_factor", headSalienceFactor);
     } else {
-      headSalienceFactor = 10;
+      headSalienceFactor = 1;
     }
     if(node_.hasParam("joint_salience_factor"))
     {
@@ -122,9 +132,7 @@ public:
     } else {
       lookingSalienceFactor= 1;
     }
-    /**
-    * Temporal filtering to reduce salience over time
-    **/
+    // Temporal filtering to reduce salience over time
     if(!saliency_map_.empty())
     {
       for(SaliencyMap_t::iterator it_sm = saliency_map_.begin() ; it_sm != saliency_map_.end() ; ++it_sm )
@@ -138,9 +146,7 @@ public:
     } else {
       throw HeadManagerException ( "Could not update an empty saliency map." );
     }
-    /**
-    * Saliency update according to motion facts provided by toaster
-    **/
+    // Saliency update according to motion facts provided by agent_monitor
     if(!fact_list_.empty())
     {
       for (FactList_t::iterator it_fl = fact_list_.begin() ; it_fl != fact_list_.end() ; ++it_fl )
@@ -206,11 +212,11 @@ public:
     } else {
       throw HeadManagerException ( "Could not read an empty fact list." );
     }
-
     sendSaliencyMap();
-
   }
-
+  /****************************************************
+   * @brief : Send the saliency map throw his topic
+   ****************************************************/
   void sendSaliencyMap()
   {
     head_manager::StampedMap map;
@@ -224,7 +230,9 @@ public:
     }
     saliency_map_pub_.publish(map);
   }
-
+  /****************************************************
+   * @brief : Send the salient stimuli throw his topic
+   ****************************************************/
   void sendSalientStimuli()
   {
     geometry_msgs::PointStamped point;
@@ -232,38 +240,41 @@ public:
     SaliencyPair_t salient;
     if (selectBestStimuli(salient))
     {
-      point.header.frame_id = "map";
-      if (!isObject(salient.first))
+      if(salient.first!="Waiting")
       {
-        if (isJoint(salient.first))
+        point.header.frame_id = "map";
+        if (!isObject(salient.first))
         {
-          size_t pos = salient.first.find("::");
-          entity = getJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
+          if (isJoint(salient.first))
+          {
+            size_t pos = salient.first.find("::");
+            entity = getHumanJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
+          } else {
+            entity = getHuman(salient.first);
+          }
         } else {
-          entity = getHuman(salient.first);
+          entity = getObject(salient.first);
         }
-      } else {
-        entity = getObject(salient.first);
-      }
-        ROS_INFO("Salient stimuli send :");
-        ROS_INFO("positionX = %f",entity.positionX);
-        ROS_INFO("positionY = %f",entity.positionY);
-        ROS_INFO("positionZ = %f",entity.positionZ);
-        point.header.stamp=ros::Time::now();
         point.point.x = entity.positionX;
         point.point.y = entity.positionY; 
         point.point.z = entity.positionZ;
-        ROS_INFO("PUBLICATION");
-        salient_stimuli_pub_.publish(point);
+      } else {
+        point.point.x = getRobot(my_id_).positionX+2;
+        point.point.y = getRobot(my_id_).positionY; 
+        point.point.z = getRobot(my_id_).positionZ;
+      }
+      point.header.stamp=ros::Time::now();
+      salient_stimuli_pub_.publish(point);
     } else {
       throw HeadManagerException ( "Could not select best stimuli in an empty saliency map." );
     }   
   }
-
 private:
-  /*************************************
-   * Node private methods
-   *************************************/
+  /****************************************************
+   * @brief : Select the best stimuli from saliency map
+   * @param : best stimuli
+   * @return : true if succeed
+   ****************************************************/
   bool selectBestStimuli(SaliencyPair_t& best)
   {
     SaliencyMap_t::iterator it;
@@ -283,34 +294,44 @@ private:
     } 
     return(false);
   }
-
+  /****************************************************
+   * @brief : Get object entity from object list
+   * @param : object's id
+   * @return : object entity
+   ****************************************************/
   toaster_msgs::Entity getObject(std::string id)
   {
     double x,y,z;
+    std::vector<float> offset;
     if(!object_list_.empty())
     {
       for (unsigned int i = 0; i < object_list_.size(); ++i)
       {
         if (object_list_[i].meEntity.id == id)
         {
-          std::string offset = "offset_"+object_list_[i].meEntity.id;
-          if (node_.hasParam(offset))
+          std::string offset_str = "offset_"+object_list_[i].meEntity.id;
+          if (node_.hasParam(offset_str))
           {
-            if (node_.getParam((const string) offset+"/x",x))
-              object_list_[i].meEntity.positionX+=x;
-            if (node_.getParam((const string) offset+"/y",y))
-              object_list_[i].meEntity.positionY+=y;
-            if (node_.getParam((const string) offset+"/z",z))
-              object_list_[i].meEntity.positionZ+=z;
+            offset.clear();
+            if (node_.getParam((const string) offset_str,offset))
+            {
+              object_list_[i].meEntity.positionX+=offset[0];
+              object_list_[i].meEntity.positionY+=offset[1];
+              object_list_[i].meEntity.positionZ+=offset[2];
+            }
           }
           return (object_list_[i].meEntity);
         }
       }
     } else {
-      throw HeadManagerException ( "Could not get entity object in an empty object list." );
+      throw HeadManagerException ( "Could not get object entity :\""+id+"\" in an empty object list." );
     }
   }
-
+  /****************************************************
+   * @brief : Get human entity from human list
+   * @param : human's id
+   * @return : human entity
+   ****************************************************/
   toaster_msgs::Entity getHuman(std::string id)
   {
     if (!human_list_.empty())
@@ -323,11 +344,16 @@ private:
         }
       }
     } else {
-      throw HeadManagerException ( "Could not get entity human in an empty human list." );
+      throw HeadManagerException ( "Could not get human entity :\""+id+"\" in an empty human list." );
     }
   }
-
-  toaster_msgs::Entity getJoint(std::string ownerId, std::string jointId)
+  /****************************************************
+   * @brief : Get human joint entity from human list
+   * @param : object's id
+   * @param : joint's id
+   * @return : human joint entity
+   ****************************************************/
+  toaster_msgs::Entity getHumanJoint(std::string ownerId, std::string jointId)
   {
     if (!human_list_.empty())
     {
@@ -343,18 +369,74 @@ private:
               {
                 return (human_list_[i].meAgent.skeletonJoint[j].meEntity);
               }
-
             }
           } else {
-            throw HeadManagerException ( "Could not get entity "+jointId+"joint in an empty skeletonJoint list." );
+            throw HeadManagerException ( "Could not get human joint entity \""+jointId+"\" in an empty skeletonJoint list." );
           }
         }
       }
     } else {
-      throw HeadManagerException ( "Could not get entity "+ownerId+"human in an empty human list." );
+      throw HeadManagerException ( "Could not get human entity \""+ownerId+"\" in an empty human list." );
     }
   }
+  /****************************************************
+   * @brief : Get robot entity from robot list
+   * @param : robot's id
+   * @return : robot entity
+   ****************************************************/
+  toaster_msgs::Entity getRobot(std::string id)
+  {
+    if (!robot_list_.empty())
+    {
+      for (unsigned int i = 0; i < robot_list_.size(); ++i)
+      {
+        if (robot_list_[i].meAgent.meEntity.id == id)
+        {
+          return (robot_list_[i].meAgent.meEntity);
+        }
+      }
+    } else {
+      throw HeadManagerException ( "Could not get robot entity :\""+id+"\" in an empty robot list." );
+    }
+  }
+  /****************************************************
+   * @brief : Get robot joint entity from robot list
+   * @param : robot's id
+   * @param : joint's id
+   * @return : robot joint entity
+   ****************************************************/
+  toaster_msgs::Entity getRobotJoint(std::string ownerId, std::string jointId)
+  {
+    if (!robot_list_.empty())
+    {
+      for (unsigned int i = 0; i < robot_list_.size(); ++i)
+      {
+        if (robot_list_[i].meAgent.meEntity.id == ownerId)
+        {
+          if (!robot_list_[i].meAgent.skeletonJoint.empty())
+          {
+            for (unsigned int j = 0; j < robot_list_[i].meAgent.skeletonJoint.size(); ++j)
+            {
+              if (robot_list_[i].meAgent.skeletonJoint[j].meEntity.id == jointId)
+              {
+                return (robot_list_[i].meAgent.skeletonJoint[j].meEntity);
+              }
 
+            }
+          } else {
+            throw HeadManagerException ( "Could not get robot joint entity :\""+jointId+"\" in an empty skeletonJoint list." );
+          }
+        }
+      }
+    } else {
+      throw HeadManagerException ( "Could not get robot entity \""+ownerId+"\" in an empty robot list." );
+    }
+  }
+  /****************************************************
+   * @brief : Test if the object list contain this id
+   * @param : tested id
+   * @return : true if contain
+   ****************************************************/
   bool isObject(std::string id)
   {
     if(!object_list_.empty())
@@ -370,7 +452,11 @@ private:
       return (false);
     }
   }
-
+  /****************************************************
+   * @brief : Test if the id contain multiples ids
+   * @param : tested id
+   * @return : true if contain
+   ****************************************************/
   bool isJoint(std::string id)
   {
     std::size_t found=id.find("::");
@@ -380,9 +466,10 @@ private:
   }
 
 private:
-  /*************************************
-   * ROS Topic Callbacks
-   *************************************/
+  /****************************************************
+   * @brief : Update the object list & the saliency map
+   * @param : object list
+   ****************************************************/
   void objectListCallback(const toaster_msgs::ObjectList::ConstPtr& msg)
   {
     if(!msg->objectList.empty())
@@ -399,7 +486,25 @@ private:
       }
     }
   }
-
+  /****************************************************
+   * @brief : Update the robot list
+   * @param : robot list
+   ****************************************************/
+  void robotListCallback(const toaster_msgs::RobotList::ConstPtr& msg)
+  {
+    if(!msg->robotList.empty())
+    {
+      robot_list_.clear();
+      for (unsigned int i = 0; i < msg->robotList.size(); ++i)
+      {
+        robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
+      }
+    }
+  }
+  /****************************************************
+   * @brief : Update the human list & the saliency map
+   * @param : human list
+   ****************************************************/
   void humanListCallback(const toaster_msgs::HumanList::ConstPtr& msg)
   {
     std::string ownerId,jointId;
@@ -427,7 +532,10 @@ private:
       }
     }
   }
-
+  /****************************************************
+   * @brief : Update the fact list
+   * @param : fact list
+   ****************************************************/
   void factListCallback(const toaster_msgs::FactList::ConstPtr& msg)
   {
     if (!msg->factList.empty())
@@ -446,14 +554,14 @@ private:
     catch (HeadManagerException& e )
     {
       ROS_ERROR("[head_manager] Exception was caught : %s",e.description().c_str());
-    }   
-    
+    }
   }
-
 public:
-  /******************************************************************
-   * ROS Services 
-   ******************************************************************/
+  /****************************************************
+   * @brief : Inhibition of return service
+   * @param : stamped point
+   * @param : true if succeed
+   ****************************************************/
   bool inhibitionOfReturn(head_manager::InhibitionOfReturn::Request &req,
                           head_manager::InhibitionOfReturn::Response &res)
   {
@@ -466,43 +574,45 @@ public:
     float yDistance=0;
     float zDistance=0;
     float radius=0.2;
+    res.success=false;
 
     for( it = saliency_map_.begin() ; it != saliency_map_.end() ; ++it )
     {
-      if(!isObject(it->first))
+      if(it->first!=my_id_)
       {
-        if (isJoint(it->first))
+        if(!isObject(it->first))
         {
-          size_t pos = it->first.find("::");
-          entity = getJoint(it->first.substr(0,pos),it->first.substr(pos+2,it->first.size()-1));
+          if (isJoint(it->first))
+          {
+            size_t pos = it->first.find("::");
+            entity = getHumanJoint(it->first.substr(0,pos),it->first.substr(pos+2,it->first.size()-1));
+          } else {
+            entity = getHuman(it->first);
+          }
         } else {
-          entity = getHuman(it->first);
+          entity = getObject(it->first);
         }
-      } else {
-        entity = getObject(it->first);
-      }
-      xPosition = entity.positionX;
-      yPosition = entity.positionY; 
-      zPosition = entity.positionZ;
-      xDistance=xPosition-req.point.point.x;
-      yDistance=yPosition-req.point.point.y;
-      zDistance=zPosition-req.point.point.z;
-
-      if (sqrt((xDistance*xDistance)+(yDistance*yDistance)+(zDistance*zDistance)) < radius )
-      {
-        ROS_INFO("Inhibition of return success");
-        it->second=0.0;
-        res.success=true;
+        xPosition = entity.positionX;
+        yPosition = entity.positionY; 
+        zPosition = entity.positionZ;
+        xDistance=xPosition-req.point.point.x;
+        yDistance=yPosition-req.point.point.y;
+        zDistance=zPosition-req.point.point.z;
+        if (sqrt((xDistance*xDistance)+(yDistance*yDistance)+(zDistance*zDistance)) < radius )
+        {
+          it->second=0.0;
+          res.success=true;
+        }
       }
     }
     return(true);
   }
-
 };
-
-  /******************************************************************
-   * Main process
-   ******************************************************************/
+/****************************************************
+ * @brief : Main process function
+ * @param : arguments count
+ * @param : arguments values
+ ****************************************************/
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "salient_stimuli_selection");
