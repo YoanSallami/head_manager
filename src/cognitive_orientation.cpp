@@ -3,8 +3,14 @@
 
 using namespace std;
 
+//for convenience
 typedef std::map<std::string,ros::Subscriber> SubscriberMap_t;
+typedef std::pair<std string,ros::Subscriber> SubscriberPair_t;
 typedef std::map<std::string,supervisor_msgs::AgentActivity> ActivityMap_t;
+typedef std::pair<std::string,supervisor_msgs::AgentActivity> ActivityPair_t;
+typedef std::vector < toaster_msgs::Object > ObjectList_t;
+typedef std::vector < toaster_msgs::Robot > RobotList_t;
+typedef std::vector < toaster_msgs::Human > HumanList_t;
 
 class CognitiveOrientation
 {
@@ -42,45 +48,11 @@ public:
    */
   ~CognitiveOrientation(){}
 
-  void objectListCallback(const toaster_msgs::ObjectList::ConstPtr& msg)
-  {
-    if(!msg->objectList.empty())
-    {
-      object_list_.clear();
-      for (unsigned int i = 0; i < msg->objectList.size(); ++i)
-      {
-        object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
-      }
-    }
-  }
-
-  void robotListCallback(const toaster_msgs::RobotList::ConstPtr& msg)
-  {
-    if(!msg->robotList.empty())
-    {
-      robot_list_.clear();
-      for (unsigned int i = 0; i < msg->robotList.size(); ++i)
-      {
-        robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
-      }
-    }
-  }
-
-  void humanListCallback(const toaster_msgs::HumanList::ConstPtr& msg)
-  {
-    std::string ownerId,jointId;
-    
-    if (!msg->humanList.empty())
-    {
-      human_list_.clear();
-
-      for (unsigned int i = 0; i < msg->humanList.size(); ++i)
-      {
-        human_list_.push_back(*(new toaster_msgs::Human(msg->humanList[i])));
-      }
-    }
-  }
-private:
+  /****************************************************
+   * @brief : Get object entity from object list
+   * @param : object's id
+   * @return : object entity
+   ****************************************************/
   toaster_msgs::Entity getObject(std::string id)
   {
     double x,y,z;
@@ -109,7 +81,11 @@ private:
       throw HeadManagerException ( "Could not get object entity :\""+id+"\" in an empty object list." );
     }
   }
-
+  /****************************************************
+   * @brief : Get human entity from human list
+   * @param : human's id
+   * @return : human entity
+   ****************************************************/
   toaster_msgs::Entity getHuman(std::string id)
   {
     if (!human_list_.empty())
@@ -125,7 +101,12 @@ private:
       throw HeadManagerException ( "Could not get human entity :\""+id+"\" in an empty human list." );
     }
   }
-
+  /****************************************************
+   * @brief : Get human joint entity from human list
+   * @param : object's id
+   * @param : joint's id
+   * @return : human joint entity
+   ****************************************************/
   toaster_msgs::Entity getHumanJoint(std::string ownerId, std::string jointId)
   {
     if (!human_list_.empty())
@@ -144,15 +125,19 @@ private:
               }
             }
           } else {
-            throw HeadManagerException ( "Could not get human joint entity :\""+jointId+"\" in an empty skeletonJoint list." );
+            throw HeadManagerException ( "Could not get human joint entity \""+jointId+"\" in an empty skeletonJoint list." );
           }
         }
       }
     } else {
-      throw HeadManagerException ( "Could not get human entity :\""+ownerId+"\" in an empty human list." );
+      throw HeadManagerException ( "Could not get human entity \""+ownerId+"\" in an empty human list." );
     }
   }
-
+  /****************************************************
+   * @brief : Get robot entity from robot list
+   * @param : robot's id
+   * @return : robot entity
+   ****************************************************/
   toaster_msgs::Entity getRobot(std::string id)
   {
     if (!robot_list_.empty())
@@ -168,7 +153,12 @@ private:
       throw HeadManagerException ( "Could not get robot entity :\""+id+"\" in an empty robot list." );
     }
   }
-
+  /****************************************************
+   * @brief : Get robot joint entity from robot list
+   * @param : robot's id
+   * @param : joint's id
+   * @return : robot joint entity
+   ****************************************************/
   toaster_msgs::Entity getRobotJoint(std::string ownerId, std::string jointId)
   {
     if (!robot_list_.empty())
@@ -196,10 +186,110 @@ private:
       throw HeadManagerException ( "Could not get robot entity \""+ownerId+"\" in an empty robot list." );
     }
   }
+  /****************************************************
+   * @brief : Test if the object list contain this id
+   * @param : tested id
+   * @return : true if contain
+   ****************************************************/
+  bool isObject(std::string id)
+  {
+    if(!object_list_.empty())
+    {
+      for (unsigned int i = 0; i < object_list_.size(); ++i)
+      {
+        if (object_list_[i].meEntity.id == id)
+        {
+          return (true);
+        }
+      }
+    } else {
+      return (false);
+    }
+  }
+  /****************************************************
+   * @brief : Test if the id contain multiples ids
+   * @param : tested id
+   * @return : true if contain
+   ****************************************************/
+  bool isJoint(std::string id)
+  {
+    std::size_t found=id.find("::");
+    if(id.find("::") != std::string::npos)
+      return(true);
+    return(false);
+  }
 
+private:
+  /****************************************************
+   * @brief : Update the activity state map
+   * @param : object list
+   ****************************************************/
+  void activityCallback(const supervisor_msgs::AgentActivity::ConstPtr& msg)
+  {
+    
+  }
+  /****************************************************
+   * @brief : Update the object list
+   * @param : object list
+   ****************************************************/
+  void objectListCallback(const toaster_msgs::ObjectList::ConstPtr& msg)
+  {
+    if(!msg->objectList.empty())
+    {
+      object_list_.clear();
+      for (unsigned int i = 0; i < msg->objectList.size(); ++i)
+      {
+        object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
+      }
+    }
+  }
+  /****************************************************
+   * @brief : Update the robot list
+   * @param : robot list
+   ****************************************************/
+  void robotListCallback(const toaster_msgs::RobotList::ConstPtr& msg)
+  {
+    if(!msg->robotList.empty())
+    {
+      robot_list_.clear();
+      for (unsigned int i = 0; i < msg->robotList.size(); ++i)
+      {
+        robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
+      }
+    }
+  }
+  /****************************************************
+   * @brief : Update the human list & activity state
+   *          subscriber map
+   * @param : human list
+   ****************************************************/
+  void humanListCallback(const toaster_msgs::HumanList::ConstPtr& msg)
+  {
+    std::string ownerId,jointId;
+    
+    if (!msg->humanList.empty())
+    {
+      human_list_.clear();
+
+      for (HumanList_t::iterator it = msg->humanList.begin() ; it < msg->humanList.end(); ++it)
+      {
+        human_list_.push_back(*(new toaster_msgs::Human(it)));
+        std::string id = it->meAgent.meEntity.id;
+        if (activity_state_sub_map_.find(id) == activity_state_sub_map_.end())
+        {
+          ros::Subscriber sub = node_.subscribe((const string)"/state_machines/activity_state/"+id, 1, &CognitiveOrientation::activityCallback, this);
+          activity_state_sub_map_.insert(SubscriberPair_t(id,sub));
+        }
+      }
+    }
+  }
 
 };
-
+/****************************************************
+ * @brief : Main process function
+ * @param : arguments count
+ * @param : arguments values
+ ****************************************************/
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "cognitive_orientation");

@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <string>
 #include <cstdlib>
-//#include <math>
 #include <map>
 
 #include "../include/head_manager/HeadManagerException.h"
@@ -22,7 +21,7 @@
 
 using namespace std;
 
-//for convinence
+//for convenience
 typedef std::map < std::string, float > SaliencyMap_t;
 typedef std::pair < std::string, float > SaliencyPair_t;
 typedef std::vector < toaster_msgs::Object > ObjectList_t;
