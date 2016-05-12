@@ -30,20 +30,21 @@ typedef std::vector < toaster_msgs::Human > HumanList_t;
 class CognitiveOrientation
 {
 private:
-  ros::NodeHandle node_;
-  std::string my_id_;
-  SubscriberMap_t agent_activity_sub_map_;
-  std::vector<toaster_msgs::Object> object_list_; //!< object list from toaster
-  std::vector<toaster_msgs::Human> human_list_; //!< human list from toaster
-  std::vector<toaster_msgs::Robot> robot_list_; //!< robot list from toaster
-  ActivityMap_t agent_activity_map_;
-  ros::Subscriber object_list_sub_;
-  ros::Subscriber human_list_sub_;
-  ros::Subscriber robot_list_sub_;
+  std::string my_id_; //!< robot's id
+  ros::NodeHandle node_; //!< node handler
+  SubscriberMap_t agent_activity_sub_map_; //!< agent activity state subscribers map
+  std::vector<toaster_msgs::Object> object_list_; //!< object list from pdg
+  std::vector<toaster_msgs::Human> human_list_; //!< human list from pdg
+  std::vector<toaster_msgs::Robot> robot_list_; //!< robot list from pdg
+  ActivityMap_t agent_activity_map_; //!< agent activity state machines map
+  ros::Subscriber object_list_sub_; //!< object list subscriber
+  ros::Subscriber human_list_sub_; //!< human list subscriber
+  ros::Subscriber robot_list_sub_; //!< robot list subscriber
 public:
-  /**
-   * Default constructor
-   */
+  /****************************************************
+   * @brief : Default constructor
+   * @param : ros node handler
+   ****************************************************/
   CognitiveOrientation(ros::NodeHandle& node)
   {
     node_=node;
@@ -58,9 +59,9 @@ public:
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &CognitiveOrientation::humanListCallback, this);
     robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &CognitiveOrientation::objectListCallback, this);
   }
-  /**
-   * Default destructor
-   */
+  /****************************************************
+   * @brief : Default destructor
+   ****************************************************/
   ~CognitiveOrientation(){}
 
   /****************************************************
