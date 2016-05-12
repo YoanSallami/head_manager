@@ -1,11 +1,26 @@
 #include <ros/ros.h>
 #include <string>
+#include <cstdlib>
+#include <map>
+
+#include "../include/head_manager/HeadManagerException.h"
+#include "geometry_msgs/PointStamped.h"
+
+#include "toaster_msgs/ObjectList.h"
+#include "toaster_msgs/HumanList.h"
+#include "toaster_msgs/RobotList.h"
+#include "toaster_msgs/Object.h"
+#include "toaster_msgs/Robot.h"
+#include "toaster_msgs/Human.h"
+#include "toaster_msgs/Entity.h"
+
+#include "supervisor_msgs/AgentActivity.h"
 
 using namespace std;
 
 //for convenience
 typedef std::map<std::string,ros::Subscriber> SubscriberMap_t;
-typedef std::pair<std string,ros::Subscriber> SubscriberPair_t;
+typedef std::pair<std::string,ros::Subscriber> SubscriberPair_t;
 typedef std::map<std::string,supervisor_msgs::AgentActivity> ActivityMap_t;
 typedef std::pair<std::string,supervisor_msgs::AgentActivity> ActivityPair_t;
 typedef std::vector < toaster_msgs::Object > ObjectList_t;
@@ -39,9 +54,9 @@ public:
     } else {
       my_id_="pr2";
     }
-    object_list_sub_ = node_.subscribe("/pdg/objectList", 1, &SalientStimuliSelection::objectListCallback, this);
-    human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &SalientStimuliSelection::humanListCallback, this);
-    robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &SalientStimuliSelection::objectListCallback, this);
+    object_list_sub_ = node_.subscribe("/pdg/objectList", 1, &CognitiveOrientation::objectListCallback, this);
+    human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &CognitiveOrientation::humanListCallback, this);
+    robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &CognitiveOrientation::objectListCallback, this);
   }
   /**
    * Default destructor
@@ -226,7 +241,7 @@ private:
    ****************************************************/
   void activityCallback(const supervisor_msgs::AgentActivity::ConstPtr& msg)
   {
-    
+
   }
   /****************************************************
    * @brief : Update the object list
@@ -255,6 +270,7 @@ private:
       for (unsigned int i = 0; i < msg->robotList.size(); ++i)
       {
         robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
+
       }
     }
   }
@@ -271,10 +287,10 @@ private:
     {
       human_list_.clear();
 
-      for (HumanList_t::iterator it = msg->humanList.begin() ; it < msg->humanList.end(); ++it)
+      for (unsigned int i = 0; i < msg->humanList.size(); ++i)
       {
-        human_list_.push_back(*(new toaster_msgs::Human(it)));
-        std::string id = it->meAgent.meEntity.id;
+        human_list_.push_back(*(new toaster_msgs::Human(msg->humanList[i])));
+        std::string id = msg->humanList[i].meAgent.meEntity.id;
         if (activity_state_sub_map_.find(id) == activity_state_sub_map_.end())
         {
           ros::Subscriber sub = node_.subscribe((const string)"/state_machines/activity_state/"+id, 1, &CognitiveOrientation::activityCallback, this);

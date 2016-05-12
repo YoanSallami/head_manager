@@ -54,6 +54,10 @@ add_executable(salient_stimuli_selection src/salient_stimuli_selection.cpp)
 target_link_libraries(salient_stimuli_selection ${catkin_LIBRARIES})
 add_dependencies(salient_stimuli_selection ${catkin_EXPORTED_TARGETS})
 
+add_executable(cognitive_orientation src/cognitive_orientation.cpp)
+target_link_libraries(cognitive_orientation ${catkin_LIBRARIES})
+add_dependencies(cognitive_orientation ${catkin_EXPORTED_TARGETS})
+
 add_executable(sensitive_reorientation src/sensitive_reorientation.cpp)
 target_link_libraries(sensitive_reorientation ${catkin_LIBRARIES})
 add_dependencies(sensitive_reorientation ${catkin_EXPORTED_TARGETS})
