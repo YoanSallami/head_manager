@@ -1,0 +1,4 @@
+std_msgs/Time stamp
+---
+bool success
+string error
