@@ -68,8 +68,8 @@ public:
     robot_list_sub_ = node_.subscribe("/pdg/robotList", 5, &SalientStimuliSelection::robotListCallback, this);
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 5, &SalientStimuliSelection::factListCallback, this);
     // Advertise publishers
-    salient_stimuli_pub_ = node_.advertise <geometry_msgs::PointStamped>("head_manager/salient_stimuli", 5);
-    saliency_map_pub_ = node_.advertise <head_manager::StampedMap>("head_manager/saliency_map",5);
+    salient_stimuli_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/salient_stimuli", 5);
+    saliency_map_pub_ = node_.advertise<head_manager::StampedMap>("head_manager/saliency_map",5);
     // Advertise services
     inhibition_of_return_srv_ = node_.advertiseService("head_manager/inhibition_of_return", &SalientStimuliSelection::inhibitionOfReturn, this);
     // Add a waiting attention zone to saliency map
@@ -561,8 +561,8 @@ public:
    * @param : stamped point
    * @param : true if succeed
    ****************************************************/
-  bool inhibitionOfReturn(head_manager::InhibitionOfReturn::Request &req,
-                          head_manager::InhibitionOfReturn::Response &res)
+  bool inhibitionOfReturn(head_manager::InhibitionOfReturn::Request& req,
+                          head_manager::InhibitionOfReturn::Response& res)
   {
     SaliencyMap_t::iterator it;
     toaster_msgs::Entity entity;

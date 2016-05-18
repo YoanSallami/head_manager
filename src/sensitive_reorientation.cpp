@@ -46,17 +46,17 @@ public:
     srv.request.local = "joint_state";
     srv.request.remote = "joint_states";
     if (!connect.call(srv)){
-      ROS_ERROR("[head_manager] Failed to call service pr2motion/connect_port");
+      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
     }
     srv.request.local = "head_controller_state";
     srv.request.remote = "/head_traj_controller/state";
     if (!connect.call(srv)){
-      ROS_ERROR("[head_manager] Failed to call service pr2motion/connect_port");
+      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
     }
     srv.request.local = "head_desired_position";
     srv.request.remote = "/head_manager/salient_stimuli";
     if (!connect.call(srv)){
-      ROS_ERROR("[head_manager] Failed to call service pr2motion/connect_port");
+      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
     }
   }
   /** 
@@ -80,10 +80,10 @@ private:
     if (finishedBeforeTimeout)
     {
       actionlib::SimpleClientGoalState state = head_action_client_->getState();
-      ROS_DEBUG("[head_manager] Action finished: %s",state.toString().c_str());
+      ROS_DEBUG("[sensitive_reorientation] Action finished: %s",state.toString().c_str());
     }
     else
-      ROS_DEBUG("[head_manager] Action did not finish before the time out.");
+      ROS_DEBUG("[sensitive_reorientation] Action did not finish before the time out.");
   }
 
   void salientStimuliCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
@@ -92,13 +92,13 @@ private:
     srv.request.point.header=msg->header;
     srv.request.point.point=msg->point;
     if (inhibition_client_.exists())
-      ROS_INFO("service ready");
-    else
-      ROS_ERROR("service not ready");
-
-    if (!inhibition_client_.call(srv))
     {
-      ROS_ERROR("[head_manager] Failed to call service : inhibition_of_return");
+      if (!inhibition_client_.call(srv))
+      {
+        ROS_ERROR("[sensitive_reorientation] Failed to call service : inhibition_of_return");
+      }
+    } else {
+      ROS_ERROR("service not ready");
     }
     lookAt(msg->header.frame_id,msg->point.x,msg->point.y,msg->point.z);
   }

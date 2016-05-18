@@ -4,7 +4,9 @@
 #include <map>
 
 #include "../include/head_manager/HeadManagerException.h"
+#include "head_manager/Sync.h"
 #include "geometry_msgs/PointStamped.h"
+#include "std_msgs/Float64.h"
 
 #include "toaster_msgs/ObjectList.h"
 #include "toaster_msgs/HumanList.h"
@@ -40,6 +42,12 @@ private:
   ros::Subscriber object_list_sub_; //!< object list subscriber
   ros::Subscriber human_list_sub_; //!< human list subscriber
   ros::Subscriber robot_list_sub_; //!< robot list subscriber
+  ros::ServiceServer cognitive_sync_srv_; //!< cognitive sync service
+  ros::Publisher cognitive_attention_pub_; //!< cognitive attention publisher
+  float focus_; //!< robot focus
+  ros::Publisher focus_pub_; //!< focus publisher
+  bool surprised_; //!< true when an unexpected act occur
+  
 public:
   /****************************************************
    * @brief : Default constructor
@@ -55,9 +63,15 @@ public:
     } else {
       my_id_="pr2";
     }
+    // Advertise subscribers
     object_list_sub_ = node_.subscribe("/pdg/objectList", 1, &CognitiveOrientation::objectListCallback, this);
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &CognitiveOrientation::humanListCallback, this);
     robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &CognitiveOrientation::objectListCallback, this);
+    // Advertise publishers
+    cognitive_attention_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/cognitive_attention", 5);
+    focus_pub_ = node_.advertise <std_msgs::Float64>("head_manager/focus", 5);
+    // Advertise services
+    cognitive_sync_srv_= node_.advertiseService("head_manager/cognitive_sync", &CognitiveOrientation::CognitiveSync, this);
   }
   /****************************************************
    * @brief : Default destructor
@@ -234,7 +248,6 @@ public:
       return(true);
     return(false);
   }
-
 private:
   /****************************************************
    * @brief : Update the activity state map
@@ -245,6 +258,11 @@ private:
     bool succeed=false;
     ActivityMap_t::iterator it = agent_activity_map_.begin();
 
+    if(msg->unexpected==true)
+    {
+      surprised_=true;
+    }
+    // Update activity map
     while( it != agent_activity_map_.end()  && succeed==false)
     {
       if (it->first == id)
@@ -321,7 +339,57 @@ private:
       }
     }
   }
+public:
+  /****************************************************
+   * @brief : Cognitive sync service called by reactive
+   *          stimuli selection node witch allow the
+   *          computation of cognitive attention & focus
+   * @param : time stamp to sync
+   * @param : true if succeed
+   ****************************************************/
+   bool CognitiveSync(head_manager::Sync::Request & req, 
+                      head_manager::Sync::Response & res)
+   {
+      supervisor_msgs::AgentActivity robotState;
+      ActivityMap_t involvedAgents_map;
+      //ObjectMap_t involvedObjects_map;
+      geometry_msgs::PointStamped cognitive_attention;
+      bool succeed=false;
+      float temporal_factor=0.2;
 
+      if(!agent_activity_map_.empty())
+      {
+        if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
+        {
+          robotState = agent_activity_map_.find(my_id_)->second;
+          if (robotState.activityState=="ACTING")
+          {
+            // If the robot is acting we allow reactive input by modulating focus according to supervisor
+            if (surprised_)
+            {
+              focus_= 0.0;
+              surprised_ = false;
+            } else {
+              focus_ = focus_+temporal_factor*(robotState.weight-focus_);
+            }
+          }else {
+            // If the robot is waiting we allow reactive input by setting focus to zero
+            focus_= 0.0;
+            for (ActivityMap_t::iterator it = agent_activity_map_.begin(); it != agent_activity_map_.end(); ++it)
+            {
+              if(it->first!=my_id_)
+              {
+                if(it->second.activityState=="SHOULDACT")
+                {
+                  involvedAgents_map.insert(ActivityPair_t(it->first,it->second));
+                }
+              }
+            }
+          }
+        }
+      }
+    return true;
+   }
 };
 /****************************************************
  * @brief : Main process function

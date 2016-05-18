@@ -35,6 +35,7 @@ add_message_files(
 add_service_files(
   FILES
   InhibitionOfReturn.srv
+  Sync.srv
 )
 
 generate_messages(
