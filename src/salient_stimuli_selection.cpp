@@ -63,13 +63,13 @@ public:
       my_id_="pr2";
     }
     // Advertise subscribers
-    object_list_sub_ = node_.subscribe("/pdg/objectList", 5, &SalientStimuliSelection::objectListCallback, this);
-    human_list_sub_ = node_.subscribe("/pdg/humanList", 5, &SalientStimuliSelection::humanListCallback, this);
-    robot_list_sub_ = node_.subscribe("/pdg/robotList", 5, &SalientStimuliSelection::robotListCallback, this);
-    fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 5, &SalientStimuliSelection::factListCallback, this);
+    object_list_sub_ = node_.subscribe("/pdg/objectList", 1, &SalientStimuliSelection::objectListCallback, this);
+    human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &SalientStimuliSelection::humanListCallback, this);
+    robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &SalientStimuliSelection::robotListCallback, this);
+    fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &SalientStimuliSelection::factListCallback, this);
     // Advertise publishers
-    salient_stimuli_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/salient_stimuli", 5);
-    saliency_map_pub_ = node_.advertise<head_manager::StampedMap>("head_manager/saliency_map",5);
+    salient_stimuli_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/salient_stimuli", 1);
+    saliency_map_pub_ = node_.advertise<head_manager::StampedMap>("head_manager/saliency_map",1);
     // Advertise services
     inhibition_of_return_srv_ = node_.advertiseService("head_manager/inhibition_of_return", &SalientStimuliSelection::inhibitionOfReturn, this);
     // Add a waiting attention zone to saliency map
@@ -150,66 +150,67 @@ public:
     {
       for (FactList_t::iterator it_fl = fact_list_.begin() ; it_fl != fact_list_.end() ; ++it_fl )
       {
-        if ( it_fl->property == "IsMovingToward" )
+        if (it_fl->subjectId!=my_id_)
         {
-          if (it_fl->targetId!="pr2")
+          if ( it_fl->property == "IsMovingToward" )
           {
-            target=saliency_map_.find(it_fl->targetId);
-              if ( target != saliency_map_.end() )
+            if (it_fl->targetId!=my_id_)
             {
-              target->second+=it_fl->doubleValue*objectSalienceFactor;
-            } else {
-              throw HeadManagerException ("Could not find "+it_fl->targetId+" in saliency map.");
+              target=saliency_map_.find(it_fl->targetId);
+                if ( target != saliency_map_.end() )
+              {
+                target->second+=it_fl->doubleValue*objectSalienceFactor;
+              } else {
+                throw HeadManagerException ("Could not find "+it_fl->targetId+" in saliency map.");
+              }
             }
           }
-        }
-        if ( it_fl->property == "IsLookingToward" )
-        {
-          if (it_fl->targetId!="pr2")
+          if ( it_fl->property == "IsLookingToward" )
           {
-            target=saliency_map_.find(it_fl->targetId);
-              if ( target != saliency_map_.end() )
+            if (it_fl->targetId!=my_id_)
             {
-              target->second+=it_fl->doubleValue*lookingSalienceFactor;
-            } else {
-              throw HeadManagerException ("Could not find "+it_fl->targetId+" in saliency map.");
-            }
-          }else{
-            subject=saliency_map_.find(it_fl->subjectId+"::head");
-            if ( subject != saliency_map_.end() )
-            {
-                subject->second+=it_fl->doubleValue*lookingSalienceFactor;
-            } else {
-              throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
-            }
-          }
-        }
-        if ( it_fl->property == "IsMoving")
-        {
-          if ( it_fl->subProperty == "joint")
-          { 
-            subject=saliency_map_.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
-            if ( subject != saliency_map_.end() )
-            {
-                subject->second+=it_fl->doubleValue*jointSalienceFactor;
-            } else {
-              throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
+              target=saliency_map_.find(it_fl->targetId);
+                if ( target != saliency_map_.end() )
+              {
+                target->second+=it_fl->doubleValue*lookingSalienceFactor;
+              } else {
+                throw HeadManagerException ("lol:Could not find "+it_fl->targetId+" in saliency map.");
+              }
+            }else{
+              subject=saliency_map_.find(it_fl->subjectId+"::head");
+              if ( subject != saliency_map_.end() )
+              {
+                  subject->second+=it_fl->doubleValue*lookingSalienceFactor;
+              } else {
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
+              }
             }
           }
-          if ( it_fl->subProperty == "agent")
-          { 
-            subject=saliency_map_.find(it_fl->subjectId+"::head");
-            if ( subject != saliency_map_.end() )
-            {
-                subject->second+=it_fl->doubleValue*headSalienceFactor;
-            } else {
-              throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
+          if ( it_fl->property == "IsMoving")
+          {
+            if ( it_fl->subProperty == "joint")
+            { 
+              subject=saliency_map_.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
+              if ( subject != saliency_map_.end() )
+              {
+                  subject->second+=it_fl->doubleValue*jointSalienceFactor;
+              } else {
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
+              }
+            }
+            if ( it_fl->subProperty == "agent")
+            { 
+              subject=saliency_map_.find(it_fl->subjectId+"::head");
+              if ( subject != saliency_map_.end() )
+              {
+                  subject->second+=it_fl->doubleValue*headSalienceFactor;
+              } else {
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
+              }
             }
           }
         }
       }
-    } else {
-      throw HeadManagerException ( "Could not read an empty fact list." );
     }
     sendSaliencyMap();
   }
@@ -242,14 +243,20 @@ public:
       if(salient.first!="Waiting")
       {
         point.header.frame_id = "map";
-        if (!isObject(salient.first))
+        if(!isObject(salient.first))
         {
           if (isJoint(salient.first))
           {
             size_t pos = salient.first.find("::");
-            entity = getHumanJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
+            if(isHuman(salient.first.substr(0,pos)))
+              entity = getHumanJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
+            else
+              entity = getRobotJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
           } else {
-            entity = getHuman(salient.first);
+            if(isHuman(salient.first))
+              entity = getHuman(salient.first);
+            else
+              entity = getRobot(salient.first);
           }
         } else {
           entity = getObject(salient.first);
@@ -258,10 +265,12 @@ public:
         point.point.y = entity.positionY; 
         point.point.z = entity.positionZ;
       } else {
-        point.point.x = getRobot(my_id_).positionX+2;
-        point.point.y = getRobot(my_id_).positionY; 
-        point.point.z = getRobot(my_id_).positionZ;
+        // mathFunction::
+        point.point.x = getRobot(my_id_).positionX;
+        point.point.y = getRobot(my_id_).positionY+1; 
+        point.point.z = getRobot(my_id_).positionZ+1.2;
       }
+      point.header.frame_id="map";
       point.header.stamp=ros::Time::now();
       salient_stimuli_pub_.publish(point);
     } else {
@@ -277,7 +286,7 @@ private:
   bool selectBestStimuli(SaliencyPair_t& best)
   {
     SaliencyMap_t::iterator it;
-    SaliencyPair_t bestTemp = * saliency_map_.begin();
+    SaliencyPair_t bestTemp = * saliency_map_.rbegin();
 
     if (!saliency_map_.empty())
     {
@@ -452,6 +461,26 @@ private:
     }
   }
   /****************************************************
+   * @brief : Test if the human list contain this id
+   * @param : tested id
+   * @return : true if contain
+   ****************************************************/
+  bool isHuman(std::string id)
+  {
+    if(!human_list_.empty())
+    {
+      for (unsigned int i = 0; i < human_list_.size(); ++i)
+      {
+        if (human_list_[i].meAgent.meEntity.id == id)
+        {
+          return (true);
+        }
+      }
+    } else {
+      return (false);
+    }
+  }
+  /****************************************************
    * @brief : Test if the id contain multiples ids
    * @param : tested id
    * @return : true if contain
@@ -552,7 +581,7 @@ private:
     }
     catch (HeadManagerException& e )
     {
-      ROS_ERROR("[head_manager] Exception was caught : %s",e.description().c_str());
+      ROS_ERROR("[salient_stimuli_selection] Exception was caught : %s",e.description().c_str());
     }
   }
 public:
@@ -574,38 +603,47 @@ public:
     float zDistance=0;
     float radius=0.2;
     res.success=false;
-
-    for( it = saliency_map_.begin() ; it != saliency_map_.end() ; ++it )
+    if (!saliency_map_.empty())
     {
-      if(it->first!=my_id_)
+      for( it = saliency_map_.begin() ; it != saliency_map_.end() ; ++it )
       {
-        if(!isObject(it->first))
+        if(it->first!="Waiting")
         {
-          if (isJoint(it->first))
+          if(!isObject(it->first))
           {
-            size_t pos = it->first.find("::");
-            entity = getHumanJoint(it->first.substr(0,pos),it->first.substr(pos+2,it->first.size()-1));
+            if (isJoint(it->first))
+            {
+              size_t pos = it->first.find("::");
+              if(isHuman(it->first.substr(0,pos)))
+                entity = getHumanJoint(it->first.substr(0,pos),it->first.substr(pos+2,it->first.size()-1));
+              else
+                entity = getRobotJoint(it->first.substr(0,pos),it->first.substr(pos+2,it->first.size()-1));
+            } else {
+              if(isHuman(it->first))
+                entity = getHuman(it->first);
+              else
+                entity = getRobot(it->first);
+            }
           } else {
-            entity = getHuman(it->first);
+            entity = getObject(it->first);
           }
-        } else {
-          entity = getObject(it->first);
-        }
-        xPosition = entity.positionX;
-        yPosition = entity.positionY; 
-        zPosition = entity.positionZ;
-        xDistance=xPosition-req.point.point.x;
-        yDistance=yPosition-req.point.point.y;
-        zDistance=zPosition-req.point.point.z;
-        if (sqrt((xDistance*xDistance)+(yDistance*yDistance)+(zDistance*zDistance)) < radius )
-        {
-          it->second=0.0;
-          res.success=true;
+          xPosition = entity.positionX;
+          yPosition = entity.positionY; 
+          zPosition = entity.positionZ;
+          xDistance = xPosition - req.point.point.x;
+          yDistance = yPosition - req.point.point.y;
+          zDistance = zPosition - req.point.point.z;
+          if (sqrt((xDistance*xDistance)+(yDistance*yDistance)+(zDistance*zDistance)) < radius )
+          {
+            it->second=0.0;
+            res.success=true;
+          }
         }
       }
     }
     return(true);
   }
+
 };
 /****************************************************
  * @brief : Main process function

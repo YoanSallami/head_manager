@@ -5,21 +5,25 @@
 #include <pr2motion/InitAction.h>
 #include <pr2motion/connect_port.h>
 #include <pr2motion/Head_MoveAction.h>
+#include <pr2motion/Head_Stop.h>
 #include <geometry_msgs/PointStamped.h>
 #include "head_manager/InhibitionOfReturn.h"
 
 using namespace std;
 
-typedef actionlib::SimpleActionClient<pr2motion::InitAction> InitActionClient;
-typedef actionlib::SimpleActionClient<pr2motion::Head_MoveAction> HeadActionClient;
+typedef actionlib::SimpleActionClient<pr2motion::InitAction> InitActionClient_t;
+typedef actionlib::SimpleActionClient<pr2motion::Head_MoveAction> HeadActionClient_t;
 
 class SensitiveReorientation
 {
 private:
   ros::Subscriber salient_stim_sub_;
   ros::ServiceClient inhibition_client_ ;
-  InitActionClient * init_action_client_; //!< initialisation client
-  HeadActionClient * head_action_client_; //!< interface to head controller client
+  InitActionClient_t * init_action_client_; //!< initialisation client
+  HeadActionClient_t * head_action_client_; //!< interface to head controller client
+  ros::ServiceClient connect_port_srv_;
+  ros::ServiceClient head_stop_srv_;
+
 public:
   /**
    * Default constructor
@@ -27,13 +31,14 @@ public:
   SensitiveReorientation(ros::NodeHandle& node)
   {
     inhibition_client_ = node.serviceClient<head_manager::InhibitionOfReturn>("head_manager/inhibition_of_return");
-    salient_stim_sub_ = node.subscribe("/head_manager/salient_stimuli", 5, &SensitiveReorientation::salientStimuliCallback, this);
+    salient_stim_sub_ = node.subscribe("/head_manager/salient_stimuli", 1, &SensitiveReorientation::salientStimuliCallback, this);
 
-    init_action_client_ = new InitActionClient("pr2motion/Init", true);
+    init_action_client_ = new InitActionClient_t("pr2motion/Init", true);
     // Initialize action client for the action interface to the head controller
-    head_action_client_ = new HeadActionClient("pr2motion/Head_Move_Target", true);
+    head_action_client_ = new HeadActionClient_t("pr2motion/Head_Move_Target", true);
     // Connection to the pr2motion client
-    ros::ServiceClient connect = node.serviceClient<pr2motion::connect_port>("pr2motion/connect_port");
+    connect_port_srv_ = node.serviceClient<pr2motion::connect_port>("pr2motion/connect_port");
+    head_stop_srv_ = node.serviceClient<pr2motion::connect_port>("pr2motion/Head_Stop");
     ROS_INFO("Waiting for pr2motion action server to start.");
     init_action_client_->waitForServer(); //will wait for infinite time
     head_action_client_->waitForServer(); //will wait for infinite time
@@ -45,19 +50,19 @@ public:
     pr2motion::connect_port srv;
     srv.request.local = "joint_state";
     srv.request.remote = "joint_states";
-    if (!connect.call(srv)){
+    if (!connect_port_srv_.call(srv)){
       ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
     }
     srv.request.local = "head_controller_state";
     srv.request.remote = "/head_traj_controller/state";
-    if (!connect.call(srv)){
+    if (!connect_port_srv_.call(srv)){
       ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
     }
-    srv.request.local = "head_desired_position";
-    srv.request.remote = "/head_manager/salient_stimuli";
-    if (!connect.call(srv)){
-      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
-    }
+    // srv.request.local = "head_desired_position";
+    // srv.request.remote = "/head_manager/salient_stimuli";
+    // if (!connect_port_srv_.call(srv)){
+    //   ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
+    // }
   }
   /** 
    * Default destructor
@@ -100,9 +105,11 @@ private:
     } else {
       ROS_ERROR("service not ready");
     }
+    pr2motion::Head_Stop stop;
+    if (!ros::service::call("pr2motion/Head_Stop", stop))
+      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/Head_Stop");
     lookAt(msg->header.frame_id,msg->point.x,msg->point.y,msg->point.z);
   }
-
 };
 
 int main(int argc, char** argv)
