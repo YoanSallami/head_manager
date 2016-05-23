@@ -16,6 +16,8 @@
 #include "toaster_msgs/Fact.h"
 #include "toaster_msgs/Entity.h"
 
+#include "../include/toaster-lib/MathFunctions.h"
+
 #include "head_manager/StampedMap.h"
 #include "head_manager/InhibitionOfReturn.h"
 
@@ -265,10 +267,17 @@ public:
         point.point.y = entity.positionY; 
         point.point.z = entity.positionZ;
       } else {
-        // mathFunction::
-        point.point.x = getRobot(my_id_).positionX;
-        point.point.y = getRobot(my_id_).positionY+1; 
-        point.point.z = getRobot(my_id_).positionZ+1.2;
+        Vec_t tempPoint(3);
+        Vec_t resultPoint(3);
+        Mat_t rotZ(3);
+        tempPoint[0]= getRobot(my_id_).positionX;
+        tempPoint[1]= getRobot(my_id_).positionY;
+        tempPoint[2]= getRobot(my_id_).positionZ;
+        rotZ = MathFunctions::matrixfromAngle(2,(const double)getRobot(my_id_).orientationYaw);
+        resultPoint = MathFunctions::multiplyMatVec(rotZ,tempPoint);
+        point.point.x = resultPoint[0];
+        point.point.y = resultPoint[1]+1; 
+        point.point.z = resultPoint[2]+1.2;
       }
       point.header.frame_id="map";
       point.header.stamp=ros::Time::now();
