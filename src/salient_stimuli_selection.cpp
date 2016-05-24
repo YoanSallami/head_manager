@@ -154,7 +154,7 @@ public:
       {
         if (it_fl->subjectId!=my_id_)
         {
-          if ( it_fl->property == "IsMovingToward" )
+          if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="angle")
           {
             if (it_fl->targetId!=my_id_)
             {
@@ -270,14 +270,14 @@ public:
         Vec_t tempPoint(3);
         Vec_t resultPoint(3);
         Mat_t rotZ(3);
-        tempPoint[0]= getRobot(my_id_).positionX;
-        tempPoint[1]= getRobot(my_id_).positionY;
-        tempPoint[2]= getRobot(my_id_).positionZ;
+        tempPoint[0]= 1.0;//getRobot(my_id_).positionX;
+        tempPoint[1]= 0.0;//getRobot(my_id_).positionY;
+        tempPoint[2]= 1.2;//getRobot(my_id_).positionZ;
         rotZ = MathFunctions::matrixfromAngle(2,(const double)getRobot(my_id_).orientationYaw);
         resultPoint = MathFunctions::multiplyMatVec(rotZ,tempPoint);
-        point.point.x = resultPoint[0];
-        point.point.y = resultPoint[1]+1; 
-        point.point.z = resultPoint[2]+1.2;
+        point.point.x = resultPoint[0]+getRobot(my_id_).positionX;
+        point.point.y = resultPoint[1]+getRobot(my_id_).positionY;
+        point.point.z = resultPoint[2]+getRobot(my_id_).positionZ;
       }
       point.header.frame_id="map";
       point.header.stamp=ros::Time::now();
