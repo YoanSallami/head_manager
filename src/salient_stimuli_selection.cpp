@@ -320,23 +320,20 @@ public:
 private:
   bool normalizeMap(SaliencyMap_t& map)
   {
-    double max=0;
+    SaliencyPair_t max;
     SaliencyMap_t::iterator it;
     if(!map.empty())
     {
-      for( it = map.begin() ; it != map.end() ; ++it )
+      if(selectBestStimuli(max))
       {
-        if( it->second > max )
+        for( it = map.begin() ; it != map.end() ; ++it )
         {
-          max=it->second;
+          it->second = it->second/max.second;
         }
-      }
-      for( it = map.begin() ; it != map.end() ; ++it )
-      {
-        it->second /= max;
-      }
-      return(true);
-    } else return(false);
+        return(true);
+      }      
+    }
+    return(false);
   }
   /****************************************************
    * @brief : Select the best stimuli from saliency map
