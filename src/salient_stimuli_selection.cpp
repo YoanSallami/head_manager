@@ -97,7 +97,11 @@ public:
     double headSalienceFactor;
     double jointSalienceFactor;
     double lookingSalienceFactor;
-    SaliencyMap_t temp = saliency_map_;
+    SaliencyMap_t temp_map = saliency_map_;
+    SaliencyMap_t objectSaliency_map;
+    SaliencyMap_t headSaliency_map;
+    SaliencyMap_t jointSaliency_map;
+    SaliencyMap_t lookingSaliency_map;
     SaliencyMap_t::iterator subject;
     SaliencyMap_t::iterator subjectOwner;
     SaliencyMap_t::iterator target;
@@ -133,6 +137,17 @@ public:
     } else {
       lookingSalienceFactor= 1;
     }
+    if (!temp_map.empty())
+    {
+      for(SaliencyMap_t::iterator it_tm = temp_map.begin() ; it_tm != temp_map.end() ; ++it_tm )
+      {
+        it_tm->second=0.0;
+      }
+    }
+    objectSaliency_map = temp_map;
+    headSaliency_map = temp_map;
+    jointSaliency_map = temp_map;
+    lookingSaliency_map = temp_map;
     // Temporal filtering to reduce salience over time
     if(!saliency_map_.empty())
     {
@@ -154,16 +169,16 @@ public:
       {
         if (it_fl->subjectId!=my_id_)
         {
-          if ( it_fl->property == "IsMovingToward" )
+          if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="angle")
           {
             if (it_fl->targetId!=my_id_)
             {
-              target=saliency_map_.find(it_fl->targetId);
-                if ( target != saliency_map_.end() )
+              target=objectSaliency_map.find(it_fl->targetId);
+                if ( target != objectSaliency_map.end() )
               {
-                target->second+=it_fl->doubleValue*objectSalienceFactor;
+                target->second+=it_fl->doubleValue;
               } else {
-                throw HeadManagerException ("Could not find "+it_fl->targetId+" in saliency map.");
+                throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
               }
             }
           }
@@ -171,20 +186,20 @@ public:
           {
             if (it_fl->targetId!=my_id_)
             {
-              target=saliency_map_.find(it_fl->targetId);
-                if ( target != saliency_map_.end() )
+              target=lookingSaliency_map.find(it_fl->targetId);
+                if ( target != lookingSaliency_map.end() )
               {
-                target->second+=it_fl->doubleValue*lookingSalienceFactor;
+                target->second+=it_fl->doubleValue;
               } else {
-                throw HeadManagerException ("lol:Could not find "+it_fl->targetId+" in saliency map.");
+                throw HeadManagerException ("Could not find "+it_fl->targetId+" in looking saliency map.");
               }
             }else{
-              subject=saliency_map_.find(it_fl->subjectId+"::head");
-              if ( subject != saliency_map_.end() )
+              subject=lookingSaliency_map.find(it_fl->subjectId+"::head");
+              if ( subject != lookingSaliency_map.end() )
               {
-                  subject->second+=it_fl->doubleValue*lookingSalienceFactor;
+                  subject->second+=it_fl->doubleValue;
               } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in looking saliency map.");
               }
             }
           }
@@ -192,27 +207,31 @@ public:
           {
             if ( it_fl->subProperty == "joint")
             { 
-              subject=saliency_map_.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
-              if ( subject != saliency_map_.end() )
+              subject=jointSaliency_map.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
+              if ( subject != jointSaliency_map.end() )
               {
-                  subject->second+=it_fl->doubleValue*jointSalienceFactor;
+                  subject->second+=it_fl->doubleValue;
               } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in joint saliency map.");
               }
             }
             if ( it_fl->subProperty == "agent")
             { 
-              subject=saliency_map_.find(it_fl->subjectId+"::head");
-              if ( subject != saliency_map_.end() )
+              subject=headSaliency_map.find(it_fl->subjectId+"::head");
+              if ( subject != headSaliency_map.end() )
               {
-                  subject->second+=it_fl->doubleValue*headSalienceFactor;
+                  subject->second+=it_fl->doubleValue;
               } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in saliency map.");
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in head saliency map.");
               }
             }
           }
         }
       }
+      // for (int i = 0; i < count; ++i)
+      // {
+      //   /* code *///TODO normalize & add features * respectives factors
+      // }
     }
     sendSaliencyMap();
   }
