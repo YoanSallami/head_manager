@@ -148,20 +148,6 @@ public:
     headSaliency_map = temp_map;
     jointSaliency_map = temp_map;
     lookingSaliency_map = temp_map;
-    // Temporal filtering to reduce salience over time
-    if(!saliency_map_.empty())
-    {
-      for(SaliencyMap_t::iterator it_sm = saliency_map_.begin() ; it_sm != saliency_map_.end() ; ++it_sm )
-      {
-        it_sm->second*=stimuliDiscountFactor;
-        if (it_sm->second < 0.0001)//to avoid very low float
-        {
-          it_sm->second=0.0;
-        }
-      }
-    } else {
-      throw HeadManagerException ( "Could not update an empty saliency map." );
-    }
     // Saliency update according to motion facts provided by agent_monitor
     if(!fact_list_.empty())
     {
@@ -228,10 +214,34 @@ public:
           }
         }
       }
-      // for (int i = 0; i < count; ++i)
-      // {
-      //   /* code *///TODO normalize & add features * respectives factors
-      // }
+      if(!normalizeMap(objectSaliency_map))
+        throw HeadManagerException ( "Could not normalize object saliency map");
+      if(!normalizeMap(headSaliency_map))
+        throw HeadManagerException ( "Could not normalize head saliency map");
+      if(!normalizeMap(jointSaliency_map))
+        throw HeadManagerException ( "Could not normalize joint saliency map");
+      if(!normalizeMap(lookingSaliency_map))
+        throw HeadManagerException ( "Could not normalize looking saliency map");
+      for (SaliencyMap_t::iterator it = temp_map.begin(); it != temp_map.end() ; ++it)
+      {
+        it->second=(objectSaliency_map[it->first]*objectSalienceFactor)+
+                    (headSaliency_map[it->first]*headSalienceFactor)+
+                    (jointSaliency_map[it->first]*jointSalienceFactor)+
+                    (lookingSaliency_map[it->first]*lookingSalienceFactor);
+      }
+      if(!normalizeMap(temp_map))
+        throw HeadManagerException ( "Could not normalize temp saliency map");
+      
+      if(!saliency_map_.empty())
+      {
+        for(SaliencyMap_t::iterator it_sm = saliency_map_.begin() ; it_sm != saliency_map_.end() ; ++it_sm )
+        {
+          it_sm->second*=stimuliDiscountFactor; // Temporal filtering to reduce salience over time
+          it_sm->second+=temp_map[it_sm->first]; // Add normalized feature saliency
+        }
+      } else {
+        throw HeadManagerException ( "Could not update an empty saliency map." );
+      }
     }
     sendSaliencyMap();
   }
@@ -306,6 +316,26 @@ public:
     }   
   }
 private:
+  bool normalizeMap(SaliencyMap_t& map)
+  {
+    double max=0;
+    SaliencyMap_t::iterator it;
+    if(!map.empty())
+    {
+      for( it = map.begin() ; it != map.end() ; ++it )
+      {
+        if( it->second > max )
+        {
+          max=it->second;
+        }
+      }
+      for( it = map.begin() ; it != map.end() ; ++it )
+      {
+        it->second /= max;
+      }
+      return(true);
+    } else return(false);
+  }
   /****************************************************
    * @brief : Select the best stimuli from saliency map
    * @param : best stimuli
