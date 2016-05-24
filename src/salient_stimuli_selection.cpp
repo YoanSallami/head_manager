@@ -224,10 +224,10 @@ public:
         throw HeadManagerException ( "Could not normalize looking saliency map");
       for (SaliencyMap_t::iterator it = temp_map.begin(); it != temp_map.end() ; ++it)
       {
-        it->second=(objectSaliency_map[it->first].second*objectSalienceFactor)+
-                    (headSaliency_map[it->first].second*headSalienceFactor)+
-                    (jointSaliency_map[it->first].second*jointSalienceFactor)+
-                    (lookingSaliency_map[it->first].second*lookingSalienceFactor);
+        it->second=(objectSaliency_map.find(it->first)->second*objectSalienceFactor)+
+                    (headSaliency_map.find(it->first)->second*headSalienceFactor)+
+                    (jointSaliency_map.find(it->first)->second*jointSalienceFactor)+
+                    (lookingSaliency_map.find(it->first)->second*lookingSalienceFactor);
       }
       if(!normalizeMap(temp_map))
         throw HeadManagerException ( "Could not normalize temp saliency map");
@@ -237,7 +237,7 @@ public:
         for(SaliencyMap_t::iterator it_sm = saliency_map_.begin() ; it_sm != saliency_map_.end() ; ++it_sm )
         {
           it_sm->second*=stimuliDiscountFactor; // Temporal filtering to reduce salience over time
-          it_sm->second+=temp_map[it_sm->first].second; // Add normalized feature saliency
+          it_sm->second+=temp_map.find(it_sm->first)->second; // Add normalized feature saliency
         }
       } else {
         throw HeadManagerException ( "Could not update an empty saliency map." );
