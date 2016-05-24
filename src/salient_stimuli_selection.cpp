@@ -327,6 +327,10 @@ private:
           if (it->second != 0.0)
           {
             it->second = it->second/max.second;
+            if(it->second == max.second)
+            {
+              it->second=1.0;
+            }
           }
         }
         return(true);
