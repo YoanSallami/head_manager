@@ -238,6 +238,8 @@ public:
         {
           it_sm->second*=stimuliDiscountFactor; // Temporal filtering to reduce salience over time
           it_sm->second+=temp_map.find(it_sm->first)->second; // Add normalized feature saliency
+          if (it_sm->second < 0.00001)
+            it_sm->second=0.0;
         }
       } else {
         throw HeadManagerException ( "Could not update an empty saliency map." );
