@@ -322,18 +322,21 @@ private:
     {
       if(selectBestStimuli(max))
       {
-        for( it = map.begin() ; it != map.end() ; ++it )
+        if (max.second > 0.0)
         {
-          if (it->second != 0.0)
+          for(it = map.begin() ; it != map.end() ; ++it )
           {
-            it->second = it->second/max.second;
-            if(it->second == max.second)
+            if (it->second != 0.0)
             {
-              it->second=1.0;
+              it->second = (double)it->second/(double)max.second;
+              if(it->second == max.second)
+              {
+                it->second=1.0;
+              }
             }
           }
+          return(true);
         }
-        return(true);
       }      
     }
     return(false);
