@@ -97,11 +97,7 @@ public:
     double headSalienceFactor;
     double jointSalienceFactor;
     double lookingSalienceFactor;
-    SaliencyMap_t temp_map = saliency_map_;
-    SaliencyMap_t objectSaliency_map;
-    SaliencyMap_t headSaliency_map;
-    SaliencyMap_t jointSaliency_map;
-    SaliencyMap_t lookingSaliency_map;
+    SaliencyMap_t temp_map(saliency_map_);
     SaliencyMap_t::iterator subject;
     SaliencyMap_t::iterator subjectOwner;
     SaliencyMap_t::iterator target;
@@ -144,10 +140,10 @@ public:
         it_tm->second=0.0;
       }
     }
-    objectSaliency_map = temp_map;
-    headSaliency_map = temp_map;
-    jointSaliency_map = temp_map;
-    lookingSaliency_map = temp_map;
+    SaliencyMap_t objectSaliency_map(temp_map);
+    SaliencyMap_t headSaliency_map(temp_map);
+    SaliencyMap_t jointSaliency_map(temp_map);
+    SaliencyMap_t lookingSaliency_map(temp_map);
     // Saliency update according to motion facts provided by agent_monitor
     if(!fact_list_.empty())
     {
@@ -328,7 +324,10 @@ private:
       {
         for( it = map.begin() ; it != map.end() ; ++it )
         {
-          it->second = it->second/max.second;
+          if (it->second != 0.0)
+          {
+            it->second = it->second/max.second;
+          }
         }
         return(true);
       }      
