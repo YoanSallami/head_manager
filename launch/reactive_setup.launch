@@ -21,7 +21,6 @@
 
 	<!-- Loading parameters -->
 	<param name="my_robot_id" value="pr2" />
-	<rosparam command="load" file="$(find head_manager)/param/reactive_param.yaml" />
 	<rosparam command="load" file="$(find head_manager)/param/object_offset.yaml" />
 
 	<!-- Launching reactive nodes -->
