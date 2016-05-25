@@ -208,8 +208,8 @@ public:
                     (jointSaliency_map.find(it->first)->second*jointSalienceFactor_)+
                     (lookingSaliency_map.find(it->first)->second*lookingSalienceFactor_);
       }
-      if(!normalizeMap(temp_map))
-        throw HeadManagerException ( "Could not normalize temp saliency map");
+      // if(!normalizeMap(temp_map))
+      //   throw HeadManagerException ( "Could not normalize temp saliency map");
       
       if(!saliency_map_.empty())
       {
