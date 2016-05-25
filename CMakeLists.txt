@@ -26,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
   toaster_msgs
+  dynamic_reconfigure
 )
 
 add_message_files(
@@ -37,6 +38,10 @@ add_service_files(
   FILES
   InhibitionOfReturn.srv
   Sync.srv
+)
+
+generate_dynamic_reconfigure_options(
+  cfg/reactive_dyn_param.cfg
 )
 
 generate_messages(
@@ -56,7 +61,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} $ENV{TO
 
 add_executable(salient_stimuli_selection src/salient_stimuli_selection.cpp)
 target_link_libraries(salient_stimuli_selection ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(salient_stimuli_selection ${catkin_EXPORTED_TARGETS})
+add_dependencies(salient_stimuli_selection ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
 add_executable(cognitive_orientation src/cognitive_orientation.cpp)
 target_link_libraries(cognitive_orientation ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)

@@ -16,6 +16,9 @@
 #include "toaster_msgs/Fact.h"
 #include "toaster_msgs/Entity.h"
 
+#include <dynamic_reconfigure/server.h>
+#include <head_manager/ReactiveHeadMotionConfig.h>
+
 #include "../include/toaster-lib/MathFunctions.h"
 
 #include "head_manager/StampedMap.h"
@@ -30,6 +33,7 @@ typedef std::vector < toaster_msgs::Object > ObjectList_t;
 typedef std::vector < toaster_msgs::Robot > RobotList_t;
 typedef std::vector < toaster_msgs::Human > HumanList_t;
 typedef std::vector < toaster_msgs::Fact > FactList_t;
+typedef dynamic_reconfigure::Server<head_manager::ReactiveHeadMotionConfig> ParamServer_t;
 
 class SalientStimuliSelection
 {
@@ -40,6 +44,11 @@ public:
   RobotList_t robot_list_; //!< robot list from pdg
   FactList_t fact_list_; //!< fact list from agent_monitor
 private:
+  double stimuliDiscountFactor_; //!<
+  double objectSalienceFactor_; //!<
+  double headSalienceFactor_; //!<
+  double jointSalienceFactor_; //!<
+  double lookingSalienceFactor_; //!<
   string my_id_; //!< robot's id
   ros::NodeHandle node_; //!< node handler
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
@@ -49,6 +58,7 @@ private:
   ros::Publisher salient_stimuli_pub_; //!< sensitive goal publisher
   ros::Publisher saliency_map_pub_; //!< saliency map publisher
   ros::ServiceServer inhibition_of_return_srv_; //!< inhibition of return service
+  ParamServer_t reactive_dyn_param_srv; //!<
 public:
   /****************************************************
    * @brief : Default constructor
@@ -57,6 +67,12 @@ public:
   SalientStimuliSelection(ros::NodeHandle& node)
   {
     node_=node;
+    // Setting reactive parameters to default
+    stimuliDiscountFactor_ = 0.8;
+    objectSalienceFactor_ = 1;
+    headSalienceFactor_ = 1;
+    jointSalienceFactor_ = 1;
+    lookingSalienceFactor_ = 1;
     // Getting robot's id from ros param
     if(node_.hasParam("my_robot_id"))
     {
@@ -74,6 +90,8 @@ public:
     saliency_map_pub_ = node_.advertise<head_manager::StampedMap>("head_manager/saliency_map",1);
     // Advertise services
     inhibition_of_return_srv_ = node_.advertiseService("head_manager/inhibition_of_return", &SalientStimuliSelection::inhibitionOfReturn, this);
+    
+    reactive_dyn_param_srv.setCallback(boost::bind(&SalientStimuliSelection::dynParamCallback, this, _1, _2));
     // Add a waiting attention zone to saliency map
     saliency_map_.insert(SaliencyPair_t("Waiting",0.0));
   }
@@ -92,47 +110,12 @@ public:
     float xPosition=0;
     float yPosition=0;
     float zPosition=0;
-    double stimuliDiscountFactor;
-    double objectSalienceFactor;
-    double headSalienceFactor;
-    double jointSalienceFactor;
-    double lookingSalienceFactor;
     SaliencyMap_t temp_map(saliency_map_);
     SaliencyMap_t::iterator subject;
     SaliencyMap_t::iterator subjectOwner;
     SaliencyMap_t::iterator target;
     SaliencyMap_t::iterator joint;
-    // Getting ros parameters
-    if(node_.hasParam("stimuli_discount_factor"))
-    {
-      node_.getParam("stimuli_discount_factor", stimuliDiscountFactor);
-    } else {
-      stimuliDiscountFactor = 0.8;
-    }
-    if(node_.hasParam("object_salience_factor"))
-    {
-      node_.getParam("object_salience_factor", objectSalienceFactor);
-    } else {
-      objectSalienceFactor = 1;
-    }
-    if(node_.hasParam("head_salience_factor"))
-    {
-      node_.getParam("head_salience_factor", headSalienceFactor);
-    } else {
-      headSalienceFactor = 1;
-    }
-    if(node_.hasParam("joint_salience_factor"))
-    {
-      node_.getParam("joint_salience_factor", jointSalienceFactor);
-    } else {
-      jointSalienceFactor = 1;
-    }
-    if(node_.hasParam("looking_salience_factor"))
-    {
-      node_.getParam("looking_salience_factor", lookingSalienceFactor);
-    } else {
-      lookingSalienceFactor= 1;
-    }
+    
     if (!temp_map.empty())
     {
       for(SaliencyMap_t::iterator it_tm = temp_map.begin() ; it_tm != temp_map.end() ; ++it_tm )
@@ -220,10 +203,10 @@ public:
         throw HeadManagerException ( "Could not normalize looking saliency map");
       for (SaliencyMap_t::iterator it = temp_map.begin(); it != temp_map.end() ; ++it)
       {
-        it->second=(objectSaliency_map.find(it->first)->second*objectSalienceFactor)+
-                    (headSaliency_map.find(it->first)->second*headSalienceFactor)+
-                    (jointSaliency_map.find(it->first)->second*jointSalienceFactor)+
-                    (lookingSaliency_map.find(it->first)->second*lookingSalienceFactor);
+        it->second=(objectSaliency_map.find(it->first)->second*objectSalienceFactor_)+
+                    (headSaliency_map.find(it->first)->second*headSalienceFactor_)+
+                    (jointSaliency_map.find(it->first)->second*jointSalienceFactor_)+
+                    (lookingSaliency_map.find(it->first)->second*lookingSalienceFactor_);
       }
       if(!normalizeMap(temp_map))
         throw HeadManagerException ( "Could not normalize temp saliency map");
@@ -232,10 +215,8 @@ public:
       {
         for(SaliencyMap_t::iterator it_sm = saliency_map_.begin() ; it_sm != saliency_map_.end() ; ++it_sm )
         {
-          it_sm->second*=stimuliDiscountFactor; // Temporal filtering to reduce salience over time
+          it_sm->second*=stimuliDiscountFactor_; // Temporal filtering to reduce salience over time
           it_sm->second+=temp_map.find(it_sm->first)->second; // Add normalized feature saliency
-          // if (it_sm->second < 0.00001)
-          //   it_sm->second=0.0;
         }
       } else {
         throw HeadManagerException ( "Could not update an empty saliency map." );
@@ -297,9 +278,9 @@ public:
         Vec_t tempPoint(3);
         Vec_t resultPoint(3);
         Mat_t rotZ(3);
-        tempPoint[0]= 1.0;//getRobot(my_id_).positionX;
-        tempPoint[1]= 0.0;//getRobot(my_id_).positionY;
-        tempPoint[2]= 1.2;//getRobot(my_id_).positionZ;
+        tempPoint[0]= 1.0;
+        tempPoint[1]= 0.0;
+        tempPoint[2]= 1.2;
         rotZ = MathFunctions::matrixfromAngle(2,(const double)getRobot(my_id_).orientationYaw);
         resultPoint = MathFunctions::multiplyMatVec(rotZ,tempPoint);
         point.point.x = resultPoint[0]+getRobot(my_id_).positionX;
@@ -328,7 +309,7 @@ private:
           {
             if (it->second != 0.0)
             {
-              it->second = (double)it->second/(double)max.second;
+              it->second = it->second / max.second;
               if(it->second == max.second)
               {
                 it->second=1.0;
@@ -646,6 +627,18 @@ private:
     {
       ROS_ERROR("[salient_stimuli_selection] Exception was caught : %s",e.description().c_str());
     }
+  }
+  /****************************************************
+   * @brief : Update reactives parameters
+   * @param : fact list
+   ****************************************************/
+  void dynParamCallback(head_manager::ReactiveHeadMotionConfig &config, uint32_t level) 
+  {
+    stimuliDiscountFactor_ = config.stimuli_discount_factor;
+    objectSalienceFactor_ = config.object_salience_factor;
+    headSalienceFactor_ = config.head_salience_factor;
+    jointSalienceFactor_ = config.joint_salience_factor;
+    lookingSalienceFactor_ = config.looking_salience_factor;
   }
 public:
   /****************************************************
