@@ -136,14 +136,16 @@ public:
         {
           if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction")
           {
-            if (it_fl->targetId!=my_id_)
-            {
-              target=objectSaliency_map.find(it_fl->targetId);
-                if ( target != objectSaliency_map.end() )
+            if(!isHuman(it_fl->subjectId)){
+              if (it_fl->targetId!=my_id_)
               {
-                target->second+=it_fl->doubleValue;
-              } else {
-                throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
+                target=objectSaliency_map.find(it_fl->targetId);
+                  if ( target != objectSaliency_map.end() )
+                {
+                  target->second+=it_fl->doubleValue;
+                } else {
+                  throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
+                }
               }
             }
           }
