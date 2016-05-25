@@ -4,7 +4,7 @@
 	<node name="pdg" pkg="pdg" type="pdg" output="screen" />
 
 	<!-- Launch the agent monitor -->
-	<node name="agent_monitor" pkg="agent_monitor" type="agent_monitor" output="screen" /> 
+	<node name="agent_monitor" pkg="agent_monitor" type="agent_monitor"  /> 
     
     <!-- Launch the area monitor -->
     <node name="area_manager" pkg="area_manager" type="area_manager" output="screen" />  
