@@ -134,7 +134,7 @@ public:
       {
         if (it_fl->subjectId!=my_id_)
         {
-          if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="angle")
+          if ( it_fl->property == "IsMovingToward")// && it_fl->subProperty=="angle")
           {
             if (it_fl->targetId!=my_id_)
             {
