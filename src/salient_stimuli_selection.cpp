@@ -45,10 +45,12 @@ public:
   FactList_t fact_list_; //!< fact list from agent_monitor
 private:
   double stimuliDiscountFactor_; //!<
-  double objectSalienceFactor_; //!<
-  double headSalienceFactor_; //!<
-  double jointSalienceFactor_; //!<
+  double directionSalienceFactor_; //!<
+  double movingSalienceFactor_; //!<
   double lookingSalienceFactor_; //!<
+  double inhibitionRadius_; //!<
+  double hysteresisThreshold_; //!<
+  SaliencyPair_t salient_stimuli_;
   string my_id_; //!< robot's id
   ros::NodeHandle node_; //!< node handler
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
@@ -69,10 +71,11 @@ public:
     node_=node;
     // Setting reactive parameters to default
     stimuliDiscountFactor_ = 0.8;
-    objectSalienceFactor_ = 1;
-    headSalienceFactor_ = 1;
-    jointSalienceFactor_ = 1;
+    directionSalienceFactor_ = 1;
+    movingSalienceFactor_ = 1;
     lookingSalienceFactor_ = 1;
+    inhibitionRadius_ = 0.2;
+    hysteresisThreshold_ = 0.5;
     // Getting robot's id from ros param
     if(node_.hasParam("my_robot_id"))
     {
@@ -94,6 +97,7 @@ public:
     reactive_dyn_param_srv.setCallback(boost::bind(&SalientStimuliSelection::dynParamCallback, this, _1, _2));
     // Add a waiting attention zone to saliency map
     saliency_map_.insert(SaliencyPair_t("Waiting",0.0));
+    salient_stimuli_=SaliencyPair_t("Waiting",0.0);
   }
   /****************************************************
    * @brief : Default destructor
@@ -123,9 +127,8 @@ public:
         it_tm->second=0.0;
       }
     }
-    SaliencyMap_t objectSaliency_map(temp_map);
-    SaliencyMap_t headSaliency_map(temp_map);
-    SaliencyMap_t jointSaliency_map(temp_map);
+    SaliencyMap_t directionSaliency_map(temp_map);
+    SaliencyMap_t movingSaliency_map(temp_map);
     SaliencyMap_t lookingSaliency_map(temp_map);
     // Saliency update according to motion facts provided by agent_monitor
     if(!fact_list_.empty())
@@ -139,8 +142,8 @@ public:
             if(!isHuman(it_fl->subjectId)){
               if (it_fl->targetId!=my_id_)
               {
-                target=objectSaliency_map.find(it_fl->targetId);
-                  if ( target != objectSaliency_map.end() )
+                target=directionSaliency_map.find(it_fl->targetId);
+                  if ( target != directionSaliency_map.end() )
                 {
                   target->second+=it_fl->doubleValue;
                 } else {
@@ -173,9 +176,9 @@ public:
           if ( it_fl->property == "IsMoving")
           {
             if ( it_fl->subProperty == "joint")
-            { 
-              subject=jointSaliency_map.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
-              if ( subject != jointSaliency_map.end() )
+            {
+              subject=movingSaliency_map.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
+              if ( subject != movingSaliency_map.end() )
               {
                   subject->second+=it_fl->doubleValue;
               } else {
@@ -184,8 +187,8 @@ public:
             }
             if ( it_fl->subProperty == "agent")
             { 
-              subject=headSaliency_map.find(it_fl->subjectId+"::head");
-              if ( subject != headSaliency_map.end() )
+              subject=movingSaliency_map.find(it_fl->subjectId+"::head");
+              if ( subject != movingSaliency_map.end() )
               {
                   subject->second+=it_fl->doubleValue;
               } else {
@@ -195,24 +198,18 @@ public:
           }
         }
       }
-      if(!normalizeMap(objectSaliency_map))
+      if(!normalizeMap(directionSaliency_map))
         throw HeadManagerException ( "Could not normalize object saliency map");
-      if(!normalizeMap(headSaliency_map))
-        throw HeadManagerException ( "Could not normalize head saliency map");
-      if(!normalizeMap(jointSaliency_map))
+      if(!normalizeMap(movingSaliency_map))
         throw HeadManagerException ( "Could not normalize joint saliency map");
       if(!normalizeMap(lookingSaliency_map))
         throw HeadManagerException ( "Could not normalize looking saliency map");
       for (SaliencyMap_t::iterator it = temp_map.begin(); it != temp_map.end() ; ++it)
       {
-        it->second=(objectSaliency_map.find(it->first)->second*objectSalienceFactor_)+
-                    (headSaliency_map.find(it->first)->second*headSalienceFactor_)+
-                    (jointSaliency_map.find(it->first)->second*jointSalienceFactor_)+
-                    (lookingSaliency_map.find(it->first)->second*lookingSalienceFactor_);
+        it->second=(directionSaliency_map.find(it->first)->second*directionSalienceFactor_)+
+                   (movingSaliency_map.find(it->first)->second*movingSalienceFactor_)+
+                   (lookingSaliency_map.find(it->first)->second*lookingSalienceFactor_);
       }
-      // if(!normalizeMap(temp_map))
-      //   throw HeadManagerException ( "Could not normalize temp saliency map");
-      
       if(!saliency_map_.empty())
       {
         for(SaliencyMap_t::iterator it_sm = saliency_map_.begin() ; it_sm != saliency_map_.end() ; ++it_sm )
@@ -245,56 +242,50 @@ public:
   /****************************************************
    * @brief : Send the salient stimuli throw his topic
    ****************************************************/
-  void sendSalientStimuli()
+  void sendSalientStimuli(SaliencyPair_t salient)
   {
     geometry_msgs::PointStamped point;
     toaster_msgs::Entity entity;
-    SaliencyPair_t salient;
-    if (selectBestStimuli(salient))
+    if(salient.first!="Waiting")
     {
-      if(salient.first!="Waiting")
+      point.header.frame_id = "map";
+      if(!isObject(salient.first))
       {
-        point.header.frame_id = "map";
-        if(!isObject(salient.first))
+        if (isJoint(salient.first))
         {
-          if (isJoint(salient.first))
-          {
-            size_t pos = salient.first.find("::");
-            if(isHuman(salient.first.substr(0,pos)))
-              entity = getHumanJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
-            else
-              entity = getRobotJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
-          } else {
-            if(isHuman(salient.first))
-              entity = getHuman(salient.first);
-            else
-              entity = getRobot(salient.first);
-          }
+          size_t pos = salient.first.find("::");
+          if(isHuman(salient.first.substr(0,pos)))
+            entity = getHumanJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
+          else
+            entity = getRobotJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
         } else {
-          entity = getObject(salient.first);
+          if(isHuman(salient.first))
+            entity = getHuman(salient.first);
+          else
+            entity = getRobot(salient.first);
         }
-        point.point.x = entity.positionX;
-        point.point.y = entity.positionY; 
-        point.point.z = entity.positionZ;
       } else {
-        Vec_t tempPoint(3);
-        Vec_t resultPoint(3);
-        Mat_t rotZ(3);
-        tempPoint[0]= 1.0;
-        tempPoint[1]= 0.0;
-        tempPoint[2]= 1.2;
-        rotZ = MathFunctions::matrixfromAngle(2,(const double)getRobot(my_id_).orientationYaw);
-        resultPoint = MathFunctions::multiplyMatVec(rotZ,tempPoint);
-        point.point.x = resultPoint[0]+getRobot(my_id_).positionX;
-        point.point.y = resultPoint[1]+getRobot(my_id_).positionY;
-        point.point.z = resultPoint[2]+getRobot(my_id_).positionZ;
+        entity = getObject(salient.first);
       }
-      point.header.frame_id="map";
-      point.header.stamp=ros::Time::now();
-      salient_stimuli_pub_.publish(point);
+      point.point.x = entity.positionX;
+      point.point.y = entity.positionY; 
+      point.point.z = entity.positionZ;
     } else {
-      throw HeadManagerException ( "Could not select best stimuli in an empty saliency map." );
-    }   
+      Vec_t tempPoint(3);
+      Vec_t resultPoint(3);
+      Mat_t rotZ(3);
+      tempPoint[0]= 1.0;
+      tempPoint[1]= 0.0;
+      tempPoint[2]= 1.2;
+      rotZ = MathFunctions::matrixfromAngle(2,(const double)getRobot(my_id_).orientationYaw);
+      resultPoint = MathFunctions::multiplyMatVec(rotZ,tempPoint);
+      point.point.x = resultPoint[0]+getRobot(my_id_).positionX;
+      point.point.y = resultPoint[1]+getRobot(my_id_).positionY;
+      point.point.z = resultPoint[2]+getRobot(my_id_).positionZ;
+    }
+    point.header.frame_id="map";
+    point.header.stamp=ros::Time::now();
+    salient_stimuli_pub_.publish(point);  
   }
 private:
   bool normalizeMap(SaliencyMap_t& map)
@@ -344,6 +335,29 @@ private:
         }
       }
       best=bestTemp;
+      return(true);
+    } 
+    return(false);
+  }
+  /****************************************************
+   * @brief : Select better stimuli from saliency map by
+   *          using an hysteresis
+   * @param : best stimuli
+   * @return : true if succeed
+   ****************************************************/
+  bool selectStimuli(SaliencyPair_t& stimuli)
+  {
+    SaliencyMap_t::iterator it;
+    //SaliencyPair_t pair = * saliency_map_.rbegin();
+    if (!saliency_map_.empty())
+    {
+      for( it = saliency_map_.begin() ; it != saliency_map_.end() ; ++it )
+      {
+        if( it->second > stimuli.second + hysteresisThreshold_ )
+        {
+          stimuli=*it;
+        }
+      }
       return(true);
     } 
     return(false);
@@ -623,7 +637,8 @@ private:
     try
     {
       updateSaliencyMap();
-      sendSalientStimuli();
+      selectStimuli(salient_stimuli_);
+      sendSalientStimuli(salient_stimuli_);
     }
     catch (HeadManagerException& e )
     {
@@ -637,10 +652,11 @@ private:
   void dynParamCallback(head_manager::ReactiveHeadMotionConfig &config, uint32_t level) 
   {
     stimuliDiscountFactor_ = config.stimuli_discount_factor;
-    objectSalienceFactor_ = config.object_salience_factor;
-    headSalienceFactor_ = config.head_salience_factor;
-    jointSalienceFactor_ = config.joint_salience_factor;
+    directionSalienceFactor_ = config.direction_salience_factor;
+    movingSalienceFactor_ = config.moving_salience_factor;
     lookingSalienceFactor_ = config.looking_salience_factor;
+    inhibitionRadius_ = config.inhibition_radius;
+    hysteresisThreshold_ = config.hysteresis_threshold;
   }
 public:
   /****************************************************
@@ -659,7 +675,6 @@ public:
     float xDistance=0;
     float yDistance=0;
     float zDistance=0;
-    float radius=0.2;
     res.success=false;
     if (!saliency_map_.empty())
     {
@@ -691,7 +706,7 @@ public:
           xDistance = xPosition - req.point.point.x;
           yDistance = yPosition - req.point.point.y;
           zDistance = zPosition - req.point.point.z;
-          if (sqrt((xDistance*xDistance)+(yDistance*yDistance)+(zDistance*zDistance)) < radius )
+          if (sqrt((xDistance*xDistance)+(yDistance*yDistance)+(zDistance*zDistance)) < inhibitionRadius_ )
           {
             it->second=0.0;
             res.success=true;

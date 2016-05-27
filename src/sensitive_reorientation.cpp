@@ -93,6 +93,11 @@ private:
 
   void salientStimuliCallback(const geometry_msgs::PointStamped::ConstPtr& msg)
   {
+    pr2motion::Head_Stop stop;
+    if (!ros::service::call("pr2motion/Head_Stop", stop))
+      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/Head_Stop");
+    lookAt(msg->header.frame_id,msg->point.x,msg->point.y,msg->point.z);
+    
     head_manager::InhibitionOfReturn srv;
     srv.request.point.header=msg->header;
     srv.request.point.point=msg->point;
@@ -105,10 +110,6 @@ private:
     } else {
       ROS_ERROR("service not ready");
     }
-    pr2motion::Head_Stop stop;
-    if (!ros::service::call("pr2motion/Head_Stop", stop))
-      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/Head_Stop");
-    lookAt(msg->header.frame_id,msg->point.x,msg->point.y,msg->point.z);
   }
 };
 
