@@ -353,7 +353,7 @@ private:
     {
       for( it = saliency_map_.begin() ; it != saliency_map_.end() ; ++it )
       {
-        if( it->second > stimuli.second + hysteresisThreshold_ )
+        if( it->second > stimuli.second + (stimuli.second*hysteresisThreshold_) )
         {
           stimuli=*it;
         }
