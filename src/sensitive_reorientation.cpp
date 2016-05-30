@@ -18,7 +18,6 @@ class SensitiveReorientation
 {
 private:
   ros::Subscriber salient_stim_sub_;
-  ros::ServiceClient inhibition_client_ ;
   InitActionClient_t * init_action_client_; //!< initialisation client
   HeadActionClient_t * head_action_client_; //!< interface to head controller client
   ros::ServiceClient connect_port_srv_;
@@ -30,7 +29,6 @@ public:
    */
   SensitiveReorientation(ros::NodeHandle& node)
   {
-    inhibition_client_ = node.serviceClient<head_manager::InhibitionOfReturn>("head_manager/inhibition_of_return");
     salient_stim_sub_ = node.subscribe("/head_manager/salient_stimuli", 1, &SensitiveReorientation::salientStimuliCallback, this);
 
     init_action_client_ = new InitActionClient_t("pr2motion/Init", true);
@@ -97,19 +95,6 @@ private:
     if (!ros::service::call("pr2motion/Head_Stop", stop))
       ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/Head_Stop");
     lookAt(msg->header.frame_id,msg->point.x,msg->point.y,msg->point.z);
-    
-    head_manager::InhibitionOfReturn srv;
-    srv.request.point.header=msg->header;
-    srv.request.point.point=msg->point;
-    if (inhibition_client_.exists())
-    {
-      if (!inhibition_client_.call(srv))
-      {
-        ROS_ERROR("[sensitive_reorientation] Failed to call service : inhibition_of_return");
-      }
-    } else {
-      ROS_ERROR("service not ready");
-    }
   }
 };
 

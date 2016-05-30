@@ -49,7 +49,8 @@ private:
   double movingSalienceFactor_; //!<
   double lookingSalienceFactor_; //!<
   double inhibitionRadius_; //!<
-  double hysteresisThreshold_; //!<
+  double hysteresisMinThreshold_; //!<
+  double hysteresisThresholdFactor_; //!<
   SaliencyPair_t salient_stimuli_;
   string my_id_; //!< robot's id
   ros::NodeHandle node_; //!< node handler
@@ -75,7 +76,8 @@ public:
     movingSalienceFactor_ = 1;
     lookingSalienceFactor_ = 1;
     inhibitionRadius_ = 0.2;
-    hysteresisThreshold_ = 0.5;
+    hysteresisMinThreshold_=1.0;
+    hysteresisThresholdFactor_ = 0.2;
     // Getting robot's id from ros param
     if(node_.hasParam("my_robot_id"))
     {
@@ -92,8 +94,7 @@ public:
     salient_stimuli_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/salient_stimuli", 1);
     saliency_map_pub_ = node_.advertise<head_manager::StampedMap>("head_manager/saliency_map",1);
     // Advertise services
-    inhibition_of_return_srv_ = node_.advertiseService("head_manager/inhibition_of_return", &SalientStimuliSelection::inhibitionOfReturn, this);
-    
+    // Dyn param server
     reactive_dyn_param_srv.setCallback(boost::bind(&SalientStimuliSelection::dynParamCallback, this, _1, _2));
     // Add a waiting attention zone to saliency map
     saliency_map_.insert(SaliencyPair_t("Waiting",0.0));
@@ -114,22 +115,23 @@ public:
     float xPosition=0;
     float yPosition=0;
     float zPosition=0;
-    SaliencyMap_t temp_map(saliency_map_);
+    SaliencyMap_t input_map(saliency_map_);
     SaliencyMap_t::iterator subject;
     SaliencyMap_t::iterator subjectOwner;
     SaliencyMap_t::iterator target;
     SaliencyMap_t::iterator joint;
     
-    if (!temp_map.empty())
+    if (!input_map.empty())
     {
-      for(SaliencyMap_t::iterator it_tm = temp_map.begin() ; it_tm != temp_map.end() ; ++it_tm )
+      for(SaliencyMap_t::iterator it_tm = input_map.begin() ; it_tm != input_map.end() ; ++it_tm )
       {
         it_tm->second=0.0;
       }
     }
-    SaliencyMap_t directionSaliency_map(temp_map);
-    SaliencyMap_t movingSaliency_map(temp_map);
-    SaliencyMap_t lookingSaliency_map(temp_map);
+    SaliencyMap_t directionSaliency_map(input_map);
+    SaliencyMap_t movingSaliency_map(input_map);
+    SaliencyMap_t lookingSaliency_map(input_map);
+    SaliencyMap_t inhibition_map(input_map);
     // Saliency update according to motion facts provided by agent_monitor
     if(!fact_list_.empty())
     {
@@ -143,7 +145,7 @@ public:
               if (it_fl->targetId!=my_id_)
               {
                 target=directionSaliency_map.find(it_fl->targetId);
-                  if ( target != directionSaliency_map.end() )
+                if ( target != directionSaliency_map.end() )
                 {
                   target->second+=it_fl->doubleValue;
                 } else {
@@ -157,7 +159,7 @@ public:
             if (it_fl->targetId!=my_id_)
             {
               target=lookingSaliency_map.find(it_fl->targetId);
-                if ( target != lookingSaliency_map.end() )
+              if ( target != lookingSaliency_map.end() )
               {
                 target->second+=it_fl->doubleValue;
               } else {
@@ -167,9 +169,9 @@ public:
               subject=lookingSaliency_map.find(it_fl->subjectId+"::head");
               if ( subject != lookingSaliency_map.end() )
               {
-                  subject->second+=it_fl->doubleValue;
+                subject->second+=it_fl->doubleValue;
               } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in looking saliency map.");
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+"::"+it_fl->subjectId+" in looking saliency map.");
               }
             }
           }
@@ -180,9 +182,9 @@ public:
               subject=movingSaliency_map.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
               if ( subject != movingSaliency_map.end() )
               {
-                  subject->second+=it_fl->doubleValue;
+                subject->second+=it_fl->doubleValue;
               } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in joint saliency map.");
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in moving saliency map.");
               }
             }
             if ( it_fl->subProperty == "agent")
@@ -190,21 +192,50 @@ public:
               subject=movingSaliency_map.find(it_fl->subjectId+"::head");
               if ( subject != movingSaliency_map.end() )
               {
-                  subject->second+=it_fl->doubleValue;
+                subject->second+=it_fl->doubleValue;
               } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in head saliency map.");
+                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in movingsaliency map.");
               }
             }
           }
+        } else {
+          //Inhibition of return
+          if (it_fl->property == "IsLookingToward" )
+          {
+            if(isHuman(it_fl->targetId))
+            {
+              // humans
+              target=inhibition_map.find(it_fl->targetId+"::head");
+              if ( target != inhibition_map.end() )
+              {
+                target->second+=it_fl->doubleValue;
+              } else {
+                throw HeadManagerException ("Could not find "+it_fl->targetId+"::head in inhibition map.");
+              }
+            } else {
+              // ojects
+              target=inhibition_map.find(it_fl->targetId);
+              if ( target != inhibition_map.end() )
+              {
+                target->second+=it_fl->doubleValue;
+              } else {
+                throw HeadManagerException ("Could not find "+it_fl->targetId+" in inhibition map.");
+              }
+            }//TODO add case for others robots
+            
+          }
         }
       }
+
+      if(!normalizeMap(inhibition_map))
+        throw HeadManagerException ( "Could not normalize object saliency map");
       if(!normalizeMap(directionSaliency_map))
         throw HeadManagerException ( "Could not normalize object saliency map");
       if(!normalizeMap(movingSaliency_map))
         throw HeadManagerException ( "Could not normalize joint saliency map");
       if(!normalizeMap(lookingSaliency_map))
         throw HeadManagerException ( "Could not normalize looking saliency map");
-      for (SaliencyMap_t::iterator it = temp_map.begin(); it != temp_map.end() ; ++it)
+      for (SaliencyMap_t::iterator it = input_map.begin(); it != input_map.end() ; ++it)
       {
         it->second=(directionSaliency_map.find(it->first)->second*directionSalienceFactor_)+
                    (movingSaliency_map.find(it->first)->second*movingSalienceFactor_)+
@@ -215,13 +246,18 @@ public:
         for(SaliencyMap_t::iterator it_sm = saliency_map_.begin() ; it_sm != saliency_map_.end() ; ++it_sm )
         {
           it_sm->second*=stimuliDiscountFactor_; // Temporal filtering to reduce salience over time
-          it_sm->second+=temp_map.find(it_sm->first)->second; // Add normalized feature saliency
+          it_sm->second+=(input_map.find(it_sm->first)->second*(1-inhibition_map.find(it_sm->first)->second)); // Add normalized feature saliency
+          if (it_sm->second<0.001)
+          {
+            it_sm->second=0.0;
+          }
         }
       } else {
         throw HeadManagerException ( "Could not update an empty saliency map." );
       }
     }
     sendSaliencyMap();
+    selectStimuli(salient_stimuli_);
   }
   /****************************************************
    * @brief : Send the saliency map throw his topic
@@ -320,7 +356,7 @@ private:
    * @param : best stimuli
    * @return : true if succeed
    ****************************************************/
-  bool selectBestStimuli(SaliencyPair_t& best)
+  bool selectBestStimuli(SaliencyPair_t & best)
   {
     SaliencyMap_t::iterator it;
     SaliencyPair_t bestTemp = * saliency_map_.rbegin();
@@ -348,18 +384,26 @@ private:
   bool selectStimuli(SaliencyPair_t& stimuli)
   {
     SaliencyMap_t::iterator it;
-    //SaliencyPair_t pair = * saliency_map_.rbegin();
     if (!saliency_map_.empty())
     {
+      stimuli=*saliency_map_.find(stimuli.first);
       for( it = saliency_map_.begin() ; it != saliency_map_.end() ; ++it )
       {
-        if( it->second > stimuli.second + (stimuli.second*hysteresisThreshold_))
+        if (stimuli.first=="Waiting")
         {
-          stimuli=*it;
+          if( it->second >= stimuli.second)
+          {
+            stimuli = * it;
+          }
+        } else {
+          if( it->second >= stimuli.second + hysteresisMinThreshold_ + (stimuli.second*hysteresisThresholdFactor_))
+          {
+            stimuli = * it;
+          }
         }
       }
       return(true);
-    } 
+    }
     return(false);
   }
   /****************************************************
@@ -637,7 +681,6 @@ private:
     try
     {
       updateSaliencyMap();
-      selectStimuli(salient_stimuli_);
       sendSalientStimuli(salient_stimuli_);
     }
     catch (HeadManagerException& e )
@@ -655,68 +698,11 @@ private:
     directionSalienceFactor_ = config.direction_salience_factor;
     movingSalienceFactor_ = config.moving_salience_factor;
     lookingSalienceFactor_ = config.looking_salience_factor;
-    inhibitionRadius_ = config.inhibition_radius;
-    hysteresisThreshold_ = config.hysteresis_threshold;
+    hysteresisMinThreshold_ = config.hysteresis_min_threshold;
+    hysteresisThresholdFactor_ = config.hysteresis_threshold_factor;
   }
 public:
-  /****************************************************
-   * @brief : Inhibition of return service
-   * @param : stamped point
-   * @param : true if succeed
-   ****************************************************/
-  bool inhibitionOfReturn(head_manager::InhibitionOfReturn::Request& req,
-                          head_manager::InhibitionOfReturn::Response& res)
-  {
-    SaliencyMap_t::iterator it;
-    toaster_msgs::Entity entity;
-    float xPosition=0;
-    float yPosition=0;
-    float zPosition=0;
-    float xDistance=0;
-    float yDistance=0;
-    float zDistance=0;
-    res.success=false;
-    if (!saliency_map_.empty())
-    {
-      for( it = saliency_map_.begin() ; it != saliency_map_.end() ; ++it )
-      {
-        if(it->first!="Waiting")
-        {
-          if(!isObject(it->first))
-          {
-            if (isJoint(it->first))
-            {
-              size_t pos = it->first.find("::");
-              if(isHuman(it->first.substr(0,pos)))
-                entity = getHumanJoint(it->first.substr(0,pos),it->first.substr(pos+2,it->first.size()-1));
-              else
-                entity = getRobotJoint(it->first.substr(0,pos),it->first.substr(pos+2,it->first.size()-1));
-            } else {
-              if(isHuman(it->first))
-                entity = getHuman(it->first);
-              else
-                entity = getRobot(it->first);
-            }
-          } else {
-            entity = getObject(it->first);
-          }
-          xPosition = entity.positionX;
-          yPosition = entity.positionY; 
-          zPosition = entity.positionZ;
-          xDistance = xPosition - req.point.point.x;
-          yDistance = yPosition - req.point.point.y;
-          zDistance = zPosition - req.point.point.z;
-          if (sqrt((xDistance*xDistance)+(yDistance*yDistance)+(zDistance*zDistance)) < inhibitionRadius_ )
-          {
-            it->second=0.0;
-            res.success=true;
-          }
-        }
-      }
-    }
-    return(true);
-  }
-
+  
 };
 /****************************************************
  * @brief : Main process function

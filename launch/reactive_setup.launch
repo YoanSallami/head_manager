@@ -4,7 +4,7 @@
 	<node name="pdg" pkg="pdg" type="pdg" output="screen" />
 
 	<!-- Launch the agent monitor -->
-	<node name="agent_monitor" pkg="agent_monitor" type="agent_monitor"  /> 
+	<node name="agent_monitor" pkg="agent_monitor" type="agent_monitor" output="screen" /> 
     
     <!-- Launch the area monitor -->
     <node name="area_manager" pkg="area_manager" type="area_manager" output="screen" />  
@@ -22,6 +22,7 @@
 	<!-- Loading parameters -->
 	<param name="my_robot_id" value="pr2" />
 	<rosparam command="load" file="$(find head_manager)/param/object_offset.yaml" />
+	<node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" />
 
 	<!-- Launching reactive nodes -->
 	<node name="salient_stimuli_selection" pkg="head_manager" type="salient_stimuli_selection" output="screen" />
