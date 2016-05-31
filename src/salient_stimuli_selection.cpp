@@ -198,7 +198,8 @@ public:
               }
             }
           }
-        } else {
+        } else if (it_fl->subjectId==my_id_)
+        {
           //Inhibition of return
           if (it_fl->property == "IsLookingToward" )
           {
@@ -396,7 +397,7 @@ private:
             stimuli = * it;
           }
         } else {
-          if( it->second >= stimuli.second + hysteresisMinThreshold_ + (stimuli.second*hysteresisThresholdFactor_))
+          if( it->second > (stimuli.second + hysteresisMinThreshold_ + (stimuli.second*hysteresisThresholdFactor_)))
           {
             stimuli = * it;
           }
