@@ -141,8 +141,10 @@ public:
         {
           if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction")
           {
-            if(!isHuman(it_fl->subjectId)){
-              if (it_fl->targetId!=my_id_)
+            
+            if (it_fl->targetId!=my_id_)
+            {
+              if(it_fl->subjectId=="rightHand")
               {
                 target=directionSaliency_map.find(it_fl->targetId);
                 if ( target != directionSaliency_map.end() )
