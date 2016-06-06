@@ -1,7 +1,7 @@
 <launch>
 	
 	<!-- Launch the pdg -->
-	<node name="pdg" pkg="pdg" type="pdg" output="screen" />
+	<node name="pdg" pkg="pdg" type="pdg"/>
 
 	<!-- Launch the agent monitor -->
 	<node name="agent_monitor" pkg="agent_monitor" type="agent_monitor" output="screen" /> 
