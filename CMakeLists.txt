@@ -32,11 +32,12 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
    FILES
    StampedMap.msg
+   Signal.msg
+   Focus.msg
 )
 
 add_service_files(
   FILES
-  InhibitionOfReturn.srv
   Sync.srv
 )
 
@@ -59,13 +60,13 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} $ENV{TOASTERLIB_DIR}/include)
 
-add_executable(salient_stimuli_selection src/salient_stimuli_selection.cpp)
-target_link_libraries(salient_stimuli_selection ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(salient_stimuli_selection ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+add_executable(stimulus_driven_attention src/stimulus_driven_attention.cpp)
+target_link_libraries(stimulus_driven_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+add_dependencies(stimulus_driven_attention ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
-add_executable(cognitive_orientation src/cognitive_orientation.cpp)
-target_link_libraries(cognitive_orientation ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(cognitive_orientation ${catkin_EXPORTED_TARGETS})
+add_executable(goal_directed_attention src/goal_directed_attention.cpp)
+target_link_libraries(goal_directed_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+add_dependencies(goal_directed_attention ${catkin_EXPORTED_TARGETS})
 
 add_executable(sensitive_reorientation src/sensitive_reorientation.cpp)
 target_link_libraries(sensitive_reorientation ${catkin_LIBRARIES})

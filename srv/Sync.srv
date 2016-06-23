@@ -1,4 +1,4 @@
-std_msgs/Time stamp
+std_msgs/Header header
 ---
 bool success
 string error
