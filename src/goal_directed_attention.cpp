@@ -10,12 +10,14 @@
 #include "geometry_msgs/PointStamped.h"
 #include "std_msgs/Header.h"
 
-#include "toaster_msgs/ObjectList.h"
-#include "toaster_msgs/HumanList.h"
-#include "toaster_msgs/RobotList.h"
+#include "toaster_msgs/ObjectListStamped.h"
+#include "toaster_msgs/HumanListStamped.h"
+#include "toaster_msgs/RobotListStamped.h"
+#include "toaster_msgs/FactList.h"
 #include "toaster_msgs/Object.h"
 #include "toaster_msgs/Robot.h"
 #include "toaster_msgs/Human.h"
+#include "toaster_msgs/Fact.h"
 #include "toaster_msgs/Entity.h"
 
 #include "supervisor_msgs/AgentActivity.h"
@@ -27,9 +29,12 @@ typedef std::map<std::string,ros::Subscriber> SubscriberMap_t;
 typedef std::pair<std::string,ros::Subscriber> SubscriberPair_t;
 typedef std::map<std::string,supervisor_msgs::AgentActivity> ActivityMap_t;
 typedef std::pair<std::string,supervisor_msgs::AgentActivity> ActivityPair_t;
+typedef std::map<std::string,bool> AckMap_t;
+typedef std::pair<std::string,bool> AckPair_t;
 typedef std::vector < toaster_msgs::Object > ObjectList_t;
 typedef std::vector < toaster_msgs::Robot > RobotList_t;
 typedef std::vector < toaster_msgs::Human > HumanList_t;
+typedef std::vector < toaster_msgs::Fact > FactList_t;
 typedef std::vector < head_manager::Signal > SignalList_t;
 
 class GoalDirectedAttention
@@ -41,13 +46,15 @@ private:
   ObjectList_t object_list_; //!< object list from pdg
   HumanList_t human_list_; //!< human list from pdg
   RobotList_t robot_list_; //!< robot list from pdg
+  FactList_t fact_list_; //!< fact list from pdg
+  AckMap_t ack_map_; //!< acknowledgement map;
   SignalList_t signal_list_; //!< signal list from supervisor
   ActivityMap_t agent_activity_map_; //!< agent activity state machines map
   ros::Subscriber object_list_sub_; //!< object list subscriber
   ros::Subscriber human_list_sub_; //!< human list subscriber
   ros::Subscriber robot_list_sub_; //!< robot list subscriber
+  ros::Subscriber fact_list_sub_; //!< fact list subscriber
   ros::Subscriber signal_sub_; //!< signal subscriber
-  ros::ServiceServer cognitive_sync_srv_; //!< cognitive sync service
   ros::Publisher goal_directed_attention_pub_; //!< goal_directed attention publisher
   ros::Publisher signal_pub_; //!<
   double focus_; //!< robot focus
@@ -77,13 +84,12 @@ public:
     object_list_sub_ = node_.subscribe("/pdg/objectList", 1, &GoalDirectedAttention::objectListCallback, this);
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &GoalDirectedAttention::humanListCallback, this);
     robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &GoalDirectedAttention::objectListCallback, this);
+    fact_list_sub_ = node_.subscribe("/pdg/factList", 1, &GoalDirectedAttention::factListCallback, this);
     signal_sub_ = node_.subscribe("head_manager/signal", 10, &GoalDirectedAttention::signalCallback, this);
     // Advertise publishers
     goal_directed_attention_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/goal_directed_attention", 5);
-    focus_pub_ = node_.advertise <head_manager::Focus>("head_manager/focus", 5);
-    signal_pub_ = node_.advertise<head_manager::Signal>("head_manager/signal", 10);
-    // Advertise services
-    cognitive_sync_srv_= node_.advertiseService("head_manager/cognitive_sync", &GoalDirectedAttention::CognitiveSync, this);
+    focus_pub_ = node_.advertise <head_manager::Focus> ("head_manager/focus", 5);
+    signal_pub_ = node_.advertise <head_manager::Signal> ("head_manager/signal", 10);
     //surprised_=false;
     signalling_=false;
     current_signal_it_=0;
@@ -144,9 +150,9 @@ public:
             offset.clear();
             if (node_.getParam((const string) offset_str,offset))
             {
-              object_list_[i].meEntity.positionX+=offset[0];
-              object_list_[i].meEntity.positionY+=offset[1];
-              object_list_[i].meEntity.positionZ+=offset[2];
+              object_list_[i].meEntity.pose.position.x+=offset[0];
+              object_list_[i].meEntity.pose.position.y+=offset[1];
+              object_list_[i].meEntity.pose.position.z+=offset[2];
             }
           }
           return (object_list_[i].meEntity);
@@ -313,7 +319,9 @@ public:
       return(true);
     return(false);
   }
-
+  /****************************************************
+   * @brief : Compute goal-directed attention
+   ****************************************************/
   void updateSignalList()
   {
     if(!signal_list_.empty())
@@ -359,6 +367,121 @@ public:
       return(changed);
     }
     return(false);
+  }
+  /****************************************************
+   * @brief : Compute goal-directed attention
+   ****************************************************/
+  void updateAckMap()
+  {
+    if (!ack_map_.empty())
+    {
+      for (AckMap_t::iterator it_am = ack_map_.begin(); it_am != ack_map_.end(); ++it_am)
+      {
+        it_am->second=false;
+      }
+    }
+    if (!fact_list_.empty())
+    {
+      for (FactList_t::iterator it_fl = fact_list_.begin(); it_fl != fact_list_.end(); ++it_fl)
+      {
+        if (it_fl->subjectId!=my_id_ && it_fl->targetId==my_id_)
+        {
+          if ( it_fl->property == "IsFacing")
+          {
+            if (ack_map_.find(it_fl->subjectId)!=ack_map_.end())
+            {
+              ack_map_.find(it_fl->subjectId)->second=true;
+            } else {
+              ack_map_.insert(AckPair_t(it_fl->subjectId,true));
+            }
+          }
+        }
+      }
+    } else {
+      throw HeadManagerException ("Could not read an empty fact list.");
+    }
+  }
+  /****************************************************
+   * @brief : Compute goal-directed attention
+   ****************************************************/
+  void computeAttention()
+  {
+    supervisor_msgs::AgentActivity robotState;
+    //toaster_msgs::Entity current_entity;
+    head_manager::Signal current_signal;
+    geometry_msgs::PointStamped goal_directed_attention;
+    bool succeed=false;
+    float temporal_factor=0.2;
+
+    if(!agent_activity_map_.empty())
+    {
+      if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
+      {
+        //process
+        robotState = agent_activity_map_.find(my_id_)->second;
+        if (robotState.activityState=="ACTING")
+        {
+          focus_= 1.0;
+          if (!robotState.objects.empty())
+          {
+            //Show action intention
+            current_entity_=getEntity(robotState.objects[0]);
+          }
+        }else {
+          // If the robot is waiting we allow reactive input by setting focus to zero
+          focus_= 0.0;
+        }
+        // If signal received
+        if (!signal_list_.empty())
+        {
+          focus_ = 1.0;
+          updateSignalList();
+          if(selectSignal(current_signal))
+          {
+            signal_start_time_ = ros::Time::now();
+            if(signalling_==true)
+            {
+              //signal interuption
+              signal_pub_.publish(current_signal_);
+            } else {
+              signalling_=true;
+            }
+            current_signal_=current_signal;
+          }
+        }
+
+        if (signalling_=true)
+        {
+          if (current_signal_it_ < current_signal_.entities.size())
+          {
+            focus_=1.0;
+            ros::Duration duration(current_signal_.durations[current_signal_it_]);
+            if(ros::Time::now() > signal_start_time_+ duration)
+            {
+              if(current_signal_it_==current_signal_.entities.size()-1)
+              {
+                current_signal_it_=0;
+                signalling_=false;
+                focus_=0.0;
+              }else{
+                current_signal_it_++;
+                signal_start_time_ = ros::Time::now();
+              }
+            }
+            current_entity_=getEntity(current_signal.entities[current_signal_it_]);
+          }
+        }
+        //Publish
+        goal_directed_attention.header.stamp = ros::Time::now();
+        goal_directed_attention.header.frame_id = "map";
+        goal_directed_attention.point = current_entity_.pose.position;
+        goal_directed_attention_pub_.publish(goal_directed_attention);
+        head_manager::Focus focus;
+        focus.header=goal_directed_attention.header;
+        focus.data=focus_;
+        focus_pub_.publish(focus);
+      }
+    }
   }
 
 private:
@@ -419,7 +542,7 @@ private:
    * @brief : Update the object list
    * @param : object list
    ****************************************************/
-  void objectListCallback(const toaster_msgs::ObjectList::ConstPtr& msg)
+  void objectListCallback(const toaster_msgs::ObjectListStamped::ConstPtr& msg)
   {
     if(!msg->objectList.empty())
     {
@@ -434,7 +557,7 @@ private:
    * @brief : Update the robot list
    * @param : robot list
    ****************************************************/
-  void robotListCallback(const toaster_msgs::RobotList::ConstPtr& msg)
+  void robotListCallback(const toaster_msgs::RobotListStamped::ConstPtr& msg)
   {
     if(!msg->robotList.empty())
     {
@@ -457,7 +580,7 @@ private:
    *          subscriber map
    * @param : human list
    ****************************************************/
-  void humanListCallback(const toaster_msgs::HumanList::ConstPtr& msg)
+  void humanListCallback(const toaster_msgs::HumanListStamped::ConstPtr& msg)
   {
     std::string ownerId,jointId;
     
@@ -479,6 +602,30 @@ private:
     }
   }
   /****************************************************
+   * @brief : Update the fact list
+   * @param : fact list
+   ****************************************************/
+  void factListCallback(const toaster_msgs::FactList::ConstPtr& msg)
+  {
+    if (!msg->factList.empty())
+    {
+      fact_list_.clear();
+      for (unsigned int i = 0; i < msg->factList.size(); ++i)
+      {
+        fact_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
+      }
+    }
+    try
+    {
+      updateAckMap();
+      computeAttention();
+    }
+    catch (HeadManagerException& e )
+    {
+      ROS_ERROR("[goal_directed_attention] Exception was caught : %s",e.description().c_str());
+    }
+  }
+  /****************************************************
    * @brief : Update the signal list
    * @param : signal received
    ****************************************************/
@@ -488,103 +635,7 @@ private:
   }
 
 public:
-  /****************************************************
-   * @brief : Cognitive sync service called by reactive
-   *          stimuli selection node witch allow the
-   *          computation of robot focus
-   * @param : time stamp to sync
-   * @param : true if succeed
-   ****************************************************/
-   bool CognitiveSync(head_manager::Sync::Request & req, 
-                      head_manager::Sync::Response & res)
-   {
-      supervisor_msgs::AgentActivity robotState;
-      //toaster_msgs::Entity current_entity;
-      head_manager::Signal current_signal;
-      geometry_msgs::PointStamped goal_directed_attention;
-      bool succeed=false;
-      float temporal_factor=0.2;
-
-      try
-      {
-        if(!agent_activity_map_.empty())
-        {
-          if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
-          {
-            //process
-            robotState = agent_activity_map_.find(my_id_)->second;
-            if (robotState.activityState=="ACTING")
-            {
-              focus_= 1.0;
-              if (!robotState.objects.empty())
-              {
-                //Show action intention
-                current_entity_=getEntity(robotState.objects[0]);
-              }
-            }else {
-              // If the robot is waiting we allow reactive input by setting focus to zero
-              focus_= 0.0;
-            }
-            // If signal received
-            if (!signal_list_.empty())
-            {
-              focus_ = 1.0;
-              updateSignalList();
-              if(selectSignal(current_signal))
-              {
-                signal_start_time_ = ros::Time::now();
-                if(signalling_==true)
-                {
-                  //signal interuption
-                  signal_pub_.publish(current_signal_);
-                } else {
-                  signalling_=true;
-                }
-                current_signal_=current_signal;
-              }
-            }
-
-            if (signalling_=true)
-            {
-              if (current_signal_it_ < current_signal_.entities.size())
-              {
-                focus_=1.0;
-                ros::Duration duration(current_signal_.durations[current_signal_it_]);
-                if(ros::Time::now() > signal_start_time_+ duration)
-                {
-                  if(current_signal_it_==current_signal_.entities.size()-1)
-                  {
-                    current_signal_it_=0;
-                    signalling_=false;
-                    focus_=0.0;
-                  }else{
-                    current_signal_it_++;
-                    signal_start_time_ = ros::Time::now();
-                  }
-                }
-                current_entity_=getEntity(current_signal.entities[current_signal_it_]);
-              }
-            }
-            //Publish
-            goal_directed_attention.header = req.header;
-            goal_directed_attention.point.x = current_entity_.positionX;
-            goal_directed_attention.point.x = current_entity_.positionY;
-            goal_directed_attention.point.x = current_entity_.positionZ;
-            goal_directed_attention_pub_.publish(goal_directed_attention);
-            head_manager::Focus focus;
-            focus.header=req.header;
-            focus.data=focus_;
-            focus_pub_.publish(focus);
-          }
-        }
-      }
-      catch (HeadManagerException& e )
-      {
-        ROS_ERROR("[goal_directed_attention] Exception was caught : %s",e.description().c_str());
-        return(false);
-      }
-      return (true);
-    }
+  
 };
 /****************************************************
  * @brief : Main process function

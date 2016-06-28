@@ -13,6 +13,8 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+find_package(PkgConfig)
+
 find_package(Boost REQUIRED COMPONENTS)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -24,10 +26,14 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   geometry_msgs
   message_generation
+  message_filters
   std_msgs
   toaster_msgs
   dynamic_reconfigure
 )
+
+pkg_check_modules(pr2motion-genom3 REQUIRED pr2motion-genom3)
+
 
 add_message_files(
    FILES
@@ -58,7 +64,7 @@ catkin_package(
   geometry_msgs
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} $ENV{TOASTERLIB_DIR}/include)
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} $ENV{TOASTERLIB_DIR}/include ${pr2motion-genom3_INCLUDE_DIRS})
 
 add_executable(stimulus_driven_attention src/stimulus_driven_attention.cpp)
 target_link_libraries(stimulus_driven_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)

@@ -6,15 +6,16 @@
 #include "../include/head_manager/HeadManagerException.h"
 #include "geometry_msgs/PointStamped.h"
 
-#include "toaster_msgs/ObjectList.h"
-#include "toaster_msgs/HumanList.h"
-#include "toaster_msgs/RobotList.h"
+#include "toaster_msgs/ObjectListStamped.h"
+#include "toaster_msgs/HumanListStamped.h"
+#include "toaster_msgs/RobotListStamped.h"
 #include "toaster_msgs/FactList.h"
 #include "toaster_msgs/Object.h"
 #include "toaster_msgs/Robot.h"
 #include "toaster_msgs/Human.h"
 #include "toaster_msgs/Fact.h"
 #include "toaster_msgs/Entity.h"
+#include "tf/transform_datatypes.h"
 
 #include <dynamic_reconfigure/server.h>
 #include <head_manager/ReactiveHeadMotionConfig.h>
@@ -22,7 +23,6 @@
 #include "../include/toaster-lib/MathFunctions.h"
 
 #include "head_manager/StampedMap.h"
-#include "head_manager/InhibitionOfReturn.h"
 
 using namespace std;
 
@@ -279,11 +279,10 @@ public:
    ****************************************************/
   void sendSalientStimuli(SaliencyPair_t salient)
   {
-    geometry_msgs::PointStamped point;
+    geometry_msgs::PointStamped attention_point;
     toaster_msgs::Entity entity;
     if(salient.first!="Waiting")
     {
-      point.header.frame_id = "map";
       if(!isObject(salient.first))
       {
         if (isJoint(salient.first))
@@ -302,25 +301,27 @@ public:
       } else {
         entity = getObject(salient.first);
       }
-      point.point.x = entity.positionX;
-      point.point.y = entity.positionY; 
-      point.point.z = entity.positionZ;
+      attention_point.point = entity.pose.position;
     } else {
-      Vec_t tempPoint(3);
-      Vec_t resultPoint(3);
-      Mat_t rotZ(3);
-      tempPoint[0]= 1.0;
-      tempPoint[1]= 0.0;
-      tempPoint[2]= 1.2;
-      rotZ = MathFunctions::matrixfromAngle(2,(const double)getRobot(my_id_).orientationYaw);
-      resultPoint = MathFunctions::multiplyMatVec(rotZ,tempPoint);
-      point.point.x = resultPoint[0]+getRobot(my_id_).positionX;
-      point.point.y = resultPoint[1]+getRobot(my_id_).positionY;
-      point.point.z = resultPoint[2]+getRobot(my_id_).positionZ;
+      geometry_msgs::Vector3 tempPoint;
+      tf::Vector3 tempPointTF;
+      tempPoint.x = 1.0;
+      tempPoint.y = 0.0;
+      tempPoint.z = 1.2;
+      tf::vector3MsgToTF(tempPoint,tempPointTF);
+      tf::Quaternion q;
+      tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
+      tf::Vector3 resultVecTF;
+      geometry_msgs::Vector3 resultVec;
+      resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
+      tf::vector3TFToMsg(resultVecTF,resultVec);
+      attention_point.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
+      attention_point.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
+      attention_point.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
     }
-    point.header.frame_id="map";
-    point.header.stamp=ros::Time::now();
-    salient_stimuli_pub_.publish(point);  
+    attention_point.header.frame_id="map";
+    attention_point.header.stamp=ros::Time::now();
+    salient_stimuli_pub_.publish(attention_point);  
   }
 private:
   bool normalizeMap(SaliencyMap_t& map)
@@ -454,9 +455,9 @@ private:
             offset.clear();
             if (node_.getParam((const string) offset_str,offset))
             {
-              object_list_[i].meEntity.positionX+=offset[0];
-              object_list_[i].meEntity.positionY+=offset[1];
-              object_list_[i].meEntity.positionZ+=offset[2];
+              object_list_[i].meEntity.pose.position.x+=offset[0];
+              object_list_[i].meEntity.pose.position.y+=offset[1];
+              object_list_[i].meEntity.pose.position.z+=offset[2];
             }
           }
           return (object_list_[i].meEntity);
@@ -629,7 +630,7 @@ private:
    * @brief : Update the object list & the saliency map
    * @param : object list
    ****************************************************/
-  void objectListCallback(const toaster_msgs::ObjectList::ConstPtr& msg)
+  void objectListCallback(const toaster_msgs::ObjectListStamped::ConstPtr& msg)
   {
     if(!msg->objectList.empty())
     {
@@ -649,7 +650,7 @@ private:
    * @brief : Update the robot list
    * @param : robot list
    ****************************************************/
-  void robotListCallback(const toaster_msgs::RobotList::ConstPtr& msg)
+  void robotListCallback(const toaster_msgs::RobotListStamped::ConstPtr& msg)
   {
     if(!msg->robotList.empty())
     {
@@ -664,7 +665,7 @@ private:
    * @brief : Update the human list & the saliency map
    * @param : human list
    ****************************************************/
-  void humanListCallback(const toaster_msgs::HumanList::ConstPtr& msg)
+  void humanListCallback(const toaster_msgs::HumanListStamped::ConstPtr& msg)
   {
     std::string ownerId,jointId;
     
