@@ -422,11 +422,7 @@ public:
         if (robotState.activityState=="ACTING")
         {
           focus_= 1.0;
-          if (!robotState.objects.empty())
-          {
-            //Show action intention
-            current_entity_=getEntity(robotState.objects[0]);
-          }
+          current_entity_=getEntity(robotState.object);
         }else {
           // If the robot is waiting we allow reactive input by setting focus to zero
           focus_= 0.0;
@@ -504,7 +500,7 @@ private:
         {
           //send signal
           head_manager::Signal sig;
-          sig.entities[0]=msg->objects[0];
+          sig.entities[0]=msg->object;
           sig.durations[0]=0.2;
           sig.entities[1]=id+"::rightHand";
           sig.durations[1]=0.0;
@@ -517,7 +513,7 @@ private:
         {
           //send signal
           head_manager::Signal sig;
-          sig.entities[0]=msg->objects[0];
+          sig.entities[0]=msg->object;
           sig.durations[0]=0.2;
           sig.urgency=0.98;
           sig.importancy=0.9;
