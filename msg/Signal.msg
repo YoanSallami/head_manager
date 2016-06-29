@@ -4,3 +4,4 @@ string[] entities
 float64[] durations
 float64 urgency
 float64 importancy
+float64 weight

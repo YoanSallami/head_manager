@@ -330,11 +330,11 @@ public:
       {
         if (it->urgency!=0.0)
         {
-          it->importancy-=it->importancy*(1.0-it->urgency);
+          it->weight-=it->weight*(1.0-it->urgency);
         } else {
-          it->importancy-=it->importancy;
+          it->weight-=it->weight;
         }
-        if(it->importancy<0.000001)
+        if(it->weight<0.000001)
           signal_list_.erase(it);
       }
     } else {
@@ -348,17 +348,17 @@ public:
    ****************************************************/
   bool selectSignal(head_manager::Signal & sig)
   {
-    double max=sig.importancy;
+    double max=sig.weight;
     SignalList_t::iterator max_it;
     bool changed=false;
     if (!signal_list_.empty())
     {
       for (SignalList_t::iterator it = signal_list_.begin(); it != signal_list_.end(); ++it)
       {
-        if(it->importancy > max)
+        if(it->weight > max)
         {
           max_it=it;
-          max=it->importancy;
+          max=it->weight;
           changed=true;
         }
       }
@@ -410,7 +410,6 @@ public:
     //toaster_msgs::Entity current_entity;
     head_manager::Signal current_signal;
     geometry_msgs::PointStamped goal_directed_attention;
-    bool succeed=false;
     float temporal_factor=0.2;
 
     if(!agent_activity_map_.empty())
@@ -506,7 +505,7 @@ private:
           sig.durations[1]=0.0;
           sig.entities[2]=id+"::head";
           sig.durations[2]=0.5;
-          sig.urgency=0.98;
+          sig.urgency=0.68;
           sig.importancy=1.0;
         }
         if(id!=my_id_ && msg->activityState=="ACTING" && msg->unexpected==true)
