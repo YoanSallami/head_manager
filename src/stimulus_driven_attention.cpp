@@ -18,7 +18,7 @@
 #include "tf/transform_datatypes.h"
 
 #include <dynamic_reconfigure/server.h>
-#include <head_manager/ReactiveHeadMotionConfig.h>
+#include <head_manager/StimulusDrivenAttentionConfig.h>
 
 #include "../include/toaster-lib/MathFunctions.h"
 
@@ -33,7 +33,7 @@ typedef std::vector < toaster_msgs::Object > ObjectList_t;
 typedef std::vector < toaster_msgs::Robot > RobotList_t;
 typedef std::vector < toaster_msgs::Human > HumanList_t;
 typedef std::vector < toaster_msgs::Fact > FactList_t;
-typedef dynamic_reconfigure::Server<head_manager::ReactiveHeadMotionConfig> ParamServer_t;
+typedef dynamic_reconfigure::Server<head_manager::StimulusDrivenAttentionConfig> ParamServer_t;
 
 class StimulusDrivenAttention
 {
@@ -61,7 +61,7 @@ private:
   ros::Publisher salient_stimuli_pub_; //!< sensitive goal publisher
   ros::Publisher saliency_map_pub_; //!< saliency map publisher
   ros::ServiceServer inhibition_of_return_srv_; //!< inhibition of return service
-  ParamServer_t reactive_dyn_param_srv; //!<
+  ParamServer_t stimulu_driven_dyn_param_srv; //!<
 public:
   /****************************************************
    * @brief : Default constructor
@@ -95,7 +95,7 @@ public:
     saliency_map_pub_ = node_.advertise<head_manager::StampedMap>("head_manager/saliency_map",1);
     // Advertise services
     // Dyn param server
-    reactive_dyn_param_srv.setCallback(boost::bind(&StimulusDrivenAttention::dynParamCallback, this, _1, _2));
+    stimulu_driven_dyn_param_srv.setCallback(boost::bind(&StimulusDrivenAttention::dynParamCallback, this, _1, _2));
     // Add a waiting attention zone to saliency map
     saliency_map_.insert(SaliencyPair_t("Waiting",0.0));
     salient_stimuli_=SaliencyPair_t("Waiting",0.0);
@@ -720,7 +720,7 @@ private:
    * @brief : Update reactives parameters
    * @param : fact list
    ****************************************************/
-  void dynParamCallback(head_manager::ReactiveHeadMotionConfig &config, uint32_t level) 
+  void dynParamCallback(head_manager::StimulusDrivenAttentionConfig &config, uint32_t level) 
   {
     stimuliDiscountFactor_ = config.stimuli_discount_factor;
     directionSalienceFactor_ = config.direction_salience_factor;

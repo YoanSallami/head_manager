@@ -22,7 +22,15 @@
 
 #include "supervisor_msgs/AgentActivity.h"
 
+#include <dynamic_reconfigure/server.h>
+#include <head_manager/GoalDirectedAttentionConfig.h>
+
+#include <boost/msm/back/state_machine.hpp>
+#include <boost/msm/front/state_machine_def.hpp>
+
 using namespace std;
+namespace msm = boost::msm;
+namespace mpl = boost::mpl;
 
 //for convenience
 typedef std::map<std::string,ros::Subscriber> SubscriberMap_t;
@@ -36,6 +44,125 @@ typedef std::vector < toaster_msgs::Robot > RobotList_t;
 typedef std::vector < toaster_msgs::Human > HumanList_t;
 typedef std::vector < toaster_msgs::Fact > FactList_t;
 typedef std::vector < head_manager::Signal > SignalList_t;
+typedef dynamic_reconfigure::Server<head_manager::GoalDirectedAttentionConfig> ParamServer_t;
+
+// Forward class definition
+class GoalDirectedAttention;
+
+/**************************************************
+* Goal-directed state machine definition
+***************************************************/
+// Events definition
+struct start_acting{};
+struct stop_acting{};
+struct start_signaling{
+  start_signaling(head_manager::Signal signal_received):signal_received(signal_received){}
+  head_manager::Signal signal_received;
+};
+struct stop_signaling{};
+// State machine front definition
+struct GoalDirectedAttentionStateMachine_ : public msm::front::state_machine_def<GoalDirectedAttentionStateMachine_>
+{
+  GoalDirectedAttention * goal_directed_attention_; //<! 
+  GoalDirectedAttentionStateMachine_(GoalDirectedAttention * goal_directed_attention)
+  {
+    goal_directed_attention_ = goal_directed_attention;
+  }
+  // Starting state machine messages
+  template <class Event,class FSM>
+  void on_entry(Event const& ,FSM&) 
+  {
+      ROS_INFO("[goal_directed_attention] Starting goal-directed state machine.");
+  }
+
+  template <class Event,class FSM>
+  void on_exit(Event const&,FSM& ) 
+  {
+      ROS_INFO("[goal_directed_attention] Ending goal-directed state machine.");
+  }
+
+  // States definition
+  struct Waiting : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[goal_directed_attention] Entering state: Waiting.");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[goal_directed_attention] Leaving state: Waiting.");}
+  };
+
+  struct Acting : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[goal_directed_attention] Entering state: Acting.");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[goal_directed_attention] Leaving state: Acting.");}
+  };
+
+  struct SignalingFromActing : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[goal_directed_attention] Entering state: SignalingFromActing.");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[goal_directed_attention] Leaving state: SignalingFromActing.");}
+  };
+
+  struct SignalingFromWaiting : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[goal_directed_attention] Entering state: SignalingFromWaiting.");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[goal_directed_attention] Leaving state: SignalingFromWaiting.");}
+  };
+
+  // Initial state definition
+  typedef Waiting initial_state;
+  // Transition action definition
+  void start_action_focusing(start_acting const&); 
+  void stop_action_focusing(stop_acting const&); 
+  void start_signal_focusing(start_signaling const&);
+  void stop_signal_focusing(stop_signaling const&);
+  // Guard transition definition
+  bool isMoreUrgent(start_signaling const&);
+  bool isStopable(start_signaling const&);
+
+  typedef GoalDirectedAttentionStateMachine_ sm;
+
+  // Transition table for player
+  struct transition_table : mpl::vector<
+       //    Start                  Event             Next                   Action                        Guard
+       //  +----------------------+-----------------+----------------------+------------------------------+------------------+
+     a_row < Waiting              , start_acting    , Acting               , &sm::start_action_focusing                       >,
+     a_row < Waiting              , start_signaling , SignalingFromWaiting , &sm::start_signal_focusing                       >,
+       //  +----------------------+-----------------+----------------------+------------------------------+------------------+
+     a_row < Acting               , stop_acting     , Waiting              , &sm::stop_action_focusing                        >,
+       row < Acting               , start_signaling , SignalingFromActing  , &sm::start_signal_focusing   , &sm::isStopable   >,
+       //  +----------------------+-----------------+----------------------+------------------------------+------------------+
+     a_row < SignalingFromActing  , stop_signaling  , Acting               , &sm::stop_signal_focusing                        >,
+      irow < SignalingFromActing  , start_signaling ,                        &sm::start_signal_focusing   , &sm::isMoreUrgent >,
+       //  +----------------------+-----------------+----------------------+------------------------------+------------------+
+     a_row < SignalingFromWaiting , stop_signaling  , Waiting              , &sm::stop_signal_focusing                        >,
+    a_irow < SignalingFromWaiting , start_signaling ,                        &sm::start_signal_focusing                       >
+      //  +-----------------------+-----------------+----------------------+------------------------------+------------------+
+    > {};
+  // Replaces the default no-transition response.
+  template <class FSM,class Event>
+  void no_transition(Event const& e, FSM&,int state)
+  {
+      ROS_INFO("no transition from state %d on event %s",state,typeid(e).name());
+  }
+};
+// State machine back definition
+typedef msm::back::state_machine<GoalDirectedAttentionStateMachine_> GoalDirectedAttentionStateMachine;
+// Testing utilities
+static char const* const state_names[] = { "Waiting", "Acting", "Signaling" };
+void pstate(GoalDirectedAttentionStateMachine const& sm)
+{
+    ROS_INFO(" -> %s", state_names[sm.current_state()[0]]);
+}
 
 class GoalDirectedAttention
 {
@@ -59,12 +186,14 @@ private:
   ros::Publisher signal_pub_; //!<
   double focus_; //!< robot focus
   ros::Publisher focus_pub_; //!< focus publisher
-  //bool surprised_; //!< true when an unexpected act occur
   head_manager::Signal current_signal_; //!<
   toaster_msgs::Entity current_entity_; //!<
   int current_signal_it_; //!<
-  ros::Time signal_start_time_; //!<  
-  bool signalling_; //!<
+  ros::Time signal_start_time_;
+  GoalDirectedAttentionStateMachine * state_machine_;
+  double urgencyThreshold_;
+  ParamServer_t goal_directed_dyn_param_srv;
+
 public:
   /****************************************************
    * @brief : Default constructor
@@ -90,16 +219,22 @@ public:
     goal_directed_attention_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/goal_directed_attention", 5);
     focus_pub_ = node_.advertise <head_manager::Focus> ("head_manager/focus", 5);
     signal_pub_ = node_.advertise <head_manager::Signal> ("head_manager/signal", 10);
+    // Dyn param server
+    goal_directed_dyn_param_srv.setCallback(boost::bind(&GoalDirectedAttention::dynParamCallback, this, _1, _2));
     //surprised_=false;
-    signalling_=false;
     current_signal_it_=0;
     signal_start_time_;
     focus_=0.0;
+    urgencyThreshold_=0.8;
+    state_machine_ = new GoalDirectedAttentionStateMachine(boost::cref(this));
+    state_machine_->start();
   }
   /****************************************************
    * @brief : Default destructor
    ****************************************************/
-  ~GoalDirectedAttention(){}
+  ~GoalDirectedAttention(){
+    state_machine_->stop();
+  }
 
   /****************************************************
    * @brief : Get entity from object/human/robot list
@@ -401,16 +536,78 @@ public:
       throw HeadManagerException ("Could not read an empty fact list.");
     }
   }
+public:
+  void startActionFocusing()
+  {
+    focus_=1.0;
+  }
+  void stopActionFocusing()
+  {
+    focus_=0.0;
+  }
+  void startSignalFocusing()
+  {
+    focus_=1.0;
+  }
+  void stopSignalFocusing()
+  {
+    focus_=0.0;
+  }
+  bool isMoreUrgent(head_manager::Signal signal)
+  {
+    supervisor_msgs::AgentActivity robotState;
+    if(!agent_activity_map_.empty())
+    {
+      if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
+      {
+        robotState = agent_activity_map_.find(my_id_)->second;
+        if (signal.importancy>robotState.importancy)
+        {
+          if (signal.urgency>urgencyThreshold_)
+          {
+            return (true);
+          }
+        }
+      } else {
+        throw HeadManagerException ("Could not read the robot activity state.");
+      }
+    } else {
+      throw HeadManagerException ("Could not read an empty activity state map.");
+    }
+    return(false);
+  }
+  bool isStopable()
+  {
+    supervisor_msgs::AgentActivity robotState;
+    if(!agent_activity_map_.empty())
+    {
+      if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
+      {
+        robotState = agent_activity_map_.find(my_id_)->second;
+        if (robotState.stopable==true)
+        {
+          return (true);
+        } else {
+          return(false);
+        }
+      } else {
+        throw HeadManagerException ("Could not read the robot activity state.");
+      }
+    } else {
+      throw HeadManagerException ("Could not read an empty activity state map.");
+    }
+  }
   /****************************************************
    * @brief : Compute goal-directed attention
    ****************************************************/
-  void computeAttention()
+ /* void computeAttention()
   {
     supervisor_msgs::AgentActivity robotState;
-    //toaster_msgs::Entity current_entity;
     head_manager::Signal current_signal;
     geometry_msgs::PointStamped goal_directed_attention;
     float temporal_factor=0.2;
+    //Input reading
+
 
     if(!agent_activity_map_.empty())
     {
@@ -420,10 +617,33 @@ public:
         robotState = agent_activity_map_.find(my_id_)->second;
         if (robotState.activityState=="ACTING")
         {
+          //IF ROBOT ACTING
           focus_= 1.0;
           current_entity_=getEntity(robotState.object);
+          if (robotState.stopable==true)
+          {
+            if (!signal_list_.empty())
+            {
+              focus_ = 1.0;
+              updateSignalList();
+              if(selectSignal(current_signal))
+              {
+                signal_start_time_ = ros::Time::now();
+                if(signaling_==true)
+                {
+                  //signal interuption
+                  //send current signal to the queue
+                  signal_pub_.publish(current_signal_);
+                } else {
+                  signaling_=true;
+                }
+                current_signal_=current_signal;
+              }
+            }
+            //if(robotState.weight<)
+          }
         }else {
-          // If the robot is waiting we allow reactive input by setting focus to zero
+          // IF ROBOT WAITING/IDLE
           focus_= 0.0;
         }
         // If signal received
@@ -434,18 +654,19 @@ public:
           if(selectSignal(current_signal))
           {
             signal_start_time_ = ros::Time::now();
-            if(signalling_==true)
+            if(signaling_==true)
             {
               //signal interuption
+              //send current signal to the queue
               signal_pub_.publish(current_signal_);
             } else {
-              signalling_=true;
+              signaling_=true;
             }
             current_signal_=current_signal;
           }
         }
 
-        if (signalling_=true)
+        if (signaling_=true)
         {
           if (current_signal_it_ < current_signal_.entities.size())
           {
@@ -456,7 +677,7 @@ public:
               if(current_signal_it_==current_signal_.entities.size()-1)
               {
                 current_signal_it_=0;
-                signalling_=false;
+                signaling_=false;
                 focus_=0.0;
               }else{
                 current_signal_it_++;
@@ -477,7 +698,7 @@ public:
         focus_pub_.publish(focus);
       }
     }
-  }
+  }*/
 
 private:
   /****************************************************
@@ -613,7 +834,7 @@ private:
     try
     {
       updateAckMap();
-      computeAttention();
+      //computeAttention();
     }
     catch (HeadManagerException& e )
     {
@@ -627,11 +848,60 @@ private:
   void signalCallback(const head_manager::Signal::ConstPtr& msg)
   {
     signal_list_.push_back(*msg);
+    updateSignalList();
+    if (selectSignal(current_signal_)==true)
+    {
+      state_machine_->process_event(start_signaling(current_signal_));
+    }
   }
 
-public:
-  
+  void dynParamCallback(head_manager::GoalDirectedAttentionConfig &config, uint32_t level) 
+  {
+    urgencyThreshold_ = config.urgency_threshold;
+  }
 };
+
+void GoalDirectedAttentionStateMachine_::start_action_focusing(start_acting const&)
+{
+  goal_directed_attention_->startActionFocusing();
+}
+
+void GoalDirectedAttentionStateMachine_::stop_action_focusing(stop_acting const&)
+{
+  goal_directed_attention_->stopActionFocusing();
+}
+
+void GoalDirectedAttentionStateMachine_::start_signal_focusing(start_signaling const&)
+{
+  goal_directed_attention_->startSignalFocusing();
+}
+
+void GoalDirectedAttentionStateMachine_::stop_signal_focusing(stop_signaling const&)
+{
+  goal_directed_attention_->stopSignalFocusing();
+}
+
+bool GoalDirectedAttentionStateMachine_::isMoreUrgent(start_signaling const& s)
+{
+
+  if (goal_directed_attention_->isMoreUrgent(s.signal_received)==true)
+  {
+    return(true);
+  }
+  return(false);
+}
+bool GoalDirectedAttentionStateMachine_::isStopable(start_signaling const& s)
+{
+  if (goal_directed_attention_->isStopable()==true)
+  {
+    if (goal_directed_attention_->isMoreUrgent(s.signal_received)==true)
+    {
+      return(true);
+    }
+    return(false);
+  }
+  return(false);
+}
 /****************************************************
  * @brief : Main process function
  * @param : arguments count

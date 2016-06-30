@@ -30,6 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   toaster_msgs
   dynamic_reconfigure
+  supervisor_msgs
 )
 
 pkg_check_modules(pr2motion-genom3 REQUIRED pr2motion-genom3)
@@ -48,7 +49,8 @@ add_service_files(
 )
 
 generate_dynamic_reconfigure_options(
-  cfg/reactive_dyn_param.cfg
+  cfg/stimulus_driven_dyn_param.cfg
+  cfg/goal_directed_dyn_param.cfg
 )
 
 generate_messages(
@@ -72,7 +74,7 @@ add_dependencies(stimulus_driven_attention ${catkin_EXPORTED_TARGETS} ${PROJECT_
 
 add_executable(goal_directed_attention src/goal_directed_attention.cpp)
 target_link_libraries(goal_directed_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(goal_directed_attention ${catkin_EXPORTED_TARGETS})
+add_dependencies(goal_directed_attention ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
 add_executable(sensitive_reorientation src/sensitive_reorientation.cpp)
 target_link_libraries(sensitive_reorientation ${catkin_LIBRARIES})
