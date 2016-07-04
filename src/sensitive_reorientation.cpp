@@ -82,14 +82,14 @@ public:
   ~SensitiveReorientation(){}
 private:
 
-  void lookAt(std::string target_frame, float target_x, float target_y, float target_z)
+  void lookAt(geometry_msgs::PointStamped p)
   {
     pr2motion::Head_MoveGoal goal;
     goal.head_mode.value = 0;
-    goal.head_target_frame = target_frame;
-    goal.head_target_x = target_x;
-    goal.head_target_y = target_y;
-    goal.head_target_z = target_z;
+    goal.head_target_frame = p.header.frame_id;
+    goal.head_target_x = p.point.x;
+    goal.head_target_y = p.point.y;
+    goal.head_target_z = p.point.z;
     head_action_client_->sendGoal(goal);
     
     bool finishedBeforeTimeout = head_action_client_->waitForResult(ros::Duration(300.0));
@@ -105,13 +105,17 @@ private:
 
   void callback(const geometry_msgs::PointStamped::ConstPtr& salient_stimuli,const geometry_msgs::PointStamped::ConstPtr& goal_directed_attention,const head_manager::Focus::ConstPtr& focus)
   {
+    geometry_msgs::PointStamped effective_attention;
     pr2motion::Head_Stop stop;
+    effective_attention.header.stamp = ros::Time::now();
+    effective_attention.header.frame_id = "map";
+    effective_attention.point.x=((1-focus->data)*salient_stimuli->point.x)+(focus->data*goal_directed_attention->point.x);
+    effective_attention.point.y=((1-focus->data)*salient_stimuli->point.y)+(focus->data*goal_directed_attention->point.y);
+    effective_attention.point.z=((1-focus->data)*salient_stimuli->point.z)+(focus->data*goal_directed_attention->point.z);
     if (!ros::service::call("pr2motion/Head_Stop", stop))
       ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/Head_Stop");
-    lookAt(salient_stimuli->header.frame_id,
-      ((1-focus->data)*salient_stimuli->point.x)+(focus->data*goal_directed_attention->point.x),
-      ((1-focus->data)*salient_stimuli->point.y)+(focus->data*goal_directed_attention->point.y),
-      ((1-focus->data)*salient_stimuli->point.z)+(focus->data*goal_directed_attention->point.z));
+    lookAt(effective_attention);
+    effective_attention_pub_.publish(effective_attention);
   }
 };
 

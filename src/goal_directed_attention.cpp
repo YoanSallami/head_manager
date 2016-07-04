@@ -128,6 +128,7 @@ struct GoalDirectedAttentionStateMachine_ : public msm::front::state_machine_def
   void focus_action(acting const&); 
   void allow_distraction(waiting const&); 
   void start_focus_signal(start_signaling const&);
+  void stop_focus_signal(stop_signaling const&);
   void focus_signal(signaling const&);
   // Guard transition definition
   bool signalUrgent(start_signaling const&);
@@ -142,16 +143,17 @@ struct GoalDirectedAttentionStateMachine_ : public msm::front::state_machine_def
        //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
      a_row < Waiting              , acting          , Acting               , &sm::focus_action                                               >,
      a_row < Waiting              , start_signaling , SignalingFromWaiting , &sm::start_focus_signal                                         >,
+    a_irow < Waiting              , waiting                                , &sm::allow_distraction                                          >,
        //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
      a_row < Acting               , waiting         , Waiting              , &sm::allow_distraction                                          >,
        row < Acting               , start_signaling , SignalingFromActing  , &sm::start_focus_signal   , &sm::actionStopableAndSignalUrgent  >,
     a_irow < Acting               , acting          ,                        &sm::focus_action                                               >,
        //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
-     g_row < SignalingFromActing  , stop_signaling  , Acting                                           , &sm::signalAcknowledgement                >,
+      row < SignalingFromActing  , stop_signaling  , Acting                , &sm::stop_focus_signal    , &sm::signalAcknowledgement          >,
       irow < SignalingFromActing  , start_signaling                        , &sm::start_focus_signal   , &sm::signalUrgent                   >,
     a_irow < SignalingFromActing  , signaling                              , &sm::focus_signal                                               >,
        //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
-     g_row < SignalingFromWaiting , stop_signaling  , Waiting                                          , &sm::signalAcknowledgement                >,
+       row < SignalingFromWaiting , stop_signaling  , Waiting              , &sm::stop_focus_signal    , &sm::signalAcknowledgement          >,
     a_irow < SignalingFromWaiting , start_signaling ,                        &sm::start_focus_signal                                         >,
     a_irow < SignalingFromWaiting , signaling                              , &sm::focus_signal                                               >
       //  +-----------------------+-----------------+----------------------+---------------------------+------------------------------------+
@@ -200,6 +202,7 @@ private:
   ParamServer_t goal_directed_dyn_param_srv; //!<
   AckMap_t ack_map_; //!< acknowledgement map;
   head_manager::Signal current_signal_; //!<
+  bool signaling_;
 
 public:
   /****************************************************
@@ -219,7 +222,7 @@ public:
     // Advertise subscribers
     object_list_sub_ = node_.subscribe("/pdg/objectList", 1, &GoalDirectedAttention::objectListCallback, this);
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &GoalDirectedAttention::humanListCallback, this);
-    robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &GoalDirectedAttention::objectListCallback, this);
+    robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &GoalDirectedAttention::robotListCallback, this);
     fact_list_sub_ = node_.subscribe("/pdg/factList", 1, &GoalDirectedAttention::factListCallback, this);
     signal_sub_ = node_.subscribe("head_manager/signal", 10, &GoalDirectedAttention::signalCallback, this);
     // Advertise publishers
@@ -231,6 +234,7 @@ public:
     //surprised_=false;
     current_signal_it_=0;
     urgencyThreshold_=0.8;
+    signaling_=false;
     state_machine_ = new GoalDirectedAttentionStateMachine(boost::cref(this));
     state_machine_->start();
   }
@@ -585,18 +589,17 @@ public:
     tempPoint.x = 1.0;
     tempPoint.y = 0.0;
     tempPoint.z = 1.2;
+    
     tf::vector3MsgToTF(tempPoint,tempPointTF);
     tf::Quaternion q;
     tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
-      
-      
+  
     resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
     tf::vector3TFToMsg(resultVecTF,resultVec);
-    
+
     goal_directed_attention.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
     goal_directed_attention.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
     goal_directed_attention.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
-
     goal_directed_attention.header.stamp = ros::Time::now();
     goal_directed_attention.header.frame_id = "map";
     
@@ -607,8 +610,13 @@ public:
   }
   void startSignalFocusing()
   {
+    signaling_=true;
     current_signal_it_=0;
     signal_it_time_=ros::Time::now();
+  }
+  void stopSignalFocusing()
+  {
+    signaling_=false;
   }
   void focusOnSignal()
   {
@@ -733,10 +741,15 @@ private:
         robotIsActing=true;
       }
     }
-    if(robotIsActing)
-      state_machine_->process_event(acting());
-    if(!robotIsActing)
-      state_machine_->process_event(waiting());
+    if (signaling_)
+    {
+      state_machine_->process_event(signaling());
+    } else {
+      if(robotIsActing)
+        state_machine_->process_event(acting());
+      if(!robotIsActing)
+        state_machine_->process_event(waiting());
+    }
 
     if (robotIsActing && id!=my_id_ && msg->activityState=="ACTING")
     {
@@ -874,22 +887,52 @@ private:
 
 void GoalDirectedAttentionStateMachine_::focus_action(acting const&)
 {
-  goal_directed_attention_->focusOnAction();
+  try
+  {
+    goal_directed_attention_->focusOnAction();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[goal_directed_attention] Exception was caught : %s",e.description().c_str());
+  }
 }
 
 void GoalDirectedAttentionStateMachine_::allow_distraction(waiting const&)
 {
-  goal_directed_attention_->allowDistraction();
+  try
+  {
+    goal_directed_attention_->allowDistraction();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[goal_directed_attention] Exception was caught : %s",e.description().c_str());
+  }
 }
 
 void GoalDirectedAttentionStateMachine_::start_focus_signal(start_signaling const&)
 {
-  goal_directed_attention_->startSignalFocusing();
+  try
+  {
+    goal_directed_attention_->startSignalFocusing(); 
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[goal_directed_attention] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void GoalDirectedAttentionStateMachine_::stop_focus_signal(stop_signaling const&)
+{
+  try
+  {
+    goal_directed_attention_->stopSignalFocusing(); 
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[goal_directed_attention] Exception was caught : %s",e.description().c_str());
+  }
 }
 
 void GoalDirectedAttentionStateMachine_::focus_signal(signaling const&)
 {
-  goal_directed_attention_->focusOnSignal();
+  try
+  {
+    goal_directed_attention_->focusOnSignal();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[goal_directed_attention] Exception was caught : %s",e.description().c_str());
+  }
 }
 
 bool GoalDirectedAttentionStateMachine_::signalUrgent(start_signaling const& s)
@@ -923,7 +966,7 @@ bool GoalDirectedAttentionStateMachine_::signalAcknowledgement(stop_signaling co
  ****************************************************/
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "cognitive_orientation");
+  ros::init(argc, argv, "goal_directed_attention");
   ros::NodeHandle n;
   GoalDirectedAttention * co = new GoalDirectedAttention(n);
   while(ros::ok())
