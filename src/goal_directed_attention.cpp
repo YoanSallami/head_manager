@@ -19,6 +19,7 @@
 #include "toaster_msgs/Human.h"
 #include "toaster_msgs/Fact.h"
 #include "toaster_msgs/Entity.h"
+#include "tf/transform_datatypes.h"
 
 #include "supervisor_msgs/AgentActivity.h"
 
@@ -53,13 +54,16 @@ class GoalDirectedAttention;
 * Goal-directed state machine definition
 ***************************************************/
 // Events definition
-struct start_acting{};
-struct stop_acting{};
+struct acting{};
+struct waiting{};
+struct signaling{};
 struct start_signaling{
   start_signaling(head_manager::Signal signal_received):signal_received(signal_received){}
   head_manager::Signal signal_received;
 };
 struct stop_signaling{};
+
+static char const* const state_names[] = { "Waiting", "Acting", "SignalingFromActing", "SignalingFromWaiting" };
 // State machine front definition
 struct GoalDirectedAttentionStateMachine_ : public msm::front::state_machine_def<GoalDirectedAttentionStateMachine_>
 {
@@ -121,44 +125,49 @@ struct GoalDirectedAttentionStateMachine_ : public msm::front::state_machine_def
   // Initial state definition
   typedef Waiting initial_state;
   // Transition action definition
-  void start_action_focusing(start_acting const&); 
-  void stop_action_focusing(stop_acting const&); 
-  void start_signal_focusing(start_signaling const&);
-  void stop_signal_focusing(stop_signaling const&);
+  void focus_action(acting const&); 
+  void allow_distraction(waiting const&); 
+  void start_focus_signal(start_signaling const&);
+  void focus_signal(signaling const&);
   // Guard transition definition
-  bool isMoreUrgent(start_signaling const&);
-  bool isStopable(start_signaling const&);
+  bool signalUrgent(start_signaling const&);
+  bool actionStopableAndSignalUrgent(start_signaling const&);
+  bool signalAcknowledgement(stop_signaling const&);
 
   typedef GoalDirectedAttentionStateMachine_ sm;
 
   // Transition table for player
   struct transition_table : mpl::vector<
-       //    Start                  Event             Next                   Action                        Guard
-       //  +----------------------+-----------------+----------------------+------------------------------+------------------+
-     a_row < Waiting              , start_acting    , Acting               , &sm::start_action_focusing                       >,
-     a_row < Waiting              , start_signaling , SignalingFromWaiting , &sm::start_signal_focusing                       >,
-       //  +----------------------+-----------------+----------------------+------------------------------+------------------+
-     a_row < Acting               , stop_acting     , Waiting              , &sm::stop_action_focusing                        >,
-       row < Acting               , start_signaling , SignalingFromActing  , &sm::start_signal_focusing   , &sm::isStopable   >,
-       //  +----------------------+-----------------+----------------------+------------------------------+------------------+
-     a_row < SignalingFromActing  , stop_signaling  , Acting               , &sm::stop_signal_focusing                        >,
-      irow < SignalingFromActing  , start_signaling ,                        &sm::start_signal_focusing   , &sm::isMoreUrgent >,
-       //  +----------------------+-----------------+----------------------+------------------------------+------------------+
-     a_row < SignalingFromWaiting , stop_signaling  , Waiting              , &sm::stop_signal_focusing                        >,
-    a_irow < SignalingFromWaiting , start_signaling ,                        &sm::start_signal_focusing                       >
-      //  +-----------------------+-----------------+----------------------+------------------------------+------------------+
+       //    Start                  Event             Next                   Action                     Guard
+       //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
+     a_row < Waiting              , acting          , Acting               , &sm::focus_action                                               >,
+     a_row < Waiting              , start_signaling , SignalingFromWaiting , &sm::start_focus_signal                                         >,
+       //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
+     a_row < Acting               , waiting         , Waiting              , &sm::allow_distraction                                          >,
+       row < Acting               , start_signaling , SignalingFromActing  , &sm::start_focus_signal   , &sm::actionStopableAndSignalUrgent  >,
+    a_irow < Acting               , acting          ,                        &sm::focus_action                                               >,
+       //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
+     g_row < SignalingFromActing  , stop_signaling  , Acting                                           , &sm::signalAcknowledgement                >,
+      irow < SignalingFromActing  , start_signaling                        , &sm::start_focus_signal   , &sm::signalUrgent                   >,
+    a_irow < SignalingFromActing  , signaling                              , &sm::focus_signal                                               >,
+       //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
+     g_row < SignalingFromWaiting , stop_signaling  , Waiting                                          , &sm::signalAcknowledgement                >,
+    a_irow < SignalingFromWaiting , start_signaling ,                        &sm::start_focus_signal                                         >,
+    a_irow < SignalingFromWaiting , signaling                              , &sm::focus_signal                                               >
+      //  +-----------------------+-----------------+----------------------+---------------------------+------------------------------------+
     > {};
+
   // Replaces the default no-transition response.
   template <class FSM,class Event>
   void no_transition(Event const& e, FSM&,int state)
   {
-      ROS_INFO("no transition from state %d on event %s",state,typeid(e).name());
+      ROS_INFO("no transition from state %s on event %s",state_names[state],typeid(e).name());
   }
 };
 // State machine back definition
 typedef msm::back::state_machine<GoalDirectedAttentionStateMachine_> GoalDirectedAttentionStateMachine;
 // Testing utilities
-static char const* const state_names[] = { "Waiting", "Acting", "Signaling" };
+
 void pstate(GoalDirectedAttentionStateMachine const& sm)
 {
     ROS_INFO(" -> %s", state_names[sm.current_state()[0]]);
@@ -174,7 +183,6 @@ private:
   HumanList_t human_list_; //!< human list from pdg
   RobotList_t robot_list_; //!< robot list from pdg
   FactList_t fact_list_; //!< fact list from pdg
-  AckMap_t ack_map_; //!< acknowledgement map;
   SignalList_t signal_list_; //!< signal list from supervisor
   ActivityMap_t agent_activity_map_; //!< agent activity state machines map
   ros::Subscriber object_list_sub_; //!< object list subscriber
@@ -184,15 +192,14 @@ private:
   ros::Subscriber signal_sub_; //!< signal subscriber
   ros::Publisher goal_directed_attention_pub_; //!< goal_directed attention publisher
   ros::Publisher signal_pub_; //!<
-  double focus_; //!< robot focus
   ros::Publisher focus_pub_; //!< focus publisher
-  head_manager::Signal current_signal_; //!<
-  toaster_msgs::Entity current_entity_; //!<
   int current_signal_it_; //!<
-  ros::Time signal_start_time_;
-  GoalDirectedAttentionStateMachine * state_machine_;
-  double urgencyThreshold_;
-  ParamServer_t goal_directed_dyn_param_srv;
+  ros::Time signal_it_time_; //!<
+  GoalDirectedAttentionStateMachine * state_machine_; //!<
+  double urgencyThreshold_; //!<
+  ParamServer_t goal_directed_dyn_param_srv; //!<
+  AckMap_t ack_map_; //!< acknowledgement map;
+  head_manager::Signal current_signal_; //!<
 
 public:
   /****************************************************
@@ -223,8 +230,6 @@ public:
     goal_directed_dyn_param_srv.setCallback(boost::bind(&GoalDirectedAttention::dynParamCallback, this, _1, _2));
     //surprised_=false;
     current_signal_it_=0;
-    signal_start_time_;
-    focus_=0.0;
     urgencyThreshold_=0.8;
     state_machine_ = new GoalDirectedAttentionStateMachine(boost::cref(this));
     state_machine_->start();
@@ -537,26 +542,105 @@ public:
     }
   }
 public:
-  void startActionFocusing()
+  void focusOnAction()
   {
-    focus_=1.0;
+    geometry_msgs::PointStamped goal_directed_attention;
+    head_manager::Focus focus;
+    supervisor_msgs::AgentActivity robotActivityState;
+
+    if(!agent_activity_map_.empty())
+    {
+      if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
+      {
+        robotActivityState = agent_activity_map_.find(my_id_)->second;
+        if (robotActivityState.activityState=="ACTING")
+        {
+          goal_directed_attention.header.stamp = ros::Time::now();
+          goal_directed_attention.header.frame_id = "map";
+          goal_directed_attention.point = getEntity(robotActivityState.object).pose.position;
+          goal_directed_attention_pub_.publish(goal_directed_attention);
+          focus.header=goal_directed_attention.header;
+          focus.data=1.0;
+          focus_pub_.publish(focus);
+        } else {
+          throw HeadManagerException("Could not focus to action, robot is not acting anymore !");
+        }
+      } else {
+        throw HeadManagerException ("Could not read the robot activity state.");
+      }
+    } else {
+      throw HeadManagerException ("Could not read an empty activity state map.");
+    }
   }
-  void stopActionFocusing()
+
+  void allowDistraction()
   {
-    focus_=0.0;
+    geometry_msgs::PointStamped goal_directed_attention;
+    geometry_msgs::Vector3 tempPoint;
+    tf::Vector3 tempPointTF;
+    geometry_msgs::Vector3 resultVec;
+    tf::Vector3 resultVecTF;
+    head_manager::Focus focus;
+
+    tempPoint.x = 1.0;
+    tempPoint.y = 0.0;
+    tempPoint.z = 1.2;
+    tf::vector3MsgToTF(tempPoint,tempPointTF);
+    tf::Quaternion q;
+    tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
+      
+      
+    resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
+    tf::vector3TFToMsg(resultVecTF,resultVec);
+    
+    goal_directed_attention.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
+    goal_directed_attention.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
+    goal_directed_attention.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
+
+    goal_directed_attention.header.stamp = ros::Time::now();
+    goal_directed_attention.header.frame_id = "map";
+    
+    goal_directed_attention_pub_.publish(goal_directed_attention);
+    focus.header=goal_directed_attention.header;
+    focus.data=0.0;
+    focus_pub_.publish(focus);
   }
   void startSignalFocusing()
   {
-    focus_=1.0;
+    current_signal_it_=0;
+    signal_it_time_=ros::Time::now();
   }
-  void stopSignalFocusing()
+  void focusOnSignal()
   {
-    focus_=0.0;
+    geometry_msgs::PointStamped goal_directed_attention;
+    head_manager::Focus focus;
+    if (current_signal_it_ < current_signal_.entities.size())
+    {
+      ros::Duration duration(current_signal_.durations[current_signal_it_]);
+      if(ros::Time::now() > signal_it_time_+ duration)
+      {
+        current_signal_it_++;
+        signal_it_time_ = ros::Time::now();
+        if (current_signal_it_ > current_signal_.entities.size())
+        {
+          state_machine_->process_event(stop_signaling());
+        }
+      }
+      goal_directed_attention.header.stamp = ros::Time::now();
+      goal_directed_attention.header.frame_id = "map";
+      goal_directed_attention.point=getEntity(current_signal_.entities[current_signal_it_]).pose.position;
+      goal_directed_attention_pub_.publish(goal_directed_attention);
+      focus.header=goal_directed_attention.header;
+      focus.data=1.0;
+      focus_pub_.publish(focus);
+    } else {
+      state_machine_->process_event(stop_signaling());
+    }
   }
-  bool isMoreUrgent(head_manager::Signal signal)
+  bool isSignalUrgent(head_manager::Signal signal)
   {
     supervisor_msgs::AgentActivity robotState;
-    if(!agent_activity_map_.empty())
+    if (!agent_activity_map_.empty())
     {
       if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
       {
@@ -576,15 +660,15 @@ public:
     }
     return(false);
   }
-  bool isStopable()
+  bool isActionStopable()
   {
     supervisor_msgs::AgentActivity robotState;
-    if(!agent_activity_map_.empty())
+    if (!agent_activity_map_.empty())
     {
       if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
       {
         robotState = agent_activity_map_.find(my_id_)->second;
-        if (robotState.stopable==true)
+        if(robotState.stopable==true)
         {
           return (true);
         } else {
@@ -597,109 +681,24 @@ public:
       throw HeadManagerException ("Could not read an empty activity state map.");
     }
   }
-  /****************************************************
-   * @brief : Compute goal-directed attention
-   ****************************************************/
- /* void computeAttention()
+  bool signalAcknowledgement()
   {
-    supervisor_msgs::AgentActivity robotState;
-    head_manager::Signal current_signal;
-    geometry_msgs::PointStamped goal_directed_attention;
-    float temporal_factor=0.2;
-    //Input reading
-
-
-    if(!agent_activity_map_.empty())
+    if(current_signal_.receivers.size()>0)
     {
-      if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
+      for (int i = 0; i < current_signal_.receivers.size(); ++i)
       {
-        //process
-        robotState = agent_activity_map_.find(my_id_)->second;
-        if (robotState.activityState=="ACTING")
+        if(ack_map_.find(current_signal_.receivers[i])==ack_map_.end())
         {
-          //IF ROBOT ACTING
-          focus_= 1.0;
-          current_entity_=getEntity(robotState.object);
-          if (robotState.stopable==true)
+          return(false);
+          if(ack_map_.find(current_signal_.receivers[i])->second!=true)
           {
-            if (!signal_list_.empty())
-            {
-              focus_ = 1.0;
-              updateSignalList();
-              if(selectSignal(current_signal))
-              {
-                signal_start_time_ = ros::Time::now();
-                if(signaling_==true)
-                {
-                  //signal interuption
-                  //send current signal to the queue
-                  signal_pub_.publish(current_signal_);
-                } else {
-                  signaling_=true;
-                }
-                current_signal_=current_signal;
-              }
-            }
-            //if(robotState.weight<)
-          }
-        }else {
-          // IF ROBOT WAITING/IDLE
-          focus_= 0.0;
-        }
-        // If signal received
-        if (!signal_list_.empty())
-        {
-          focus_ = 1.0;
-          updateSignalList();
-          if(selectSignal(current_signal))
-          {
-            signal_start_time_ = ros::Time::now();
-            if(signaling_==true)
-            {
-              //signal interuption
-              //send current signal to the queue
-              signal_pub_.publish(current_signal_);
-            } else {
-              signaling_=true;
-            }
-            current_signal_=current_signal;
+            return(false);
           }
         }
-
-        if (signaling_=true)
-        {
-          if (current_signal_it_ < current_signal_.entities.size())
-          {
-            focus_=1.0;
-            ros::Duration duration(current_signal_.durations[current_signal_it_]);
-            if(ros::Time::now() > signal_start_time_+ duration)
-            {
-              if(current_signal_it_==current_signal_.entities.size()-1)
-              {
-                current_signal_it_=0;
-                signaling_=false;
-                focus_=0.0;
-              }else{
-                current_signal_it_++;
-                signal_start_time_ = ros::Time::now();
-              }
-            }
-            current_entity_=getEntity(current_signal.entities[current_signal_it_]);
-          }
-        }
-        //Publish
-        goal_directed_attention.header.stamp = ros::Time::now();
-        goal_directed_attention.header.frame_id = "map";
-        goal_directed_attention.point = current_entity_.pose.position;
-        goal_directed_attention_pub_.publish(goal_directed_attention);
-        head_manager::Focus focus;
-        focus.header=goal_directed_attention.header;
-        focus.data=focus_;
-        focus_pub_.publish(focus);
       }
     }
-  }*/
-
+    return(true);
+  }
 private:
   /****************************************************
    * @brief : Update the activity state map
@@ -707,53 +706,65 @@ private:
    ****************************************************/
   void activityCallback(const supervisor_msgs::AgentActivity::ConstPtr& msg,std::string id)
   {
-    bool succeed=false;
+    bool find=false;
     ActivityMap_t::iterator it = agent_activity_map_.begin();
     supervisor_msgs::AgentActivity robotState;
+    bool robotWasActing=false;
+    bool robotIsActing=false;
+    head_manager::Signal sig;
 
-    if(agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
-    {
-      robotState = agent_activity_map_.find(my_id_)->second;
-      if (robotState.activityState=="ACTING")
-      {
-        if(id!=my_id_ && msg->activityState=="ACTING" && msg->unexpected==false)
-        {
-          //send signal
-          head_manager::Signal sig;
-          sig.entities[0]=msg->object;
-          sig.durations[0]=0.2;
-          sig.entities[1]=id+"::rightHand";
-          sig.durations[1]=0.0;
-          sig.entities[2]=id+"::head";
-          sig.durations[2]=0.5;
-          sig.urgency=0.68;
-          sig.importancy=1.0;
-        }
-        if(id!=my_id_ && msg->activityState=="ACTING" && msg->unexpected==true)
-        {
-          //send signal
-          head_manager::Signal sig;
-          sig.entities[0]=msg->object;
-          sig.durations[0]=0.2;
-          sig.urgency=0.98;
-          sig.importancy=0.9;
-        }
-      }
-    }
-    // Update activity map
-    while( it != agent_activity_map_.end()  && succeed==false)
+    while( it != agent_activity_map_.end()  && find==false)
     {
       if (it->first == id)
       {
         it->second=*msg;
-        succeed=true;
+        find=true;
       }
     }
-    if (succeed==false)
+    if (find==false)
     {
       agent_activity_map_.insert(ActivityPair_t(id,*msg));
     }
+
+    if(agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
+    {
+      if(agent_activity_map_.find(my_id_)->second.activityState=="ACTING")
+      {
+        robotIsActing=true;
+      }
+    }
+    if(robotIsActing)
+      state_machine_->process_event(acting());
+    if(!robotIsActing)
+      state_machine_->process_event(waiting());
+
+    if (robotIsActing && id!=my_id_ && msg->activityState=="ACTING")
+    {
+      if (msg->unexpected==false)
+      {
+        // If a human do an expected action regarding to the plan during
+        // robot action we send a signal to queue
+        sig.entities[0]=msg->object;
+        sig.durations[0]=0.2;
+        sig.urgency=0.98;
+        sig.importancy=0.9;
+      } else {
+        // If a human do an unexpected action regarding to the plan during
+        // robot action we send a signal to queue
+        sig.entities[0]=msg->object;
+        sig.durations[0]=0.2;
+        sig.entities[1]=id+"::rightHand";
+        sig.durations[1]=0.0;
+        sig.entities[2]=id+"::head";
+        sig.durations[2]=0.5;
+        sig.urgency=0.68;
+        sig.importancy=1.0;
+      }
+      signal_pub_.publish(sig);
+    } 
+      
   }
+
   /****************************************************
    * @brief : Update the object list
    * @param : object list
@@ -861,46 +872,49 @@ private:
   }
 };
 
-void GoalDirectedAttentionStateMachine_::start_action_focusing(start_acting const&)
+void GoalDirectedAttentionStateMachine_::focus_action(acting const&)
 {
-  goal_directed_attention_->startActionFocusing();
+  goal_directed_attention_->focusOnAction();
 }
 
-void GoalDirectedAttentionStateMachine_::stop_action_focusing(stop_acting const&)
+void GoalDirectedAttentionStateMachine_::allow_distraction(waiting const&)
 {
-  goal_directed_attention_->stopActionFocusing();
+  goal_directed_attention_->allowDistraction();
 }
 
-void GoalDirectedAttentionStateMachine_::start_signal_focusing(start_signaling const&)
+void GoalDirectedAttentionStateMachine_::start_focus_signal(start_signaling const&)
 {
   goal_directed_attention_->startSignalFocusing();
 }
 
-void GoalDirectedAttentionStateMachine_::stop_signal_focusing(stop_signaling const&)
+void GoalDirectedAttentionStateMachine_::focus_signal(signaling const&)
 {
-  goal_directed_attention_->stopSignalFocusing();
+  goal_directed_attention_->focusOnSignal();
 }
 
-bool GoalDirectedAttentionStateMachine_::isMoreUrgent(start_signaling const& s)
+bool GoalDirectedAttentionStateMachine_::signalUrgent(start_signaling const& s)
 {
-
-  if (goal_directed_attention_->isMoreUrgent(s.signal_received)==true)
+  if (goal_directed_attention_->isSignalUrgent(s.signal_received)==true)
   {
     return(true);
   }
   return(false);
 }
-bool GoalDirectedAttentionStateMachine_::isStopable(start_signaling const& s)
+bool GoalDirectedAttentionStateMachine_::actionStopableAndSignalUrgent(start_signaling const& s)
 {
-  if (goal_directed_attention_->isStopable()==true)
+  if (goal_directed_attention_->isActionStopable()==true)
   {
-    if (goal_directed_attention_->isMoreUrgent(s.signal_received)==true)
+    if (goal_directed_attention_->isSignalUrgent(s.signal_received)==true)
     {
       return(true);
     }
     return(false);
   }
   return(false);
+}
+bool GoalDirectedAttentionStateMachine_::signalAcknowledgement(stop_signaling const&)
+{
+  goal_directed_attention_->signalAcknowledgement();
 }
 /****************************************************
  * @brief : Main process function

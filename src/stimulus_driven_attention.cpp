@@ -20,8 +20,6 @@
 #include <dynamic_reconfigure/server.h>
 #include <head_manager/StimulusDrivenAttentionConfig.h>
 
-#include "../include/toaster-lib/MathFunctions.h"
-
 #include "head_manager/StampedMap.h"
 
 using namespace std;

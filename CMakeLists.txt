@@ -30,7 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   toaster_msgs
   dynamic_reconfigure
-  supervisor_msgs
+  tf
 )
 
 pkg_check_modules(pr2motion-genom3 REQUIRED pr2motion-genom3)
