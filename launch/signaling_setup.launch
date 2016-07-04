@@ -1,0 +1,11 @@
+<launch>
+	<!-- Loading parameters -->
+	<param name="my_robot_id" value="pr2" />
+	<rosparam command="load" file="$(find head_manager)/param/object_offset.yaml" />
+	<!--<node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" />-->
+
+	<!-- Launching signaling nodes -->
+	<node name="stimulus_driven_attention" pkg="head_manager" type="stimulus_driven_attention" output="screen" />
+	<node name="sensitive_reorientation" pkg="head_manager" type="sensitive_reorientation" output="screen" />
+	<node name="goal_directed_attention" pkg="head_manager" type="goal_directed_attention" output="screen" />
+</launch>

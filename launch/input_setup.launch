@@ -1,0 +1,22 @@
+<launch>
+	
+	<!-- Launch the pdg -->
+	<node name="pdg" pkg="pdg" type="pdg"/>
+
+	<!-- Launch the agent monitor -->
+	<node name="agent_monitor" pkg="agent_monitor" type="agent_monitor" output="screen" /> 
+    
+    <!-- Launch the area monitor -->
+    <node name="area_manager" pkg="area_manager" type="area_manager" output="screen" />  
+
+    <!-- Launch the visualization of toaster -->
+	<node name="toaster_visualizer" pkg="toaster_visualizer" type="toaster_visualizer" output="screen" /> 
+
+	<!-- Launch toaster simu -->
+	<node name="toaster_simu" pkg="toaster_simu" type="toaster_simu" output="screen" />  
+
+	<!-- Launch the toaster database -->
+    <!--node name="run_server" pkg="database_manager" type="run_server" output="screen"/-->  
+    <include file="$(find database_manager)/launch/Database.launch"/>
+	
+</launch>
