@@ -149,7 +149,7 @@ struct GoalDirectedAttentionStateMachine_ : public msm::front::state_machine_def
        row < Acting               , start_signaling , SignalingFromActing  , &sm::start_focus_signal   , &sm::actionStopableAndSignalUrgent  >,
     a_irow < Acting               , acting          ,                        &sm::focus_action                                               >,
        //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
-      row < SignalingFromActing  , stop_signaling  , Acting                , &sm::stop_focus_signal    , &sm::signalAcknowledgement          >,
+       row < SignalingFromActing  , stop_signaling  , Acting               , &sm::stop_focus_signal    , &sm::signalAcknowledgement          >,
       irow < SignalingFromActing  , start_signaling                        , &sm::start_focus_signal   , &sm::signalUrgent                   >,
     a_irow < SignalingFromActing  , signaling                              , &sm::focus_signal                                               >,
        //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
@@ -193,16 +193,16 @@ private:
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
   ros::Subscriber signal_sub_; //!< signal subscriber
   ros::Publisher goal_directed_attention_pub_; //!< goal_directed attention publisher
-  ros::Publisher signal_pub_; //!<
+  ros::Publisher signal_pub_; //!< signal publisher
   ros::Publisher focus_pub_; //!< focus publisher
-  int current_signal_it_; //!<
+  int current_signal_it_; //!< 
   ros::Time signal_it_time_; //!<
   GoalDirectedAttentionStateMachine * state_machine_; //!<
   double urgencyThreshold_; //!<
   ParamServer_t goal_directed_dyn_param_srv; //!<
   AckMap_t ack_map_; //!< acknowledgement map;
   head_manager::Signal current_signal_; //!<
-  bool signaling_;
+  bool signaling_; //!<
 
 public:
   /****************************************************
@@ -622,27 +622,34 @@ public:
   {
     geometry_msgs::PointStamped goal_directed_attention;
     head_manager::Focus focus;
-    if (current_signal_it_ < current_signal_.entities.size())
+    if (current_signal_.entities.size()==current_signal_.durations.size())
     {
-      ros::Duration duration(current_signal_.durations[current_signal_it_]);
-      if(ros::Time::now() > signal_it_time_+ duration)
+      if (current_signal_it_ < current_signal_.entities.size()-1)
       {
-        current_signal_it_++;
-        signal_it_time_ = ros::Time::now();
-        if (current_signal_it_ > current_signal_.entities.size())
+        ros::Duration duration(current_signal_.durations[current_signal_it_]);
+        if (current_signal_it_ > current_signal_.entities.size()-1)
         {
           state_machine_->process_event(stop_signaling());
         }
+        if(ros::Time::now() > signal_it_time_+ duration)
+        {
+          current_signal_it_++;
+          signal_it_time_ = ros::Time::now();  
+        }
+        
+        goal_directed_attention.header.stamp = ros::Time::now();
+        goal_directed_attention.header.frame_id = "map";
+        goal_directed_attention.point=getEntity(current_signal_.entities[current_signal_it_]).pose.position;
+        goal_directed_attention_pub_.publish(goal_directed_attention);
+        focus.header=goal_directed_attention.header;
+        focus.data=1.0;
+        focus_pub_.publish(focus);
+      } else {
+        state_machine_->process_event(stop_signaling());
       }
-      goal_directed_attention.header.stamp = ros::Time::now();
-      goal_directed_attention.header.frame_id = "map";
-      goal_directed_attention.point=getEntity(current_signal_.entities[current_signal_it_]).pose.position;
-      goal_directed_attention_pub_.publish(goal_directed_attention);
-      focus.header=goal_directed_attention.header;
-      focus.data=1.0;
-      focus_pub_.publish(focus);
     } else {
       state_machine_->process_event(stop_signaling());
+      throw HeadManagerException ("Current signal bad format !");
     }
   }
   bool isSignalUrgent(head_manager::Signal signal)
@@ -774,8 +781,7 @@ private:
         sig.importancy=1.0;
       }
       signal_pub_.publish(sig);
-    } 
-      
+    }       
   }
 
   /****************************************************
