@@ -4,7 +4,7 @@
 #include <actionlib/client/terminal_state.h>
 #include <pr2motion/InitAction.h>
 #include <pr2motion/connect_port.h>
-#include <pr2motion/Head_MoveAction.h>
+#include <pr2motion/Head_Move_TargetAction.h>
 #include <pr2motion/Head_Stop.h>
 #include <geometry_msgs/PointStamped.h>
 #include "head_manager/Focus.h"
@@ -15,7 +15,7 @@
 using namespace std;
 
 typedef actionlib::SimpleActionClient<pr2motion::InitAction> InitActionClient_t;
-typedef actionlib::SimpleActionClient<pr2motion::Head_MoveAction> HeadActionClient_t;
+typedef actionlib::SimpleActionClient<pr2motion::Head_Move_TargetAction> HeadActionClient_t;
 typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PointStamped, geometry_msgs::PointStamped, head_manager::Focus> MySyncPolicy;
 
 class SensitiveReorientation
@@ -84,7 +84,7 @@ private:
 
   void lookAt(geometry_msgs::PointStamped p)
   {
-    pr2motion::Head_MoveGoal goal;
+    pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
     goal.head_target_x = p.point.x;
