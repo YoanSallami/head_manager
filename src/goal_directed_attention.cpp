@@ -241,9 +241,7 @@ public:
   /****************************************************
    * @brief : Default destructor
    ****************************************************/
-  ~GoalDirectedAttention(){
-    state_machine_->stop();
-  }
+  ~GoalDirectedAttention(){}
 
   /****************************************************
    * @brief : Get entity from object/human/robot list
