@@ -622,19 +622,19 @@ public:
     head_manager::Focus focus;
     if (current_signal_.entities.size()==current_signal_.durations.size())
     {
-      if (current_signal_it_ < current_signal_.entities.size()-1)
+      if (current_signal_it_ <= current_signal_.entities.size()-1)
       {
         ros::Duration duration(current_signal_.durations[current_signal_it_]);
-        if (current_signal_it_ > current_signal_.entities.size()-1)
-        {
-          state_machine_->process_event(stop_signaling());
-        }
         if(ros::Time::now() > signal_it_time_+ duration)
         {
-          current_signal_it_++;
-          signal_it_time_ = ros::Time::now();  
+          if (current_signal_it_ == current_signal_.entities.size()-1)
+          {
+            state_machine_->process_event(stop_signaling());
+          } else {
+            current_signal_it_++;
+            signal_it_time_ = ros::Time::now();
+          } 
         }
-        
         goal_directed_attention.header.stamp = ros::Time::now();
         goal_directed_attention.header.frame_id = "map";
         goal_directed_attention.point=getEntity(current_signal_.entities[current_signal_it_]).pose.position;
@@ -642,8 +642,6 @@ public:
         focus.header=goal_directed_attention.header;
         focus.data=1.0;
         focus_pub_.publish(focus);
-      } else {
-        state_machine_->process_event(stop_signaling());
       }
     } else {
       state_machine_->process_event(stop_signaling());
