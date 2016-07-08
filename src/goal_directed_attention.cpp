@@ -7,6 +7,7 @@
 #include "head_manager/Sync.h"
 #include "head_manager/Signal.h"
 #include "head_manager/Focus.h"
+#include "head_manager/AttentionStamped.h"
 #include "geometry_msgs/PointStamped.h"
 #include "std_msgs/Header.h"
 
@@ -193,6 +194,7 @@ private:
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
   ros::Subscriber signal_sub_; //!< signal subscriber
   ros::Publisher goal_directed_attention_pub_; //!< goal_directed attention publisher
+  ros::Publisher goal_directed_attention_vizu_pub_; //!< goal_directed attention publisher
   ros::Publisher signal_pub_; //!< signal publisher
   ros::Publisher focus_pub_; //!< focus publisher
   int current_signal_it_; //!< 
@@ -226,7 +228,8 @@ public:
     fact_list_sub_ = node_.subscribe("/pdg/factList", 1, &GoalDirectedAttention::factListCallback, this);
     signal_sub_ = node_.subscribe("head_manager/signal", 10, &GoalDirectedAttention::signalCallback, this);
     // Advertise publishers
-    goal_directed_attention_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/goal_directed_attention", 5);
+    goal_directed_attention_pub_ = node_.advertise<head_manager::AttentionStamped>("head_manager/goal_directed_attention", 5);
+    goal_directed_attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/goal_directed_attention_visualization", 5);
     focus_pub_ = node_.advertise <head_manager::Focus> ("head_manager/focus", 5);
     signal_pub_ = node_.advertise <head_manager::Signal> ("head_manager/signal", 10);
     // Dyn param server
@@ -398,7 +401,6 @@ public:
               {
                 return (robot_list_[i].meAgent.skeletonJoint[j].meEntity);
               }
-
             }
           } else {
             throw HeadManagerException ( "Could not get robot joint entity :\""+jointId+"\" in an empty skeletonJoint list." );
@@ -546,7 +548,8 @@ public:
 public:
   void focusOnAction()
   {
-    geometry_msgs::PointStamped goal_directed_attention;
+    head_manager::AttentionStamped goal_directed_attention;
+    geometry_msgs::PointStamped goal_directed_attention_vizu;
     head_manager::Focus focus;
     supervisor_msgs::AgentActivity robotActivityState;
 
@@ -557,12 +560,20 @@ public:
         robotActivityState = agent_activity_map_.find(my_id_)->second;
         if (robotActivityState.activityState=="ACTING")
         {
-          goal_directed_attention.header.stamp = ros::Time::now();
+          goal_directed_attention_vizu.point = getEntity(robotActivityState.object).pose.position;
+          goal_directed_attention_vizu.header.stamp = ros::Time::now();
           goal_directed_attention.header.frame_id = "map";
-          goal_directed_attention.point = getEntity(robotActivityState.object).pose.position;
-          goal_directed_attention_pub_.publish(goal_directed_attention);
+
+          goal_directed_attention.header = goal_directed_attention.header;
+          goal_directed_attention.point = goal_directed_attention_vizu.point;
+          goal_directed_attention.id = robotActivityState.object;
+          goal_directed_attention.object = isObject(robotActivityState.object);
+
           focus.header=goal_directed_attention.header;
           focus.data=1.0;
+
+          goal_directed_attention_vizu_pub_.publish(goal_directed_attention_vizu);
+          goal_directed_attention_pub_.publish(goal_directed_attention);
           focus_pub_.publish(focus);
         } else {
           throw HeadManagerException("Could not focus to action, robot is not acting anymore !");
@@ -577,7 +588,8 @@ public:
 
   void allowDistraction()
   {
-    geometry_msgs::PointStamped goal_directed_attention;
+    geometry_msgs::PointStamped goal_directed_attention_vizu;
+    head_manager::AttentionStamped goal_directed_attention;
     geometry_msgs::Vector3 tempPoint;
     tf::Vector3 tempPointTF;
     geometry_msgs::Vector3 resultVec;
@@ -595,15 +607,22 @@ public:
     resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
     tf::vector3TFToMsg(resultVecTF,resultVec);
 
-    goal_directed_attention.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
-    goal_directed_attention.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
-    goal_directed_attention.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
-    goal_directed_attention.header.stamp = ros::Time::now();
-    goal_directed_attention.header.frame_id = "map";
-    
-    goal_directed_attention_pub_.publish(goal_directed_attention);
+    goal_directed_attention_vizu.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
+    goal_directed_attention_vizu.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
+    goal_directed_attention_vizu.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
+    goal_directed_attention_vizu.header.stamp = ros::Time::now();
+    goal_directed_attention_vizu.header.frame_id = "map";
+
+    goal_directed_attention.header = goal_directed_attention_vizu.header;
+    goal_directed_attention.point = goal_directed_attention_vizu.point;
+    goal_directed_attention.object = false;
+    goal_directed_attention.id = "Waiting";
+
     focus.header=goal_directed_attention.header;
     focus.data=0.0;
+    
+    goal_directed_attention_vizu_pub_.publish(goal_directed_attention_vizu);
+    goal_directed_attention_pub_.publish(goal_directed_attention);
     focus_pub_.publish(focus);
   }
   void startSignalFocusing()
@@ -618,7 +637,8 @@ public:
   }
   void focusOnSignal()
   {
-    geometry_msgs::PointStamped goal_directed_attention;
+    geometry_msgs::PointStamped goal_directed_attention_vizu;
+    head_manager::AttentionStamped goal_directed_attention;
     head_manager::Focus focus;
     if (current_signal_.entities.size()==current_signal_.durations.size())
     {
@@ -635,12 +655,20 @@ public:
             signal_it_time_ = ros::Time::now();
           } 
         }
-        goal_directed_attention.header.stamp = ros::Time::now();
-        goal_directed_attention.header.frame_id = "map";
-        goal_directed_attention.point=getEntity(current_signal_.entities[current_signal_it_]).pose.position;
-        goal_directed_attention_pub_.publish(goal_directed_attention);
+        goal_directed_attention_vizu.header.stamp = ros::Time::now();
+        goal_directed_attention_vizu.header.frame_id = "map";
+        goal_directed_attention_vizu.point = getEntity(current_signal_.entities[current_signal_it_]).pose.position;
+
+        goal_directed_attention.header = goal_directed_attention_vizu.header;
+        goal_directed_attention.point = goal_directed_attention_vizu.point;
+        goal_directed_attention.object = isObject(current_signal_.entities[current_signal_it_]);
+        goal_directed_attention.id = current_signal_.entities[current_signal_it_];
+
         focus.header=goal_directed_attention.header;
         focus.data=1.0;
+
+        goal_directed_attention_vizu_pub_.publish(goal_directed_attention_vizu);
+        goal_directed_attention_pub_.publish(goal_directed_attention);
         focus_pub_.publish(focus);
       }
     } else {

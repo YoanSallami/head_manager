@@ -19,8 +19,9 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <head_manager/StimulusDrivenAttentionConfig.h>
+#include "head_manager/AttentionStamped.h"
 
-#include "head_manager/StampedMap.h"
+#include "head_manager/MapStamped.h"
 
 using namespace std;
 
@@ -57,6 +58,7 @@ private:
   ros::Subscriber human_list_sub_; //!< human list subscriber
   ros::Subscriber robot_list_sub_; //!< robot list subscriber
   ros::Publisher salient_stimuli_pub_; //!< sensitive goal publisher
+  ros::Publisher salient_stimuli_vizu_pub_; //!< sensitive goal publisher
   ros::Publisher saliency_map_pub_; //!< saliency map publisher
   ros::ServiceServer inhibition_of_return_srv_; //!< inhibition of return service
   ParamServer_t stimulu_driven_dyn_param_srv; //!<
@@ -89,8 +91,9 @@ public:
     robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &StimulusDrivenAttention::robotListCallback, this);
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &StimulusDrivenAttention::factListCallback, this);
     // Advertise publishers
-    salient_stimuli_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/salient_stimuli", 1);
-    saliency_map_pub_ = node_.advertise<head_manager::StampedMap>("head_manager/saliency_map",1);
+    salient_stimuli_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/salient_stimuli_vizualisation", 5);
+    salient_stimuli_pub_ = node_.advertise<head_manager::AttentionStamped>("head_manager/salient_stimuli", 5);
+    saliency_map_pub_ = node_.advertise<head_manager::MapStamped>("head_manager/saliency_map",1);
     // Advertise services
     // Dyn param server
     stimulu_driven_dyn_param_srv.setCallback(boost::bind(&StimulusDrivenAttention::dynParamCallback, this, _1, _2));
@@ -261,7 +264,7 @@ public:
    ****************************************************/
   void sendSaliencyMap()
   {
-    head_manager::StampedMap map;
+    head_manager::MapStamped map;
     map.header.stamp = ros::Time::now();
     SaliencyMap_t::iterator it;
 
@@ -277,29 +280,12 @@ public:
    ****************************************************/
   void sendSalientStimuli(SaliencyPair_t salient)
   {
-    geometry_msgs::PointStamped attention_point;
+    geometry_msgs::PointStamped salient_attention_point_vizu;
+    head_manager::AttentionStamped salient_attention_point;
     toaster_msgs::Entity entity;
     if(salient.first!="Waiting")
     {
-      if(!isObject(salient.first))
-      {
-        if (isJoint(salient.first))
-        {
-          size_t pos = salient.first.find("::");
-          if(isHuman(salient.first.substr(0,pos)))
-            entity = getHumanJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
-          else
-            entity = getRobotJoint(salient.first.substr(0,pos),salient.first.substr(pos+2,salient.first.size()-1));
-        } else {
-          if(isHuman(salient.first))
-            entity = getHuman(salient.first);
-          else
-            entity = getRobot(salient.first);
-        }
-      } else {
-        entity = getObject(salient.first);
-      }
-      attention_point.point = entity.pose.position;
+      salient_attention_point_vizu.point = getEntity(salient.first).pose.position;
     } else {
       geometry_msgs::Vector3 tempPoint;
       tf::Vector3 tempPointTF;
@@ -313,13 +299,25 @@ public:
       geometry_msgs::Vector3 resultVec;
       resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
       tf::vector3TFToMsg(resultVecTF,resultVec);
-      attention_point.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
-      attention_point.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
-      attention_point.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
+      salient_attention_point_vizu.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
+      salient_attention_point_vizu.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
+      salient_attention_point_vizu.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
     }
-    attention_point.header.frame_id="map";
-    attention_point.header.stamp=ros::Time::now();
-    salient_stimuli_pub_.publish(attention_point);  
+    salient_attention_point_vizu.header.frame_id="map";
+    salient_attention_point_vizu.header.stamp=ros::Time::now();
+
+    salient_attention_point.header = salient_attention_point_vizu.header;
+    salient_attention_point.point = salient_attention_point_vizu.point;
+    salient_attention_point.id = salient.first;
+    if (salient.first!="Waiting")
+    {
+      salient_attention_point.object = isObject(salient.first);
+    } else {
+      salient_attention_point.object = false;
+    }
+    
+    salient_stimuli_pub_.publish(salient_attention_point); 
+    salient_stimuli_vizu_pub_.publish(salient_attention_point_vizu);  
   }
 private:
   bool normalizeMap(SaliencyMap_t& map)

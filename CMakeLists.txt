@@ -38,9 +38,10 @@ pkg_check_modules(pr2motion-genom3 REQUIRED pr2motion-genom3)
 
 add_message_files(
    FILES
-   StampedMap.msg
+   MapStamped.msg
    Signal.msg
    Focus.msg
+   AttentionStamped.msg
 )
 
 add_service_files(
