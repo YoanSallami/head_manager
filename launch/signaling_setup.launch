@@ -1,6 +1,6 @@
 <launch>
 	<!-- Loading parameters -->
-	<param name="my_robot_id" value="pr2" />
+	<param name="my_robot_id" value="PR2_ROBOT" />
 	<rosparam command="load" file="$(find head_manager)/param/object_offset.yaml" />
 	<!--<node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" />-->
 
