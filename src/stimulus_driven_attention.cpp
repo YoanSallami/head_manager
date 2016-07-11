@@ -138,6 +138,8 @@ public:
     {
       for (FactList_t::iterator it_fl = fact_list_.begin() ; it_fl != fact_list_.end() ; ++it_fl )
       {
+        if (it_fl->subjectId.find_first_of(" ")==std::string::npos && it_fl->targetId.find_first_of(" ")==std::string::npos)
+        {
         if (it_fl->subjectId!=my_id_)
         {
           if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction" && it_fl->subjectId=="rightHand")
