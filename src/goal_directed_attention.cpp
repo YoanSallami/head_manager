@@ -838,12 +838,13 @@ private:
       robot_list_.clear();
       for (unsigned int i = 0; i < msg->robotList.size(); ++i)
       {
+        if (msg->robotList[i].meAgent.meEntity.id =="pr2")
+        {
+          msg->robotList[i].meAgent.meEntity.id ="PR2_ROBOT";
+        }
         robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
         std::string id = msg->robotList[i].meAgent.meEntity.id;
-        if (id =="pr2")
-        {
-          id="PR2_ROBOT";
-        }
+        
         std::string topicName = "/supervisor/activity_state/"+id;
         if (agent_activity_sub_map_.find(id) == agent_activity_sub_map_.end())
         {
