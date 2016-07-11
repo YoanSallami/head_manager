@@ -647,6 +647,7 @@ public:
         ros::Duration duration(current_signal_.durations[current_signal_it_]);
         if(ros::Time::now() > signal_it_time_+ duration)
         {
+          ROS_ERROR("Changement focus signal")
           if (current_signal_it_ == current_signal_.entities.size()-1)
           {
             state_machine_->process_event(stop_signaling());
