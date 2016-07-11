@@ -140,91 +140,92 @@ public:
       {
         if (it_fl->subjectId.find_first_of(" ")==std::string::npos && it_fl->targetId.find_first_of(" ")==std::string::npos)
         {
-        if (it_fl->subjectId!=my_id_)
-        {
-          if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction" && it_fl->subjectId=="rightHand")
+          if (it_fl->subjectId!=my_id_)
           {
-            if (it_fl->targetId!=my_id_)
+            if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction" && it_fl->subjectId=="rightHand")
             {
-              target=directionSaliency_map.find(it_fl->targetId);
-              if ( target != directionSaliency_map.end() )
+              if (it_fl->targetId!=my_id_)
               {
-                target->second+=it_fl->doubleValue;
-              } else {
-                throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
+                target=directionSaliency_map.find(it_fl->targetId);
+                if ( target != directionSaliency_map.end() )
+                {
+                  target->second+=it_fl->doubleValue;
+                } else {
+                  throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
+                }
               }
             }
-          }
-          if ( it_fl->property == "IsLookingToward" )
-          {
-            if (it_fl->targetId!=my_id_)
+            if ( it_fl->property == "IsLookingToward" )
             {
-              target=lookingSaliency_map.find(it_fl->targetId);
-              if ( target != lookingSaliency_map.end() )
+              if (it_fl->targetId!=my_id_)
               {
-                target->second+=it_fl->doubleValue;
-              } else {
-                throw HeadManagerException ("Could not find "+it_fl->targetId+" in looking saliency map.");
-              }
-            }else{
-              subject=lookingSaliency_map.find(it_fl->subjectId+"::head");
-              if ( subject != lookingSaliency_map.end() )
-              {
-                subject->second+=it_fl->doubleValue;
-              } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+"::"+it_fl->subjectId+" in looking saliency map.");
+                target=lookingSaliency_map.find(it_fl->targetId);
+                if ( target != lookingSaliency_map.end() )
+                {
+                  target->second+=it_fl->doubleValue;
+                } else {
+                  throw HeadManagerException ("Could not find "+it_fl->targetId+" in looking saliency map.");
+                }
+              }else{
+                subject=lookingSaliency_map.find(it_fl->subjectId+"::head");
+                if ( subject != lookingSaliency_map.end() )
+                {
+                  subject->second+=it_fl->doubleValue;
+                } else {
+                  throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+"::"+it_fl->subjectId+" in looking saliency map.");
+                }
               }
             }
-          }
-          if ( it_fl->property == "IsMoving")
-          {
-            if ( it_fl->subProperty == "joint")
+            if ( it_fl->property == "IsMoving")
             {
-              subject=movingSaliency_map.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
-              if ( subject != movingSaliency_map.end() )
+              if ( it_fl->subProperty == "joint")
               {
-                subject->second+=it_fl->doubleValue;
-              } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in moving saliency map.");
+                subject=movingSaliency_map.find(it_fl->subjectOwnerId+"::"+it_fl->subjectId);
+                if ( subject != movingSaliency_map.end() )
+                {
+                  subject->second+=it_fl->doubleValue;
+                } else {
+                  throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in moving saliency map.");
+                }
+              }
+              if ( it_fl->subProperty == "agent")
+              { 
+                subject=movingSaliency_map.find(it_fl->subjectId+"::head");
+                if ( subject != movingSaliency_map.end() )
+                {
+                  subject->second+=it_fl->doubleValue;
+                } else {
+                  throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in movingsaliency map.");
+                }
               }
             }
-            if ( it_fl->subProperty == "agent")
-            { 
-              subject=movingSaliency_map.find(it_fl->subjectId+"::head");
-              if ( subject != movingSaliency_map.end() )
-              {
-                subject->second+=it_fl->doubleValue;
-              } else {
-                throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in movingsaliency map.");
-              }
-            }
-          }
-        } else if (it_fl->subjectId==my_id_)
-        {
-          //Inhibition of return
-          if (it_fl->property == "IsLookingToward" )
+          } else if (it_fl->subjectId==my_id_)
           {
-            if(isHuman(it_fl->targetId))
+            //Inhibition of return
+            if (it_fl->property == "IsLookingToward" )
             {
-              // humans
-              target=inhibition_map.find(it_fl->targetId+"::head");
-              if ( target != inhibition_map.end() )
+              if(isHuman(it_fl->targetId))
               {
-                target->second+=it_fl->doubleValue;
+                // humans
+                target=inhibition_map.find(it_fl->targetId+"::head");
+                if ( target != inhibition_map.end() )
+                {
+                  target->second+=it_fl->doubleValue;
+                } else {
+                  throw HeadManagerException ("Could not find "+it_fl->targetId+"::head in inhibition map.");
+                }
               } else {
-                throw HeadManagerException ("Could not find "+it_fl->targetId+"::head in inhibition map.");
-              }
-            } else {
-              // ojects
-              target=inhibition_map.find(it_fl->targetId);
-              if ( target != inhibition_map.end() )
-              {
-                target->second+=it_fl->doubleValue;
-              } else {
-                throw HeadManagerException ("Could not find "+it_fl->targetId+" in inhibition map.");
-              }
-            }//TODO add case for others robots
-            
+                // ojects
+                target=inhibition_map.find(it_fl->targetId);
+                if ( target != inhibition_map.end() )
+                {
+                  target->second+=it_fl->doubleValue;
+                } else {
+                  throw HeadManagerException ("Could not find "+it_fl->targetId+" in inhibition map.");
+                }
+              }//TODO add case for others robots
+              
+            }
           }
         }
       }
