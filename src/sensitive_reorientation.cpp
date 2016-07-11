@@ -89,8 +89,6 @@ private:
   void lookAtObject(geometry_msgs::PointStamped p)
   {
     std_msgs::Bool enable_detect_tag;
-    enable_detect_tag.data=false;
-    tag_detection_pub_.publish(enable_detect_tag);
     pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
@@ -100,12 +98,16 @@ private:
     head_action_client_->sendGoal(goal);
 
     bool finishedBeforeTimeout = head_action_client_->waitForResult(ros::Duration(300.0));
-    enable_detect_tag.data=true;
-    tag_detection_pub_.publish(enable_detect_tag);
+    
     if (finishedBeforeTimeout)
     {
       actionlib::SimpleClientGoalState state = head_action_client_->getState();
       ROS_INFO("[sensitive_reorientation] Action finished: %s",state.toString().c_str());
+      enable_detect_tag.data=true;
+      tag_detection_pub_.publish(enable_detect_tag);
+      ros::Duration(0.3).sleep();
+      enable_detect_tag.data=false;
+      tag_detection_pub_.publish(enable_detect_tag);
     }
     else
       ROS_INFO("[sensitive_reorientation] Action did not finish before the time out.");
