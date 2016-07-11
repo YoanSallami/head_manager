@@ -833,17 +833,19 @@ private:
    ****************************************************/
   void robotListCallback(const toaster_msgs::RobotListStamped::ConstPtr& msg)
   {
+
     if(!msg->robotList.empty())
     {
       robot_list_.clear();
       for (unsigned int i = 0; i < msg->robotList.size(); ++i)
       {
-        if (msg->robotList[i].meAgent.meEntity.id =="pr2")
+        toaster_msgs::Robot robot(msg->robotList[i]);
+        if (robot.meAgent.meEntity.id =="pr2")
         {
-          msg->robotList[i].meAgent.meEntity.id ="PR2_ROBOT";
+          robot.meAgent.meEntity.id ="PR2_ROBOT";
         }
-        robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
-        std::string id = msg->robotList[i].meAgent.meEntity.id;
+        robot_list_.push_back(*(new toaster_msgs::Robot(robot)));
+        std::string id = robot.meAgent.meEntity.id;
         
         std::string topicName = "/supervisor/activity_state/"+id;
         if (agent_activity_sub_map_.find(id) == agent_activity_sub_map_.end())
