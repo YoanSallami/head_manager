@@ -843,6 +843,7 @@ private:
         std::string topicName = "/supervisor/activity_state/"+id;
         if (agent_activity_sub_map_.find(id) == agent_activity_sub_map_.end())
         {
+          ROS_INFO("[goal_directed_attention] Subscribing to %s robot activity state",id.c_str());
           ros::Subscriber sub = node_.subscribe<supervisor_msgs::AgentActivity>((const string)topicName, 1,boost::bind(&GoalDirectedAttention::activityCallback,this,_1,id));
           agent_activity_sub_map_.insert(SubscriberPair_t(id,sub));
         }
@@ -869,6 +870,7 @@ private:
         std::string topicName = "/supervisor/activity_state/"+id;
         if (agent_activity_sub_map_.find(id) == agent_activity_sub_map_.end())
         {
+          ROS_INFO("[goal_directed_attention] Subscribing to %s human activity state",id.c_str());
           ros::Subscriber sub = node_.subscribe<supervisor_msgs::AgentActivity>((const string)topicName, 1,boost::bind(&GoalDirectedAttention::activityCallback,this,_1,id));
           agent_activity_sub_map_.insert(SubscriberPair_t(id,sub));
         }
