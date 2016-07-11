@@ -820,7 +820,15 @@ private:
       object_list_.clear();
       for (unsigned int i = 0; i < msg->objectList.size(); ++i)
       {
-        object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
+        if (msg->objectList[i].meEntity.id!="unknow object")
+        {
+          object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
+
+          if( saliency_map_.find(msg->objectList[i].meEntity.id) == saliency_map_.end() )
+          {
+            saliency_map_.insert(SaliencyPair_t(msg->objectList[i].meEntity.id,0.0));
+          }
+        }
       }
     }
   }
