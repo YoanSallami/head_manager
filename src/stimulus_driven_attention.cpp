@@ -628,21 +628,28 @@ private:
    ****************************************************/
   void objectListCallback(const toaster_msgs::ObjectListStamped::ConstPtr& msg)
   {
-    if(!msg->objectList.empty())
+    try
     {
-      object_list_.clear();
-      for (unsigned int i = 0; i < msg->objectList.size(); ++i)
+      if(!msg->objectList.empty())
       {
-        if (msg->objectList[i].meEntity.id.find_first_of(" ")==std::string::npos)
+        object_list_.clear();
+        for (unsigned int i = 0; i < msg->objectList.size(); ++i)
         {
-          object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
-
-          if( saliency_map_.find(msg->objectList[i].meEntity.id) == saliency_map_.end() )
+          if (msg->objectList[i].meEntity.id.find_first_of(" ")==std::string::npos)
           {
-            saliency_map_.insert(SaliencyPair_t(msg->objectList[i].meEntity.id,0.0));
+            object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
+
+            if( saliency_map_.find(msg->objectList[i].meEntity.id) == saliency_map_.end() )
+            {
+              saliency_map_.insert(SaliencyPair_t(msg->objectList[i].meEntity.id,0.0));
+            }
           }
         }
       }
+    }
+    catch (HeadManagerException& e )
+    {
+      ROS_ERROR("[salient_stimuli_selection] Exception was caught : %s",e.description().c_str());
     }
   }
   /****************************************************
@@ -651,13 +658,20 @@ private:
    ****************************************************/
   void robotListCallback(const toaster_msgs::RobotListStamped::ConstPtr& msg)
   {
-    if(!msg->robotList.empty())
+    try
     {
-      robot_list_.clear();
-      for (unsigned int i = 0; i < msg->robotList.size(); ++i)
+      if(!msg->robotList.empty())
       {
-        robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
+        robot_list_.clear();
+        for (unsigned int i = 0; i < msg->robotList.size(); ++i)
+        {
+          robot_list_.push_back(*(new toaster_msgs::Robot(msg->robotList[i])));
+        }
       }
+    }
+    catch (HeadManagerException& e )
+    {
+      ROS_ERROR("[salient_stimuli_selection] Exception was caught : %s",e.description().c_str());
     }
   }
   /****************************************************
@@ -667,28 +681,34 @@ private:
   void humanListCallback(const toaster_msgs::HumanListStamped::ConstPtr& msg)
   {
     std::string ownerId,jointId;
-    
-    if (!msg->humanList.empty())
+    try
     {
-      human_list_.clear();
-
-      for (unsigned int i = 0; i < msg->humanList.size(); ++i)
+      if (!msg->humanList.empty())
       {
-        human_list_.push_back(*(new toaster_msgs::Human(msg->humanList[i])));
-        ownerId = msg->humanList[i].meAgent.meEntity.id;
-        if( saliency_map_.find(ownerId) == saliency_map_.end() )
+        human_list_.clear();
+
+        for (unsigned int i = 0; i < msg->humanList.size(); ++i)
         {
-          if ( !msg->humanList[i].meAgent.skeletonJoint.empty() )
+          human_list_.push_back(*(new toaster_msgs::Human(msg->humanList[i])));
+          ownerId = msg->humanList[i].meAgent.meEntity.id;
+          if( saliency_map_.find(ownerId) == saliency_map_.end() )
           {
-            for( unsigned int j = 0 ; j < msg->humanList[i].meAgent.skeletonJoint.size() ; ++j )
+            if ( !msg->humanList[i].meAgent.skeletonJoint.empty() )
             {
-                jointId = msg->humanList[i].meAgent.skeletonJoint[j].meEntity.id;
-                if (jointId != "base")
-                  saliency_map_.insert(SaliencyPair_t((ownerId+"::"+jointId),0.0));
+              for( unsigned int j = 0 ; j < msg->humanList[i].meAgent.skeletonJoint.size() ; ++j )
+              {
+                  jointId = msg->humanList[i].meAgent.skeletonJoint[j].meEntity.id;
+                  if (jointId != "base")
+                    saliency_map_.insert(SaliencyPair_t((ownerId+"::"+jointId),0.0));
+              }
             }
           }
         }
       }
+    }
+    catch (HeadManagerException& e )
+    {
+      ROS_ERROR("[salient_stimuli_selection] Exception was caught : %s",e.description().c_str());
     }
   }
   /****************************************************
@@ -697,16 +717,16 @@ private:
    ****************************************************/
   void factListCallback(const toaster_msgs::FactList::ConstPtr& msg)
   {
-    if (!msg->factList.empty())
-    {
-      fact_list_.clear();
-      for (unsigned int i = 0; i < msg->factList.size(); ++i)
-      {
-        fact_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
-      }
-    }
     try
     {
+      if (!msg->factList.empty())
+      {
+        fact_list_.clear();
+        for (unsigned int i = 0; i < msg->factList.size(); ++i)
+        {
+          fact_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
+        }
+      }
       updateSaliencyMap();
       sendSalientStimuli(salient_stimuli_);
     }
