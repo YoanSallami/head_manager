@@ -138,6 +138,22 @@ public:
     {
       for (FactList_t::iterator it_fl = fact_list_.begin() ; it_fl != fact_list_.end() ; ++it_fl )
       {
+        if (it_fl->subjectId=="pr2")
+        {
+          it_fl->subjectId=my_id_;
+        }
+        if (it_fl->targetId=="pr2")
+        {
+          it_fl->targetId=my_id_;
+        }
+        if (it_fl->subjectOwnerId=="pr2")
+        {
+          it_fl->subjectOwnerId=my_id_;
+        }
+        if (it_fl->targetOwnerId=="pr2")
+        {
+          it_fl->targetOwnerId=my_id_;
+        }
         if (it_fl->subjectId.find_first_of(" ")==std::string::npos && it_fl->targetId.find_first_of(" ")==std::string::npos)
         {
           if (it_fl->subjectId!=my_id_)
