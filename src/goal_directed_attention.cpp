@@ -764,6 +764,7 @@ private:
     }
     if (find==false)
     {
+      ROS_INFO("[goal_directed_attention] Adding %s to agent activity map",id.c_str());
       agent_activity_map_.insert(ActivityPair_t(id,*msg));
     }
 
