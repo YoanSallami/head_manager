@@ -219,7 +219,7 @@ public:
     {
       node_.getParam("my_robot_id",my_id_);
     } else {
-      my_id_="pr2";
+      my_id_="PR2_ROBOT";
     }
     // Advertise subscribers
     object_list_sub_ = node_.subscribe("/pdg/objectList", 1, &GoalDirectedAttention::objectListCallback, this);
