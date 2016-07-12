@@ -768,7 +768,8 @@ private:
 
     if (id==my_id_)
     {
-      if (signaling_)
+      ROS_INFO("test");
+      if (signaling_==true)
       {
         state_machine_->process_event(signaling());
       } else {
@@ -898,7 +899,6 @@ private:
     try
     {
       updateAckMap();
-      //computeAttention();
     }
     catch (HeadManagerException& e )
     {
