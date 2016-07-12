@@ -98,8 +98,8 @@ public:
     // Dyn param server
     stimulu_driven_dyn_param_srv.setCallback(boost::bind(&StimulusDrivenAttention::dynParamCallback, this, _1, _2));
     // Add a waiting attention zone to saliency map
-    saliency_map_.insert(SaliencyPair_t("Waiting",0.0));
-    salient_stimuli_=SaliencyPair_t("Waiting",0.0);
+    saliency_map_.insert(SaliencyPair_t("Waiting",10.0));
+    salient_stimuli_=SaliencyPair_t("Waiting",10.0);
   }
   /****************************************************
    * @brief : Default destructor
