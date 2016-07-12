@@ -766,47 +766,45 @@ private:
       agent_activity_map_.insert(ActivityPair_t(id,*msg));
     }
 
-    if(agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
+    if (id==my_id_)
     {
-      if(agent_activity_map_.find(my_id_)->second.activityState=="ACTING")
+      if (signaling_)
       {
-        robotIsActing=true;
-      }
-    }
-    if (signaling_)
-    {
-      state_machine_->process_event(signaling());
-    } else {
-      if(robotIsActing)
-        state_machine_->process_event(acting());
-      if(!robotIsActing)
-        state_machine_->process_event(waiting());
-    }
-
-    if (robotIsActing && id!=my_id_ && msg->activityState=="ACTING")
-    {
-      if (msg->unexpected==false)
-      {
-        // If a human do an expected action regarding to the plan during
-        // robot action we send a signal to queue
-        sig.entities[0]=msg->object;
-        sig.durations[0]=0.2;
-        sig.urgency=0.98;
-        sig.importancy=0.9;
+        state_machine_->process_event(signaling());
       } else {
-        // If a human do an unexpected action regarding to the plan during
-        // robot action we send a signal to queue
-        sig.entities[0]=msg->object;
-        sig.durations[0]=0.2;
-        sig.entities[1]=id+"::rightHand";
-        sig.durations[1]=0.0;
-        sig.entities[2]=id+"::head";
-        sig.durations[2]=0.5;
-        sig.urgency=0.68;
-        sig.importancy=1.0;
+        if (msg->activityState=="ACTING")
+        {
+          state_machine_->process_event(acting());
+        } else {
+          state_machine_->process_event(waiting());
+        }
       }
-      signal_pub_.publish(sig);
-    }       
+    } else {
+      if (msg->activityState=="ACTING")
+      {
+        if (msg->unexpected==false)
+        {
+          // If a human do an expected action regarding to the plan during
+          // robot action we send a signal to queue
+          sig.entities[0]=msg->object;
+          sig.durations[0]=0.2;
+          sig.urgency=0.98;
+          sig.importancy=0.9;
+        } else {
+          // If a human do an unexpected action regarding to the plan during
+          // robot action we send a signal to queue
+          sig.entities[0]=msg->object;
+          sig.durations[0]=0.2;
+          sig.entities[1]=id+"::rightHand";
+          sig.durations[1]=0.0;
+          sig.entities[2]=id+"::head";
+          sig.durations[2]=0.5;
+          sig.urgency=0.68;
+          sig.importancy=1.0;
+        }
+        signal_pub_.publish(sig);
+      }
+    }
   }
 
   /****************************************************
@@ -833,7 +831,6 @@ private:
    ****************************************************/
   void robotListCallback(const toaster_msgs::RobotListStamped::ConstPtr& msg)
   {
-
     if(!msg->robotList.empty())
     {
       robot_list_.clear();
