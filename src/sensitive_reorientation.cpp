@@ -105,7 +105,6 @@ private:
       ROS_INFO("[sensitive_reorientation] Action finished: %s",state.toString().c_str());
       enable_detect_tag.data=true;
       tag_detection_pub_.publish(enable_detect_tag);
-      ros::Duration(0.3).sleep();
       enable_detect_tag.data=false;
       tag_detection_pub_.publish(enable_detect_tag);
     }
