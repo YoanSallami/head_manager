@@ -754,16 +754,11 @@ private:
     head_manager::Signal sig;
     ROS_INFO("[goal_directed_attention] Receiving activity state from %s",id.c_str());
 
-    while( it != agent_activity_map_.end()  && find==false)
+    
+    if (agent_activity_map_.find(id)!=agent_activity_map_.end())
     {
-      if (it->first == id)
-      {
-        it->second=*msg;
-        find=true;
-      }
-    }
-    if (find==false)
-    {
+      agent_activity_map_.find(id)->second=*msg;
+    } else {
       ROS_INFO("[goal_directed_attention] Adding %s to agent activity map",id.c_str());
       agent_activity_map_.insert(ActivityPair_t(id,*msg));
     }
