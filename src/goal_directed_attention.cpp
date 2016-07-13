@@ -560,6 +560,7 @@ public:
         robotActivityState = agent_activity_map_.find(my_id_)->second;
         if (robotActivityState.activityState=="ACTING")
         {
+          ROS_INFO("[goal_directed_attention] Receiving activity object : %s",robotActivityState.object.c_str());
           goal_directed_attention_vizu.point = getEntity(robotActivityState.object).pose.position;
           goal_directed_attention_vizu.header.stamp = ros::Time::now();
           goal_directed_attention.header.frame_id = "map";
@@ -752,14 +753,14 @@ private:
     bool robotWasActing=false;
     bool robotIsActing=false;
     head_manager::Signal sig;
-    ROS_INFO("[goal_directed_attention] Receiving activity state from %s",id.c_str());
+    //ROS_INFO("[goal_directed_attention] Receiving activity state from %s",id.c_str());
 
     
     if (agent_activity_map_.find(id)!=agent_activity_map_.end())
     {
       agent_activity_map_.find(id)->second=*msg;
     } else {
-      ROS_INFO("[goal_directed_attention] Adding %s to agent activity map",id.c_str());
+      //ROS_INFO("[goal_directed_attention] Adding %s to agent activity map",id.c_str());
       agent_activity_map_.insert(ActivityPair_t(id,*msg));
     }
 
@@ -767,15 +768,15 @@ private:
     {
       if (signaling_==true)
       {
-        ROS_INFO("[goal_directed_attention] Sending signaling event");
+        //ROS_INFO("[goal_directed_attention] Sending signaling event");
         state_machine_->process_event(signaling());
       } else {
         if (msg->activityState=="ACTING")
         {
-          ROS_INFO("[goal_directed_attention] Sending acting event");
+          //ROS_INFO("[goal_directed_attention] Sending acting event");
           state_machine_->process_event(acting());
         } else {
-          ROS_INFO("[goal_directed_attention] Sending waiting event");
+          //ROS_INFO("[goal_directed_attention] Sending waiting event");
           state_machine_->process_event(waiting());
         }
       }
