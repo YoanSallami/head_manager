@@ -563,9 +563,9 @@ public:
           ROS_INFO("[goal_directed_attention] Receiving activity object : %s",robotActivityState.object.c_str());
           goal_directed_attention_vizu.point = getEntity(robotActivityState.object).pose.position;
           goal_directed_attention_vizu.header.stamp = ros::Time::now();
-          goal_directed_attention.header.frame_id = "map";
+          goal_directed_attention_vizu.header.frame_id = "map";
 
-          goal_directed_attention.header = goal_directed_attention.header;
+          goal_directed_attention.header = goal_directed_attention_vizu.header;
           goal_directed_attention.point = goal_directed_attention_vizu.point;
           goal_directed_attention.id = robotActivityState.object;
           goal_directed_attention.object = isObject(robotActivityState.object);
