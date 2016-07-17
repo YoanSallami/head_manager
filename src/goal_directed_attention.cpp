@@ -764,48 +764,49 @@ private:
       agent_activity_map_.insert(ActivityPair_t(id,*msg));
     }
 
-    if (id==my_id_)
+    if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
     {
       if (signaling_==true)
       {
         //ROS_INFO("[goal_directed_attention] Sending signaling event");
         state_machine_->process_event(signaling());
       } else {
-        if (msg->activityState=="ACTING")
+        if (agent_activity_map_.find(my_id_)->second.activityState=="ACTING")
         {
           //ROS_INFO("[goal_directed_attention] Sending acting event");
           state_machine_->process_event(acting());
+
+          if (id!=my_id_ && msg->activityState=="ACTING")
+          {
+            if (msg->unexpected==false)
+            {
+              // If a human do an expected action regarding to the plan during
+              // robot action we send a signal to queue
+              sig.entities[0]=msg->object;
+              sig.durations[0]=0.2;
+              sig.urgency=0.98;
+              sig.importancy=0.9;
+            } else {
+              // If a human do an unexpected action regarding to the plan during
+              // robot action we send a signal to queue
+              sig.entities[0]=msg->object;
+              sig.durations[0]=0.2;
+              sig.entities[1]=id+"::rightHand";
+              sig.durations[1]=0.0;
+              sig.entities[2]=id+"::head";
+              sig.durations[2]=0.5;
+              sig.urgency=0.68;
+              sig.importancy=1.0;
+            }
+            signal_pub_.publish(sig);
+          }
         } else {
           //ROS_INFO("[goal_directed_attention] Sending waiting event");
           state_machine_->process_event(waiting());
         }
       }
-    } else {
-      if (msg->activityState=="ACTING")
-      {
-        if (msg->unexpected==false)
-        {
-          // If a human do an expected action regarding to the plan during
-          // robot action we send a signal to queue
-          sig.entities[0]=msg->object;
-          sig.durations[0]=0.2;
-          sig.urgency=0.98;
-          sig.importancy=0.9;
-        } else {
-          // If a human do an unexpected action regarding to the plan during
-          // robot action we send a signal to queue
-          sig.entities[0]=msg->object;
-          sig.durations[0]=0.2;
-          sig.entities[1]=id+"::rightHand";
-          sig.durations[1]=0.0;
-          sig.entities[2]=id+"::head";
-          sig.durations[2]=0.5;
-          sig.urgency=0.68;
-          sig.importancy=1.0;
-        }
-        signal_pub_.publish(sig);
-      }
     }
+    
   }
 
   /****************************************************
