@@ -10,6 +10,7 @@
 #include <std_msgs/Bool.h>
 #include "head_manager/Focus.h"
 #include "head_manager/AttentionStamped.h"
+#include "ar_track_alvar/GetPositionAndOrientation.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -106,7 +107,8 @@ private:
     {
       actionlib::SimpleClientGoalState state = head_action_client_->getState();
       ROS_INFO("[sensitive_reorientation] Action finished: %s",state.toString().c_str());
-      //
+      ar_track_alvar::GetPositionAndOrientation e;
+      ros::service::call("ar_track_alvar/GetPositionAndOrientation",e);
       //enable_detect_tag.data=true;
       //tag_detection_pub_.publish(enable_detect_tag);
       

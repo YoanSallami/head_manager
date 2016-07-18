@@ -31,6 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
   toaster_msgs
   dynamic_reconfigure
   tf
+  ar_track_alvar
 )
 
 pkg_check_modules(pr2motion-genom3 REQUIRED pr2motion-genom3)
