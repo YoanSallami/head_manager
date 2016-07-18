@@ -71,12 +71,12 @@ public:
   {
     node_=node;
     // Setting reactive parameters to default
-    stimuliDiscountFactor_ = 0.8;
-    directionSalienceFactor_ = 1;
-    movingSalienceFactor_ = 1;
-    lookingSalienceFactor_ = 1;
-    inhibitionRadius_ = 0.2;
-    hysteresisMinThreshold_=1.0;
+    stimuliDiscountFactor_ = 0.6;
+    directionSalienceFactor_ = 0.0;
+    movingSalienceFactor_ = 8.0;
+    lookingSalienceFactor_ = 5.0;
+    inhibitionRadius_ = 0.4;
+    hysteresisMinThreshold_=2.5;
     hysteresisThresholdFactor_ = 0.2;
     // Getting robot's id from ros param
     if(node_.hasParam("my_robot_id"))
