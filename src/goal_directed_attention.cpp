@@ -653,6 +653,7 @@ public:
           {
             ROS_ERROR("STOP SIGNALING");
             state_machine_->process_event(stop_signaling());
+            return;
           } else {
             current_signal_it_++;
             signal_it_time_ = ros::Time::now();
