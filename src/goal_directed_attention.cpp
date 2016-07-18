@@ -932,6 +932,7 @@ private:
     updateSignalList();
     if (selectSignal(current_signal_)==true)
     {
+      ROS_INFO("Signal changed!");
       state_machine_->process_event(start_signaling(current_signal_));
     }
   }
