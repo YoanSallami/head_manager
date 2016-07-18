@@ -605,7 +605,7 @@ public:
     tf::Vector3 resultVecTF;
     head_manager::Focus focus;
     tf::Quaternion q;
-    
+
     tempPoint.x = 1.0;
     tempPoint.y = 0.0;
     tempPoint.z = 1.2;
@@ -776,7 +776,7 @@ private:
 
     if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
     {
-      ROS_INFO("test");
+      //ROS_INFO("test");
       if (signaling_==true)
       {
         ROS_INFO("[goal_directed_attention] Sending signaling event");
@@ -785,7 +785,7 @@ private:
         if (agent_activity_map_.find(my_id_)->second.activityState=="ACTING" &&
             agent_activity_map_.find(my_id_)->second.object!="")
         {
-          ROS_INFO("[goal_directed_attention] Sending acting event");
+          //ROS_INFO("[goal_directed_attention] Sending acting event");
           state_machine_->process_event(acting());
 
           if (id!=my_id_ && msg->activityState=="ACTING")
@@ -813,7 +813,7 @@ private:
             signal_pub_.publish(sig);
           }
         } else {
-          ROS_INFO("[goal_directed_attention] Sending waiting event");
+          //ROS_INFO("[goal_directed_attention] Sending waiting event");
           state_machine_->process_event(waiting());
         }
       }
