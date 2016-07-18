@@ -737,20 +737,20 @@ public:
   }
   bool signalAcknowledgement()
   {
-    if(current_signal_.receivers.size()>0)
-    {
-      for (int i = 0; i < current_signal_.receivers.size(); ++i)
-      {
-        if(ack_map_.find(current_signal_.receivers[i])==ack_map_.end())
-        {
-          return(false);
-          if(ack_map_.find(current_signal_.receivers[i])->second!=true)
-          {
-            return(false);
-          }
-        }
-      }
-    }
+    // if(current_signal_.receivers.size()>0)
+    // {
+    //   for (int i = 0; i < current_signal_.receivers.size(); ++i)
+    //   {
+    //     if(ack_map_.find(current_signal_.receivers[i])==ack_map_.end())
+    //     {
+    //       return(false);
+    //       if(ack_map_.find(current_signal_.receivers[i])->second!=true)
+    //       {
+    //         return(false);
+    //       }
+    //     }
+    //   }
+    // }
     return(true);
   }
 private:
