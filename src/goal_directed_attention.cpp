@@ -666,7 +666,6 @@ public:
           {
             ROS_INFO("STOP SIGNALING");
             signaling_=false;
-            current_signal_it_=0;
             current_signal_.weight=0.0;
             state_machine_->process_event(stop_signaling());
             return;
