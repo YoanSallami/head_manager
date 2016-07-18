@@ -188,7 +188,7 @@ public:
                 {
                   subject->second+=it_fl->doubleValue;
                 } else {
-                  throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+"::"+it_fl->subjectId+" in looking saliency map.");
+                  throw HeadManagerException ("Could not find "+it_fl->subjectd+"::head in looking saliency map.");
                 }
               }
             }
