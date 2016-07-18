@@ -92,7 +92,7 @@ private:
 
   void lookAtObject(geometry_msgs::PointStamped p)
   {
-    //std_msgs::Bool enable_detect_tag;
+    std_msgs::Bool enable_detect_tag;
     pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
