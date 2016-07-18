@@ -500,7 +500,7 @@ public:
    ****************************************************/
   bool selectSignal(head_manager::Signal & sig)
   {
-    ROS_INFO("test")
+    ROS_INFO("test");
     double max=sig.weight;
     SignalList_t::iterator max_it;
     bool changed=false;
