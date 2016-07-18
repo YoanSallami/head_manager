@@ -309,36 +309,15 @@ public:
     {
       if (!robot_list_.empty())
       {
-        if(salient.first!="Waiting")
-        {
-          salient_attention_point_vizu.point = getEntity(salient.first).pose.position;
-        } else {
-          
-          tempPoint.x = 1.0;
-          tempPoint.y = 0.0;
-          tempPoint.z = 1.2;
-          tf::vector3MsgToTF(tempPoint,tempPointTF);
-          tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
-          tf::Vector3 resultVecTF;
-          geometry_msgs::Vector3 resultVec;
-          resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
-          tf::vector3TFToMsg(resultVecTF,resultVec);
-          salient_attention_point_vizu.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
-          salient_attention_point_vizu.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
-          salient_attention_point_vizu.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
-        }
+        salient_attention_point_vizu.point = getEntity(salient.first).pose.position;
+        
         salient_attention_point_vizu.header.frame_id="map";
         salient_attention_point_vizu.header.stamp=ros::Time::now();
 
         salient_attention_point.header = salient_attention_point_vizu.header;
         salient_attention_point.point = salient_attention_point_vizu.point;
         salient_attention_point.id = salient.first;
-        if(salient.first!="Waiting")
-        {
-          salient_attention_point.object = isObject(salient.first);
-        } else {
-          salient_attention_point.object = false;
-        }
+        salient_attention_point.object = isObject(salient.first);
       
         salient_stimuli_pub_.publish(salient_attention_point); 
         salient_stimuli_vizu_pub_.publish(salient_attention_point_vizu);  
@@ -348,7 +327,6 @@ public:
     } else {
       throw HeadManagerException ("Could not read an empty object list.");
     }
-    
   }
 private:
   bool normalizeMap(SaliencyMap_t& map)
@@ -441,25 +419,49 @@ private:
   toaster_msgs::Entity getEntity(std::string id)
   {
     toaster_msgs::Entity entity;
-    if(!isObject(id))
+    if(id!="Waiting")
     {
-      if (isJoint(id))
+      if(!isObject(id))
       {
-        size_t pos = id.find("::");
-        if(isHuman(id.substr(0,pos)))
-          entity = getHumanJoint(id.substr(0,pos),id.substr(pos+2,id.size()-1));
-        else
-          entity = getRobotJoint(id.substr(0,pos),id.substr(pos+2,id.size()-1));
+        if (isJoint(id))
+        {
+          size_t pos = id.find("::");
+          if(isHuman(id.substr(0,pos)))
+            entity = getHumanJoint(id.substr(0,pos),id.substr(pos+2,id.size()-1));
+          else
+            entity = getRobotJoint(id.substr(0,pos),id.substr(pos+2,id.size()-1));
+        } else {
+          if(isHuman(id))
+            entity = getHuman(id);
+          else
+            entity = getRobot(id);
+        }
       } else {
-        if(isHuman(id))
-          entity = getHuman(id);
-        else
-          entity = getRobot(id);
+        entity = getObject(id);
       }
-    } else {
-      entity = getObject(id);
+      return(entity);
+    }else{
+      geometry_msgs::Vector3 tempPoint;
+      tf::Vector3 tempPointTF;
+      geometry_msgs::Vector3 resultVec;
+      tf::Vector3 resultVecTF;
+      toaster_msgs::Entity temp;
+      tf::Quaternion q;
+      tempPoint.x = 1.0;
+      tempPoint.y = 0.0;
+      tempPoint.z = 1.2;
+      tf::vector3MsgToTF(tempPoint,tempPointTF);
+      tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
+      resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
+      tf::vector3TFToMsg(resultVecTF,resultVec);
+      temp.id="Waiting";
+      temp.name="Waiting";
+      temp.time=0.0;
+      temp.pose.position.x=resultVec.x;
+      temp.pose.position.y=resultVec.y;
+      temp.pose.position.z=resultVec.z;
+      return(temp);
     }
-    return(entity);
   }
   /****************************************************
    * @brief : Get object entity from object list
@@ -672,6 +674,7 @@ private:
 
             if( saliency_map_.find(msg->objectList[i].meEntity.id) == saliency_map_.end() )
             {
+              ROS_INFO("[stimulus_driven_attention] Add %s to saliency map.",msg->objectList[i].meEntity.id.c_str());
               saliency_map_.insert(SaliencyPair_t(msg->objectList[i].meEntity.id,0.0));
             }
           }
@@ -730,6 +733,7 @@ private:
               {
                   jointId = msg->humanList[i].meAgent.skeletonJoint[j].meEntity.id;
                   if (jointId != "base")
+                    ROS_INFO("[stimulus_driven_attention] Add %s::%s to saliency map.",ownerId.c_str(),jointId.c_str());
                     saliency_map_.insert(SaliencyPair_t((ownerId+"::"+jointId),0.0));
               }
             }
