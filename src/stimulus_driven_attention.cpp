@@ -154,7 +154,7 @@ public:
         {
           it_fl->targetOwnerId=my_id_;
         }
-        if (it_fl->subjectId.find_first_of(" ")==std::string::npos && it_fl->targetId.find_first_of(" ")==std::string::npos)
+        if (it_fl->subjectId!="unknown_object" && it_fl->targetId!="unknown_object")
         {
           if (it_fl->subjectId!=my_id_)
           {
@@ -654,7 +654,7 @@ private:
         object_list_.clear();
         for (unsigned int i = 0; i < msg->objectList.size(); ++i)
         {
-          if (msg->objectList[i].meEntity.id.find_first_of(" ")==std::string::npos)
+          if (msg->objectList[i].meEntity.id!="unknown_object")
           {
             object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
 

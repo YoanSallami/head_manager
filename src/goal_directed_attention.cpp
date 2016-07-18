@@ -822,7 +822,7 @@ private:
       object_list_.clear();
       for (unsigned int i = 0; i < msg->objectList.size(); ++i)
       {
-        if (msg->objectList[i].meEntity.id!="unknow object")
+        if (msg->objectList[i].meEntity.id!="unknown_object")
         {
           object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
         }
