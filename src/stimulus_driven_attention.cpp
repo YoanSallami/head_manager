@@ -299,9 +299,10 @@ public:
    ****************************************************/
   void sendSalientStimuli(SaliencyPair_t salient)
   {
+    
     geometry_msgs::PointStamped salient_attention_point_vizu;
     head_manager::AttentionStamped salient_attention_point;
-    toaster_msgs::Entity entity;
+    /*
     geometry_msgs::Vector3 tempPoint;
     tf::Vector3 tempPointTF;
     tf::Quaternion q;
@@ -326,6 +327,23 @@ public:
       }
     } else {
       throw HeadManagerException ("Could not read an empty object list.");
+    }*/
+    if (!human_list_.empty())
+    {
+      salient_attention_point_vizu.point = getEntity("HERAKLES_HUMAN1::head").pose.position;
+        
+      salient_attention_point_vizu.header.frame_id="map";
+      salient_attention_point_vizu.header.stamp=ros::Time::now();
+
+      salient_attention_point.header = salient_attention_point_vizu.header;
+      salient_attention_point.point = salient_attention_point_vizu.point;
+      salient_attention_point.id = "HERAKLES_HUMAN1::head";
+      salient_attention_point.object = isObject("HERAKLES_HUMAN1::head");
+    
+      salient_stimuli_pub_.publish(salient_attention_point); 
+      salient_stimuli_vizu_pub_.publish(salient_attention_point_vizu);  
+    }  else {
+      throw HeadManagerException ("Could not read an empty human list.");
     }
   }
 private:
