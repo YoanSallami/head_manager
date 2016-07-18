@@ -515,6 +515,7 @@ public:
           changed=true;
         }
       }
+      ROS_INFO("lolo");
       sig=*max_it;
       signal_list_.erase(max_it);
       return(changed);
