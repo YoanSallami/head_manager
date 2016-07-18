@@ -651,6 +651,7 @@ public:
           ROS_ERROR("Changement focus signal");
           if (current_signal_it_ == current_signal_.entities.size()-1)
           {
+            ROS_ERROR("STOP SIGNALING");
             state_machine_->process_event(stop_signaling());
           } else {
             current_signal_it_++;
