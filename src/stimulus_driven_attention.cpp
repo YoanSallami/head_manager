@@ -342,10 +342,10 @@ public:
         salient_stimuli_pub_.publish(salient_attention_point); 
         salient_stimuli_vizu_pub_.publish(salient_attention_point_vizu);  
       } else {
-        throw HeadManagerException ("Could not read an empty robot list.")
+        throw HeadManagerException ("Could not read an empty robot list.");
       }
     } else {
-      throw HeadManagerException ("Could not read an empty object list.")
+      throw HeadManagerException ("Could not read an empty object list.");
     }
     
   }
