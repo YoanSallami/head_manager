@@ -770,12 +770,12 @@ private:
     {
       if (signaling_==true)
       {
-        //ROS_INFO("[goal_directed_attention] Sending signaling event");
+        ROS_INFO("[goal_directed_attention] Sending signaling event");
         state_machine_->process_event(signaling());
       } else {
         if (agent_activity_map_.find(my_id_)->second.activityState=="ACTING")
         {
-          //ROS_INFO("[goal_directed_attention] Sending acting event");
+          ROS_INFO("[goal_directed_attention] Sending acting event");
           state_machine_->process_event(acting());
 
           if (id!=my_id_ && msg->activityState=="ACTING")
@@ -803,7 +803,7 @@ private:
             signal_pub_.publish(sig);
           }
         } else {
-          //ROS_INFO("[goal_directed_attention] Sending waiting event");
+          ROS_INFO("[goal_directed_attention] Sending waiting event");
           state_machine_->process_event(waiting());
         }
       }
