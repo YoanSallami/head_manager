@@ -752,7 +752,6 @@ private:
    ****************************************************/
   void factListCallback(const toaster_msgs::FactList::ConstPtr& msg)
   {
-    ROS_ERROR("test");
     try
     {
       if (!msg->factList.empty())
