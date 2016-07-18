@@ -518,6 +518,7 @@ public:
       ROS_INFO("lolo");
       sig=*max_it;
       signal_list_.erase(max_it);
+      ROS_INFO("frefed");
       return(changed);
     }
     return(false);
@@ -666,6 +667,7 @@ public:
             ROS_INFO("STOP SIGNALING");
             signaling_=false;
             current_signal_it_=0;
+            current_signal_.weight=0.0;
             state_machine_->process_event(stop_signaling());
             return;
           } else {
