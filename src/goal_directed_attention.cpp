@@ -247,6 +247,7 @@ public:
     my_agent.unexpected=false;
     my_agent.stopable=true;
     agent_activity_map_.insert(ActivityPair_t(my_id_,my_agent));
+    ROS_INFO("[goal_directed_attention] Adding %s to agent activity map",my_id_.c_str());
   }
   /****************************************************
    * @brief : Default destructor
@@ -769,12 +770,13 @@ private:
     {
       agent_activity_map_.find(id)->second=*msg;
     } else {
-      //ROS_INFO("[goal_directed_attention] Adding %s to agent activity map",id.c_str());
+      ROS_INFO("[goal_directed_attention] Adding %s to agent activity map",id.c_str());
       agent_activity_map_.insert(ActivityPair_t(id,*msg));
     }
 
     if (agent_activity_map_.find(my_id_)!=agent_activity_map_.end())
     {
+      ROS_INFO("test");
       if (signaling_==true)
       {
         ROS_INFO("[goal_directed_attention] Sending signaling event");
