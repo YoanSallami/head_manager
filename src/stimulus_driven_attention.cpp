@@ -306,6 +306,10 @@ public:
     {
       salient_attention_point_vizu.point = getEntity(salient.first).pose.position;
     } else {
+      if (robot_list_.empty())
+      {
+        return;
+      }
       geometry_msgs::Vector3 tempPoint;
       tf::Vector3 tempPointTF;
       tempPoint.x = 1.0;
