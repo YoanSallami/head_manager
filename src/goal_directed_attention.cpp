@@ -240,6 +240,13 @@ public:
     signaling_=false;
     state_machine_ = new GoalDirectedAttentionStateMachine(boost::cref(this));
     state_machine_->start();
+    supervisor_msgs::AgentActivity my_agent;
+    my_agent.activityState="IDLE";
+    my_agent.object={""};
+    my_agent.importancy=0.0;
+    my_agent.unexpected=false;
+    my_agent.stopable=true;
+    agent_activity_map_.insert(ActivityPair_t(my_id_,my_agent));
   }
   /****************************************************
    * @brief : Default destructor
