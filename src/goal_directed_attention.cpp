@@ -662,6 +662,8 @@ public:
           if (current_signal_it_ == current_signal_.entities.size()-1)
           {
             ROS_ERROR("STOP SIGNALING");
+            signaling_=false;
+            state_machine_->process_event(stop_signaling());
             state_machine_->process_event(stop_signaling());
             ;;
             return;
