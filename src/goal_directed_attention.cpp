@@ -664,8 +664,6 @@ public:
             ROS_ERROR("STOP SIGNALING");
             signaling_=false;
             state_machine_->process_event(stop_signaling());
-            state_machine_->process_event(stop_signaling());
-            ;;
             return;
           } else {
             current_signal_it_++;
