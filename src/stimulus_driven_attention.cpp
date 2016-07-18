@@ -73,8 +73,8 @@ public:
     // Setting reactive parameters to default
     stimuliDiscountFactor_ = 0.6;
     directionSalienceFactor_ = 0.0;
-    movingSalienceFactor_ = 8.0;
-    lookingSalienceFactor_ = 5.0;
+    movingSalienceFactor_ = 7.0;
+    lookingSalienceFactor_ = 0.0;
     inhibitionRadius_ = 0.4;
     hysteresisMinThreshold_=2.5;
     hysteresisThresholdFactor_ = 0.2;
