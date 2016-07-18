@@ -764,7 +764,6 @@ private:
     bool robotIsActing=false;
     head_manager::Signal sig;
     //ROS_INFO("[goal_directed_attention] Receiving activity state from %s",id.c_str());
-
     
     if (agent_activity_map_.find(id)!=agent_activity_map_.end())
     {
@@ -782,7 +781,8 @@ private:
         ROS_INFO("[goal_directed_attention] Sending signaling event");
         state_machine_->process_event(signaling());
       } else {
-        if (agent_activity_map_.find(my_id_)->second.activityState=="ACTING")
+        if (agent_activity_map_.find(my_id_)->second.activityState=="ACTING" &&
+            agent_activity_map_.find(my_id_)->second.object!="")
         {
           ROS_INFO("[goal_directed_attention] Sending acting event");
           state_machine_->process_event(acting());
