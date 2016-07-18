@@ -317,7 +317,7 @@ public:
         salient_attention_point.header = salient_attention_point_vizu.header;
         salient_attention_point.point = salient_attention_point_vizu.point;
         salient_attention_point.id = salient.first;
-        salient_attention_point.object = isObject(salient.first);
+          salient_attention_point.object = isObject(salient.first);
       
         salient_stimuli_pub_.publish(salient_attention_point); 
         salient_stimuli_vizu_pub_.publish(salient_attention_point_vizu);  
@@ -674,7 +674,7 @@ private:
 
             if( saliency_map_.find(msg->objectList[i].meEntity.id) == saliency_map_.end() )
             {
-              ROS_INFO("[stimulus_driven_attention] Add %s to saliency map.",msg->objectList[i].meEntity.id.c_str());
+              //ROS_INFO("[stimulus_driven_attention] Add %s to saliency map.",msg->objectList[i].meEntity.id.c_str());
               saliency_map_.insert(SaliencyPair_t(msg->objectList[i].meEntity.id,0.0));
             }
           }
@@ -733,7 +733,7 @@ private:
               {
                   jointId = msg->humanList[i].meAgent.skeletonJoint[j].meEntity.id;
                   if (jointId != "base")
-                    ROS_INFO("[stimulus_driven_attention] Add %s::%s to saliency map.",ownerId.c_str(),jointId.c_str());
+                    //ROS_INFO("[stimulus_driven_attention] Add %s::%s to saliency map.",ownerId.c_str(),jointId.c_str());
                     saliency_map_.insert(SaliencyPair_t((ownerId+"::"+jointId),0.0));
               }
             }
