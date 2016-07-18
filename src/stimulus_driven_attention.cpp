@@ -302,45 +302,52 @@ public:
     geometry_msgs::PointStamped salient_attention_point_vizu;
     head_manager::AttentionStamped salient_attention_point;
     toaster_msgs::Entity entity;
-    if(salient.first!="Waiting")
+    if (!object_list_.empty())
     {
-      salient_attention_point_vizu.point = getEntity(salient.first).pose.position;
-    } else {
-      if (robot_list_.empty())
+      if (!robot_list_.empty())
       {
-        return;
-      }
-      geometry_msgs::Vector3 tempPoint;
-      tf::Vector3 tempPointTF;
-      tempPoint.x = 1.0;
-      tempPoint.y = 0.0;
-      tempPoint.z = 1.2;
-      tf::vector3MsgToTF(tempPoint,tempPointTF);
-      tf::Quaternion q;
-      tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
-      tf::Vector3 resultVecTF;
-      geometry_msgs::Vector3 resultVec;
-      resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
-      tf::vector3TFToMsg(resultVecTF,resultVec);
-      salient_attention_point_vizu.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
-      salient_attention_point_vizu.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
-      salient_attention_point_vizu.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
-    }
-    salient_attention_point_vizu.header.frame_id="map";
-    salient_attention_point_vizu.header.stamp=ros::Time::now();
+        if(salient.first!="Waiting")
+        {
+          salient_attention_point_vizu.point = getEntity(salient.first).pose.position;
+        } else {
+          geometry_msgs::Vector3 tempPoint;
+          tf::Vector3 tempPointTF;
+          tempPoint.x = 1.0;
+          tempPoint.y = 0.0;
+          tempPoint.z = 1.2;
+          tf::vector3MsgToTF(tempPoint,tempPointTF);
+          tf::Quaternion q;
+          tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
+          tf::Vector3 resultVecTF;
+          geometry_msgs::Vector3 resultVec;
+          resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);
+          tf::vector3TFToMsg(resultVecTF,resultVec);
+          salient_attention_point_vizu.point.x = resultVec.x+getRobot(my_id_).pose.position.x;
+          salient_attention_point_vizu.point.y = resultVec.y+getRobot(my_id_).pose.position.y;
+          salient_attention_point_vizu.point.z = resultVec.z+getRobot(my_id_).pose.position.z;
+        }
+        salient_attention_point_vizu.header.frame_id="map";
+        salient_attention_point_vizu.header.stamp=ros::Time::now();
 
-    salient_attention_point.header = salient_attention_point_vizu.header;
-    salient_attention_point.point = salient_attention_point_vizu.point;
-    salient_attention_point.id = salient.first;
-    if (salient.first!="Waiting")
-    {
-      salient_attention_point.object = isObject(salient.first);
+        salient_attention_point.header = salient_attention_point_vizu.header;
+        salient_attention_point.point = salient_attention_point_vizu.point;
+        salient_attention_point.id = salient.first;
+        if (salient.first!="Waiting")
+        {
+          salient_attention_point.object = isObject(salient.first);
+        } else {
+          salient_attention_point.object = false;
+        }
+      
+        salient_stimuli_pub_.publish(salient_attention_point); 
+        salient_stimuli_vizu_pub_.publish(salient_attention_point_vizu);  
+      } else {
+        throw HeadManagerException ("Could not read an empty robot list.")
+      }
     } else {
-      salient_attention_point.object = false;
+      throw HeadManagerException ("Could not read an empty object list.")
     }
     
-    salient_stimuli_pub_.publish(salient_attention_point); 
-    salient_stimuli_vizu_pub_.publish(salient_attention_point_vizu);  
   }
 private:
   bool normalizeMap(SaliencyMap_t& map)
