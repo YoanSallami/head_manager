@@ -500,6 +500,7 @@ public:
    ****************************************************/
   bool selectSignal(head_manager::Signal & sig)
   {
+    ROS_INFO("test")
     double max=sig.weight;
     SignalList_t::iterator max_it;
     bool changed=false;
@@ -654,14 +655,14 @@ public:
     {
       if (current_signal_it_ <= current_signal_.entities.size()-1)
       {
-        ROS_INFO("IT :%d",current_signal_it_);
+        //ROS_INFO("IT :%d",current_signal_it_);
         ros::Duration duration(current_signal_.durations[current_signal_it_]);
         if(ros::Time::now() > signal_it_time_+ duration)
         {
           //ROS_ERROR("Changement focus signal");
           if (current_signal_it_ == current_signal_.entities.size()-1)
           {
-            ROS_ERROR("STOP SIGNALING");
+            ROS_INFO("STOP SIGNALING");
             signaling_=false;
             current_signal_it_=0;
             state_machine_->process_event(stop_signaling());
