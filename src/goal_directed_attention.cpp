@@ -604,13 +604,14 @@ public:
     geometry_msgs::Vector3 resultVec;
     tf::Vector3 resultVecTF;
     head_manager::Focus focus;
-
+    tf::Quaternion q;
+    
     tempPoint.x = 1.0;
     tempPoint.y = 0.0;
     tempPoint.z = 1.2;
     
     tf::vector3MsgToTF(tempPoint,tempPointTF);
-    tf::Quaternion q;
+    
     tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
   
     resultVecTF = tf::quatRotate((const tf::Quaternion)q,(const tf::Vector3)tempPointTF);

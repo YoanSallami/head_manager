@@ -98,8 +98,8 @@ public:
     // Dyn param server
     stimulu_driven_dyn_param_srv.setCallback(boost::bind(&StimulusDrivenAttention::dynParamCallback, this, _1, _2));
     // Add a waiting attention zone to saliency map
-    saliency_map_.insert(SaliencyPair_t("Waiting",10.0));
-    salient_stimuli_=SaliencyPair_t("Waiting",10.0);
+    saliency_map_.insert(SaliencyPair_t("Waiting",1.0));
+    salient_stimuli_=SaliencyPair_t("Waiting",1.0);
   }
   /****************************************************
    * @brief : Default destructor
@@ -302,6 +302,9 @@ public:
     geometry_msgs::PointStamped salient_attention_point_vizu;
     head_manager::AttentionStamped salient_attention_point;
     toaster_msgs::Entity entity;
+    geometry_msgs::Vector3 tempPoint;
+    tf::Vector3 tempPointTF;
+    tf::Quaternion q;
     if (!object_list_.empty())
     {
       if (!robot_list_.empty())
@@ -310,13 +313,11 @@ public:
         {
           salient_attention_point_vizu.point = getEntity(salient.first).pose.position;
         } else {
-          geometry_msgs::Vector3 tempPoint;
-          tf::Vector3 tempPointTF;
+          
           tempPoint.x = 1.0;
           tempPoint.y = 0.0;
           tempPoint.z = 1.2;
           tf::vector3MsgToTF(tempPoint,tempPointTF);
-          tf::Quaternion q;
           tf::quaternionMsgToTF(getRobot(my_id_).pose.orientation,q);
           tf::Vector3 resultVecTF;
           geometry_msgs::Vector3 resultVec;
@@ -332,7 +333,7 @@ public:
         salient_attention_point.header = salient_attention_point_vizu.header;
         salient_attention_point.point = salient_attention_point_vizu.point;
         salient_attention_point.id = salient.first;
-        if (salient.first!="Waiting")
+        if(salient.first!="Waiting")
         {
           salient_attention_point.object = isObject(salient.first);
         } else {
