@@ -654,14 +654,16 @@ public:
     {
       if (current_signal_it_ <= current_signal_.entities.size()-1)
       {
+        ROS_INFO("IT :%d",current_signal_it_);
         ros::Duration duration(current_signal_.durations[current_signal_it_]);
         if(ros::Time::now() > signal_it_time_+ duration)
         {
-          ROS_ERROR("Changement focus signal");
+          //ROS_ERROR("Changement focus signal");
           if (current_signal_it_ == current_signal_.entities.size()-1)
           {
             ROS_ERROR("STOP SIGNALING");
             state_machine_->process_event(stop_signaling());
+            ;;
             return;
           } else {
             current_signal_it_++;
