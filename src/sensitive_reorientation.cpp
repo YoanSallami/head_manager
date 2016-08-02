@@ -10,7 +10,6 @@
 #include <std_msgs/Bool.h>
 #include "head_manager/Focus.h"
 #include "head_manager/AttentionStamped.h"
-#include "ar_track_alvar/GetPositionAndOrientation.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -21,6 +20,10 @@ typedef actionlib::SimpleActionClient<pr2motion::InitAction> InitActionClient_t;
 typedef actionlib::SimpleActionClient<pr2motion::Head_Move_TargetAction> HeadActionClient_t;
 typedef message_filters::sync_policies::ApproximateTime<head_manager::AttentionStamped, head_manager::AttentionStamped, head_manager::Focus> MySyncPolicy;
 
+/**
+* This class provide synchronization beetween stimulu-driven attention and goal-directed attention
+* and also provide some call to pr2 controller through pr2motion
+*/
 class SensitiveReorientation
 {
 private:
@@ -84,12 +87,14 @@ public:
     enable_detect_tag.data=false;
     tag_detection_pub_.publish(enable_detect_tag);
   }
-  /** 
+  /**
    * Default destructor
    */
   ~SensitiveReorientation(){}
 private:
-
+  /**
+  * @brief : 
+  */
   void lookAtObject(geometry_msgs::PointStamped p)
   {
     std_msgs::Bool enable_detect_tag;
@@ -107,14 +112,13 @@ private:
     {
       actionlib::SimpleClientGoalState state = head_action_client_->getState();
       ROS_INFO("[sensitive_reorientation] Action finished: %s",state.toString().c_str());
-      ar_track_alvar::GetPositionAndOrientation e;
+      //ar_track_alvar::GetPositionAndOrientation e;
       //ros::service::call("ar_track_alvar/GetPositionAndOrientation",e);
       enable_detect_tag.data=true;
       tag_detection_pub_.publish(enable_detect_tag);
       ros::Duration(0.05).sleep();
       enable_detect_tag.data=false;
       tag_detection_pub_.publish(enable_detect_tag);
-      
     }
     else
       ROS_INFO("[sensitive_reorientation] Action did not finish before the time out.");

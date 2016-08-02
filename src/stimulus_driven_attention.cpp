@@ -247,13 +247,13 @@ public:
       }
 
       if(!normalizeMap(inhibition_map))
-        throw HeadManagerException ( "Could not normalize object saliency map");
+        throw HeadManagerException ("Could not normalize object saliency map");
       if(!normalizeMap(directionSaliency_map))
-        throw HeadManagerException ( "Could not normalize object saliency map");
+        throw HeadManagerException ("Could not normalize object saliency map");
       if(!normalizeMap(movingSaliency_map))
-        throw HeadManagerException ( "Could not normalize joint saliency map");
+        throw HeadManagerException ("Could not normalize joint saliency map");
       if(!normalizeMap(lookingSaliency_map))
-        throw HeadManagerException ( "Could not normalize looking saliency map");
+        throw HeadManagerException ("Could not normalize looking saliency map");
       for (SaliencyMap_t::iterator it = input_map.begin(); it != input_map.end() ; ++it)
       {
         it->second=(directionSaliency_map.find(it->first)->second*directionSalienceFactor_)+

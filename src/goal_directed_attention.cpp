@@ -65,7 +65,9 @@ struct start_signaling{
 struct stop_signaling{};
 
 static char const* const state_names[] = { "Waiting", "Acting", "SignalingFromActing", "SignalingFromWaiting" };
-// State machine front definition
+/**
+* @brief : State machine front definition
+*/
 struct GoalDirectedAttentionStateMachine_ : public msm::front::state_machine_def<GoalDirectedAttentionStateMachine_>
 {
   GoalDirectedAttention * goal_directed_attention_; //<! 
@@ -138,7 +140,7 @@ struct GoalDirectedAttentionStateMachine_ : public msm::front::state_machine_def
 
   typedef GoalDirectedAttentionStateMachine_ sm;
 
-  // Transition table for player
+  // Transition table
   struct transition_table : mpl::vector<
        //    Start                  Event             Next                   Action                     Guard
        //  +----------------------+-----------------+----------------------+---------------------------+------------------------------------+
@@ -647,6 +649,7 @@ public:
   void stopSignalFocusing()
   {
     signaling_=false;
+    current_signal_.weight=0.0;
   }
   void focusOnSignal()
   {
@@ -664,9 +667,7 @@ public:
           //ROS_ERROR("Changement focus signal");
           if (current_signal_it_ == current_signal_.entities.size()-1)
           {
-            ROS_INFO("STOP SIGNALING");
-            signaling_=false;
-            current_signal_.weight=0.0;
+            //ROS_INFO("STOP SIGNALING");
             state_machine_->process_event(stop_signaling());
             return;
           } else {
@@ -741,6 +742,7 @@ public:
   }
   bool signalAcknowledgement()
   {
+    ROS_INFO("Receivers vector size :%d",(int)current_signal_.receivers.size());
     // if(current_signal_.receivers.size()>0)
     // {
     //   for (int i = 0; i < current_signal_.receivers.size(); ++i)
