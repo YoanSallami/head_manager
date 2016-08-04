@@ -1,83 +1,15 @@
-rosservice call /pdg/manage_stream "{morseHuman: false, niutHuman: false, groupHuman: false, mocapHuman: false, adreamMocapHuman: true, toasterSimuHuman: false, pr2Robot: true, spencerRobot: false, toasterSimuRobot: false, toasterSimuObject: true}" 
+rosservice call /pdg/manage_stream "{morseHuman: false, niutHuman: false, groupHuman: false, mocapHuman: false, adreamMocapHuman: true, toasterSimuHuman: false, pr2Robot: true, spencerRobot: false, toasterSimuRobot: false, toasterSimuObject: false, arObject : true}" 
 
 rosservice call /database_manager/execute "{command: 'EMPTY', type: 'ALL', facts: [], agent: '', order: '', areaTopic: false ,agentTopic: false ,move3dTopic: false ,pdgTopic: false}"
 
-rosservice call /toaster_simu/add_entity "{id: 'TABLE_4', name: 'TABLE_4', type: 'object', ownerId: ''}"
-rosservice call /toaster_simu/set_entity_pose "{id: 'TABLE_4', ownerId: '', type: 'object', pose:
-{position:
-{x: 7.44, 
- y: 6.575,
- z: -0.1},
-orientation:
-{x: 0.0,
- y: 0.0,
- z: 0.0,
- w: 1.0}}}"
+rostopic pub /ar_track_alvar/enable_detection std_msgs/Bool "data:true"
 
-rosservice call /toaster_simu/add_entity "{id: 'RED_CUBE', name: 'RED_CUBE', type: 'object', ownerId: ''}"
-rosservice call /toaster_simu/set_entity_pose "{id: 'RED_CUBE', ownerId: '', type: 'object', pose:
-{position:
-{x: 7.24,
- y: 6.175,
- z: 0.7},
-orientation:
-{x: 0.0,
- y: 0.0,
- z: 0.0,
- w: 1.0}}}"
-
-rosservice call /toaster_simu/add_entity "{id: 'GREEN_CUBE', name: 'GREEN_CUBE', type: 'object', ownerId: ''}"
-rosservice call /toaster_simu/set_entity_pose "{id: 'GREEN_CUBE', ownerId: '', type: 'object', pose:
-{position:
-{x: 7.34, 
- y: 6.075, 
- z: 0.7},
-orientation:
-{x: 0.0
- y: 0.0
- z: 0.0
- w: 1.0}}}"
-
-rosservice call /toaster_simu/add_entity "{id: 'BLUE_CUBE', name: 'BLUE_CUBE', type: 'object', ownerId: ''}"
-rosservice call /toaster_simu/set_entity_pose "{id: 'BLUE_CUBE', ownerId: '', type: 'object', pose:
-{position:
-{x: 7.54,
- y: 7.075,
- z: 0.7},
-orientation:
-{x: 0.0
- y: 0.0
- z: 0.0
- w: 1.0}}}"
-rosservice call /toaster_simu/add_entity "{id: 'BLACK_CUBE', name: 'BLACK_CUBE', type: 'object', ownerId: ''}"
-rosservice call /toaster_simu/set_entity_pose "{id: 'BLACK_CUBE', ownerId: '', type: 'object', pose:
-{position:
-{x: 7.64, 
- y: 6.975, 
- z: 0.7}, 
-orientation:
-{x: 0.0
- y: 0.0
- z: 0.0
- w: 1.0}}}"
-
-rosservice call /toaster_simu/add_entity "{id: 'PLACEMAT_RED', name: 'PLACEMAT_RED', type: 'object', ownerId: ''}"
-rosservice call /toaster_simu/set_entity_pose "{id: 'PLACEMAT_RED', ownerId: '', type: 'object', pose:
-{position:
-{x: 7.44,
- y: 6.572,
- z: 0.7},
-orientation:
-{x: 0.0
- y: 0.0
- z: 0.0
- w: 1.0}}}"
+rosrun pr2_controller_manager pr2_controller_manager stop laser_tils_controller
 
 rosservice call /agent_monitor/monitor_all_agents "monitorAll: true"
-rosservice call /agent_monitor/add_joint_to_agent "{jointName: 'base', agentId: 'HERAKLES_HUMAN1'}"
 rosservice call /agent_monitor/add_joint_to_agent "{jointName: 'head', agentId: 'HERAKLES_HUMAN1'}"
 rosservice call /agent_monitor/add_joint_to_agent "{jointName: 'rightHand', agentId: 'HERAKLES_HUMAN1'}"
-#rosservice call /agent_monitor/add_joint_to_agent "{jointName: 'laser_tilt_mount_link', agentId: 'pr2'}"
+rosservice call /agent_monitor/add_joint_to_agent "{jointName: 'laser_tilt_mount_link', agentId: 'pr2'}"
 
 rosservice call /area_manager/add_area "myArea:
   id: 0
