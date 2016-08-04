@@ -18,5 +18,7 @@
 	<!-- Launch the toaster database -->
     <!--node name="run_server" pkg="database_manager" type="run_server" output="screen"/-->  
     <include file="$(find database_manager)/launch/Database.launch"/>
+
+    <include file="$(find ar_track_alvar)/launch/pr2_bundle_no_kinect.launch"/>
 	
 </launch>
