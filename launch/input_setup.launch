@@ -7,18 +7,17 @@
 	<node name="agent_monitor" pkg="agent_monitor" type="agent_monitor" output="screen" /> 
     
     <!-- Launch the area monitor -->
-    <node name="area_manager" pkg="area_manager" type="area_manager" output="screen" />  
+    <node name="area_manager" pkg="area_manager" type="area_manager" output="log" />  
 
     <!-- Launch the visualization of toaster -->
-	<node name="toaster_visualizer" pkg="toaster_visualizer" type="toaster_visualizer" output="screen" /> 
-
-	<!-- Launch toaster simu -->
-	<node name="toaster_simu" pkg="toaster_simu" type="toaster_simu" output="screen" />  
+	<node name="toaster_visualizer" pkg="toaster_visualizer" type="toaster_visualizer" output="screen" />  
 
 	<!-- Launch the toaster database -->
     <!--node name="run_server" pkg="database_manager" type="run_server" output="screen"/-->  
     <include file="$(find database_manager)/launch/Database.launch"/>
 
     <include file="$(find ar_track_alvar)/launch/pr2_bundle_no_kinect.launch"/>
+
+    <node name="activity_states_faker" pkg="head_manager" type="activity_states_faker" output="sceen" />
 	
 </launch>
