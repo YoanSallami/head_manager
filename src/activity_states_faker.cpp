@@ -62,6 +62,13 @@ public:
 	{
 		robotActing_=req.acting;
 		object_=req.object;
+		if (req.acting)
+		{
+			ROS_INFO("[activity_states_faker] Robot action start !");
+		} else {
+			ROS_INFO("[activity_states_faker] Robot action stop !");
+		}
+		
 		return(true);
 	}
 
