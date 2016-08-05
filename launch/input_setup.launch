@@ -19,5 +19,7 @@
     <include file="$(find ar_track_alvar)/launch/pr2_bundle_no_kinect.launch"/>
 
     <node name="activity_states_faker" pkg="head_manager" type="activity_states_faker" output="screen" />
+
+    <include file="$(find pr2_teleop)/launch/teleop_joystick.launch"/>
 	
 </launch>
