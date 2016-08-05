@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <string>
 #include "supervisor_msgs/AgentActivity.h"
+#include "head_manager/Action.h"
 
 using namespace std;
 
@@ -11,8 +12,7 @@ private:
 	ros::Publisher pr2_pub_;
 	ros::Publisher human_pub_;
 	ros::Timer timer_;
-	ros::ServiceServer Action_srv_;
-	ros::ServiceServer setObjectFocus_srv_;
+	ros::ServiceServer action_srv_;
 	bool robotActing_;
 	std::string object_;
 
@@ -21,7 +21,7 @@ public:
 	{
 		node_ = node;
 		bool robotActing_=false;
-		ros::ServiceServer Action_srv_ = node_.advertiseService("robot_action", &ActivityStatesFaker::Action,this);
+		action_srv_ = node_.advertiseService("robot_action", &ActivityStatesFaker::Action,this);
 		pr2_pub_ = node_.advertise <supervisor_msgs::AgentActivity> ("supervisor/activity_states/PR2_ROBOT", 1);
 		human_pub_ = node_.advertise <supervisor_msgs::AgentActivity> ("supervisor/activity_states/HERAKLES_HUMAN1", 1);
 		timer_ = node_.createTimer(ros::Duration(1.0/30.0), &ActivityStatesFaker::timerCallback, this);
@@ -29,8 +29,8 @@ public:
 private:
 	void timerCallback(const ros::TimerEvent&)
 	{
-		supervisor_msgs::ActivityState pr2_msg;
-		supervisor_msgs::ActivityState human_msg;
+		supervisor_msgs::AgentActivity pr2_msg;
+		supervisor_msgs::AgentActivity human_msg;
 
 		if (robotActing_)
 		{
@@ -56,12 +56,12 @@ private:
 		human_msg.stopable=true;
 		human_pub_.publish(human_msg);
 	}
-
-	bool Action(head_manager::Action::Request &req
+public:
+	bool Action(head_manager::Action::Request &req,
 				head_manager::Action::Response &res)
 	{
-		robotActing_=req->acting;
-		object_=req->object;
+		robotActing_=req.acting;
+		object_=req.object;
 		return(true);
 	}
 

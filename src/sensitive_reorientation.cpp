@@ -51,7 +51,7 @@ public:
     focus_sub_.subscribe(node_,"/head_manager/focus", 5);
     sync_ = new message_filters::Synchronizer<MySyncPolicy>(MySyncPolicy(5),salient_stim_sub_, goal_directed_attention_sub_, focus_sub_);
     sync_->registerCallback(boost::bind(&SensitiveReorientation::callback,this, _1, _2, _3));
-    effective_attention_pub_ = node_.advertise <geometry_msgs::PointStamped>("head_manager/effective_attention", 5);
+    effective_attention_pub_ = node_.advertise <geometry_msgs::PointStamped>("head_manager/effective_attention_vizu", 5);
     tag_detection_pub_ = node_.advertise <std_msgs::Bool>("ar_track_alvar/enable_detection",1);
     init_action_client_ = new InitActionClient_t("pr2motion/Init", true);
     // Initialize action client for the action interface to the head controller

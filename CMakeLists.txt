@@ -47,6 +47,7 @@ add_message_files(
 add_service_files(
   FILES
   Sync.srv
+  Action.srv
 )
 
 generate_dynamic_reconfigure_options(
@@ -80,3 +81,7 @@ add_dependencies(goal_directed_attention ${catkin_EXPORTED_TARGETS} ${PROJECT_NA
 add_executable(sensitive_reorientation src/sensitive_reorientation.cpp)
 target_link_libraries(sensitive_reorientation ${catkin_LIBRARIES})
 add_dependencies(sensitive_reorientation ${catkin_EXPORTED_TARGETS})
+
+add_executable(activity_states_faker src/activity_states_faker.cpp)
+target_link_libraries(activity_states_faker ${catkin_LIBRARIES})
+add_dependencies(activity_states_faker ${catkin_EXPORTED_TARGETS} head_manager_gencpp)
