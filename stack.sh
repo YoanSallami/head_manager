@@ -2,10 +2,6 @@ rosservice call /pdg/manage_stream "{morseHuman: false, niutHuman: false, groupH
 
 rosservice call /database_manager/execute "{command: 'EMPTY', type: 'ALL', facts: [], agent: '', order: '', areaTopic: false ,agentTopic: false ,move3dTopic: false ,pdgTopic: false}"
 
-rostopic pub /ar_track_alvar/enable_detection std_msgs/Bool "data:true"
-
-rosrun pr2_controller_manager pr2_controller_manager stop laser_tils_controller
-
 rosservice call /agent_monitor/monitor_all_agents "monitorAll: true"
 rosservice call /agent_monitor/add_joint_to_agent "{jointName: 'head', agentId: 'HERAKLES_HUMAN1'}"
 rosservice call /agent_monitor/add_joint_to_agent "{jointName: 'rightHand', agentId: 'HERAKLES_HUMAN1'}"
