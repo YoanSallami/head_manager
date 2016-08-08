@@ -137,7 +137,7 @@ private:
     goal.head_target_y = p.point.y;
     goal.head_target_z = p.point.z;
 
-    enable_detect_tag.data=false;
+    enable_detect_tag.data=true;
     tag_detection_pub_.publish(enable_detect_tag);
 
     head_action_client_->sendGoal(goal);
