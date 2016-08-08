@@ -172,6 +172,7 @@ public:
                     if (it_area->subjectId==it_fl->subjectId && it_area->targetId=="action")
                     {
                       in_area=true;
+                      ROS_INFO("[DEBUG] %s is in area %s",it_fl->subjectId.c_str(),it_area->targetId.c_str());
                     }
                   }
               }
