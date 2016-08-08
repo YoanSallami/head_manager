@@ -129,6 +129,7 @@ private:
 
   void lookAt(geometry_msgs::PointStamped p)
   {
+    std_msgs::Bool enable_detect_tag;
     pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
@@ -138,7 +139,7 @@ private:
 
     enable_detect_tag.data=false;
     tag_detection_pub_.publish(enable_detect_tag);
-    
+
     head_action_client_->sendGoal(goal);
 
     bool finishedBeforeTimeout = head_action_client_->waitForResult(ros::Duration(300.0));
