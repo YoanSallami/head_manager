@@ -42,6 +42,7 @@ public:
   HumanList_t human_list_; //!< human list from pdg
   RobotList_t robot_list_; //!< robot list from pdg
   FactList_t fact_list_; //!< fact list from agent_monitor
+  FactList_t fact_area_list_;
 private:
   double stimuliDiscountFactor_; //!<
   double directionSalienceFactor_; //!<
@@ -53,6 +54,7 @@ private:
   SaliencyPair_t salient_stimuli_;
   string my_id_; //!< robot's id
   ros::NodeHandle node_; //!< node handler
+  ros::Subscriber fact_area_list_sub_;
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
   ros::Subscriber object_list_sub_; //!< object list subscriber
   ros::Subscriber human_list_sub_; //!< human list subscriber
@@ -90,6 +92,7 @@ public:
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &StimulusDrivenAttention::humanListCallback, this);
     robot_list_sub_ = node_.subscribe("/pdg/robotList", 1, &StimulusDrivenAttention::robotListCallback, this);
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &StimulusDrivenAttention::factListCallback, this);
+    fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &StimulusDrivenAttention::factListAreaCallback, this);
     // Advertise publishers
     salient_stimuli_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/salient_stimuli_vizualisation", 5);
     salient_stimuli_pub_ = node_.advertise<head_manager::AttentionStamped>("head_manager/salient_stimuli", 5);
@@ -161,22 +164,27 @@ public:
           {
             if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction" && it_fl->subjectId=="rightHand")
             {
-              for (FactList_t::iterator it_area = fact_list_.begin(); it_area < fact_list_.end(); ++it_area)
+              in_area=false;
+              for (FactList_t::iterator it_area = fact_area_list_.begin(); it_area < fact_area_list_.end(); ++it_area)
               {
                 if (it_area->property =="IsInArea")
                 {
                   if (it_area->subjectId==it_fl->subjectId && it_area->targetId=="action")
                   {
-                    if (it_fl->targetId!=my_id_)
-                    {
-                      target=directionSaliency_map.find(it_fl->targetId);
-                      if ( target != directionSaliency_map.end() )
-                      {
-                        target->second+=it_fl->doubleValue;
-                      } else {
-                        throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
-                      }
-                    }
+                    in_area=true;
+                  }
+                }
+              }
+              if(in_area)
+              {
+                if (it_fl->targetId!=my_id_)
+                {
+                  target=directionSaliency_map.find(it_fl->targetId);
+                  if ( target != directionSaliency_map.end() )
+                  {
+                    target->second+=it_fl->doubleValue;
+                  } else {
+                    throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
                   }
                 }
               }
@@ -777,7 +785,7 @@ private:
     }
   }
   /****************************************************
-   * @brief : Update the fact list
+   * @brief : Update the fact list provided by agent_monitor
    * @param : fact list
    ****************************************************/
   void factListCallback(const toaster_msgs::FactList::ConstPtr& msg)
@@ -794,6 +802,28 @@ private:
       }
       updateSaliencyMap();
       sendSalientStimuli(salient_stimuli_);
+    }
+    catch (HeadManagerException& e )
+    {
+      ROS_ERROR("[stimulus_driven_attention] Exception was caught : %s",e.description().c_str());
+    }
+  }
+  /****************************************************
+   * @brief : Update the fact list provided by area_manager
+   * @param : fact list
+   ****************************************************/
+  void factListAreaCallback(const toaster_msgs::FactList::ConstPtr& msg)
+  {
+    try
+    {
+      if (!msg->factList.empty())
+      {
+        fact_area_list_.clear();
+        for (unsigned int i = 0; i < msg->factList.size(); ++i)
+        {
+          fact_area_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
+        }
+      }
     }
     catch (HeadManagerException& e )
     {
