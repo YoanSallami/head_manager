@@ -31,7 +31,7 @@ rosservice call /area_manager/add_area "myArea:
   name: 'action'
   myOwner: 'TABLE_4'
   areaType: ''
-  factType: 'motion'
+  factType: 'direction'
   entityType: 'entities'
   isCircle: false
   center: {x: 0.0, y: 0.0, z: 0.0}

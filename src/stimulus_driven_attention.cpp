@@ -121,6 +121,7 @@ public:
     SaliencyMap_t::iterator subjectOwner;
     SaliencyMap_t::iterator target;
     SaliencyMap_t::iterator joint;
+    bool in_area=false;
     
     if (!input_map.empty())
     {
@@ -160,14 +161,23 @@ public:
           {
             if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction" && it_fl->subjectId=="rightHand")
             {
-              if (it_fl->targetId!=my_id_)
+              for (FactList_t::interator it_area = fact_list_.begin(); it_area < fact_list_.end(); ++it_area)
               {
-                target=directionSaliency_map.find(it_fl->targetId);
-                if ( target != directionSaliency_map.end() )
+                if (it_area->property =="IsInArea")
                 {
-                  target->second+=it_fl->doubleValue;
-                } else {
-                  throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
+                  if (it_area->subjectId==it_fl->subjectId && it_area->targetId="action")
+                  {
+                    if (it_fl->targetId!=my_id_)
+                    {
+                      target=directionSaliency_map.find(it_fl->targetId);
+                      if ( target != directionSaliency_map.end() )
+                      {
+                        target->second+=it_fl->doubleValue;
+                      } else {
+                        throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
+                      }
+                    }
+                  }
                 }
               }
             }
