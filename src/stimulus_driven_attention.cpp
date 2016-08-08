@@ -165,7 +165,7 @@ public:
               {
                 if (it_area->property =="IsInArea")
                 {
-                  if (it_area->subjectId==it_fl->subjectId && it_area->targetId="action")
+                  if (it_area->subjectId==it_fl->subjectId && it_area->targetId=="action")
                   {
                     if (it_fl->targetId!=my_id_)
                     {
