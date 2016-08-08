@@ -116,7 +116,7 @@ private:
       //ros::service::call("ar_track_alvar/GetPositionAndOrientation",e);
       enable_detect_tag.data=true;
       tag_detection_pub_.publish(enable_detect_tag);
-      ros::Duration(0.05).sleep();
+      ros::Duration(0.1).sleep();
       enable_detect_tag.data=false;
       tag_detection_pub_.publish(enable_detect_tag);
     }
