@@ -161,7 +161,7 @@ public:
           {
             if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction" && it_fl->subjectId=="rightHand")
             {
-              for (FactList_t::interator it_area = fact_list_.begin(); it_area < fact_list_.end(); ++it_area)
+              for (FactList_t::iterator it_area = fact_list_.begin(); it_area < fact_list_.end(); ++it_area)
               {
                 if (it_area->property =="IsInArea")
                 {
