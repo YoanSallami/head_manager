@@ -25,6 +25,24 @@ rosservice call /area_manager/add_area "myArea:
     - {x: 0, y: 1, z: 0}
     - {x: 0, y: -1, z: 0}
   insideEntities: [0]"
+  
+rosservice call /area_manager/add_area "myArea:
+  id: 1
+  name: 'action'
+  myOwner: 'TABLE_4'
+  areaType: ''
+  factType: 'motion'
+  entityType: 'entities'
+  isCircle: false
+  center: {x: 0.0, y: 0.0, z: 0.0}
+  ray: 1.0
+  poly:
+    points:
+    - {x: 1, y: -1, z: 0}
+    - {x: 1, y: 1, z: 0}
+    - {x: -1, y: -1, z: 0}
+    - {x: -1, y: 1, z: 0}
+  insideEntities: [0]"
 
   rosservice call /database_manager/set_info "{add: true, infoType: 'FACT', agentId: 'PR2_ROBOT', facts: [
     {property: 'type', propertyType: 'state', subProperty: '', subjectId: RED_CUBE'', targetId: 'CUBE', subjectOwnerId: '', targetOwnerId: '', valueType: false, factObservability: 0.0, doubleValue: 0.0, stringValue: '', confidence: 0.0, time: 0, timeStart: 0, timeEnd: 0}
