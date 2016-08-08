@@ -104,6 +104,10 @@ private:
     goal.head_target_x = p.point.x;
     goal.head_target_y = p.point.y;
     goal.head_target_z = p.point.z;
+
+    enable_detect_tag.data=true;
+    tag_detection_pub_.publish(enable_detect_tag);
+    
     head_action_client_->sendGoal(goal);
 
     bool finishedBeforeTimeout = head_action_client_->waitForResult(ros::Duration(300.0));
@@ -114,11 +118,10 @@ private:
       ROS_INFO("[sensitive_reorientation] Action finished: %s",state.toString().c_str());
       //ar_track_alvar::GetPositionAndOrientation e;
       //ros::service::call("ar_track_alvar/GetPositionAndOrientation",e);
-      enable_detect_tag.data=true;
-      tag_detection_pub_.publish(enable_detect_tag);
-      ros::Duration(0.1).sleep();
-      enable_detect_tag.data=false;
-      tag_detection_pub_.publish(enable_detect_tag);
+      
+      //ros::Duration(0.1).sleep();
+      //enable_detect_tag.data=false;
+      //tag_detection_pub_.publish(enable_detect_tag);
     }
     else
       ROS_INFO("[sensitive_reorientation] Action did not finish before the time out.");
@@ -132,6 +135,10 @@ private:
     goal.head_target_x = p.point.x;
     goal.head_target_y = p.point.y;
     goal.head_target_z = p.point.z;
+
+    enable_detect_tag.data=false;
+    tag_detection_pub_.publish(enable_detect_tag);
+    
     head_action_client_->sendGoal(goal);
 
     bool finishedBeforeTimeout = head_action_client_->waitForResult(ros::Duration(300.0));
