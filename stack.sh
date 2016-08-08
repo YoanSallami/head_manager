@@ -38,7 +38,7 @@ rosservice call /area_manager/add_area "myArea:
   ray: 1.0
   poly:
     points:
-    - {x: 1, y: -1, z: 0}
+    - {x: 0.5, y: -1, z: 0}
     - {x: 1, y: 1, z: 0}
     - {x: -1, y: -1, z: 0}
     - {x: -1, y: 1, z: 0}
