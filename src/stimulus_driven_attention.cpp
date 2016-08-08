@@ -167,11 +167,14 @@ public:
               in_area=false;
               for (FactList_t::iterator it_area = fact_area_list_.begin(); it_area < fact_area_list_.end(); ++it_area)
               {
-                if (it_area->property =="IsInArea")
+                if(it_fl->subjectId!="unknown_object")
                 {
-                  if (it_area->subjectId==it_fl->subjectId && it_area->targetId=="action")
+                  if (it_area->property =="IsInArea")
                   {
-                    in_area=true;
+                    if (it_area->subjectId==it_fl->subjectId && it_area->targetId=="action")
+                    {
+                      in_area=true;
+                    }
                   }
                 }
               }
