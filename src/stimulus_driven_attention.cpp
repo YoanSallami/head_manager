@@ -302,7 +302,7 @@ public:
     
     geometry_msgs::PointStamped salient_attention_point_vizu;
     head_manager::AttentionStamped salient_attention_point;
-    /*
+    
     geometry_msgs::Vector3 tempPoint;
     tf::Vector3 tempPointTF;
     tf::Quaternion q;
@@ -327,7 +327,8 @@ public:
       }
     } else {
       throw HeadManagerException ("Could not read an empty object list.");
-    }*/
+    }
+    /*
     if (!human_list_.empty())
     {
       salient_attention_point_vizu.point = getEntity("HERAKLES_HUMAN1::head").pose.position;
@@ -345,6 +346,7 @@ public:
     }  else {
       throw HeadManagerException ("Could not read an empty human list.");
     }
+    */
   }
 private:
   bool normalizeMap(SaliencyMap_t& map)
