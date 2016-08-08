@@ -167,8 +167,6 @@ public:
               in_area=false;
               for (FactList_t::iterator it_area = fact_area_list_.begin(); it_area < fact_area_list_.end(); ++it_area)
               {
-                if(it_fl->subjectId!="unknown_object")
-                {
                   if (it_area->property =="IsInArea")
                   {
                     if (it_area->subjectId==it_fl->subjectId && it_area->targetId=="action")
@@ -176,7 +174,6 @@ public:
                       in_area=true;
                     }
                   }
-                }
               }
               if(in_area)
               {
@@ -709,7 +706,7 @@ private:
         object_list_.clear();
         for (unsigned int i = 0; i < msg->objectList.size(); ++i)
         {
-          if (msg->objectList[i].meEntity.id!="unknown_object")
+          if (msg->objectList[i].meEntity.id!="unknown object")
           {
             object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
 
@@ -800,7 +797,10 @@ private:
         fact_list_.clear();
         for (unsigned int i = 0; i < msg->factList.size(); ++i)
         {
-          fact_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
+          if (msg->factList[i].targetId!="unknown object" && msg->factList[i].subjectId!="unknown object")
+          {
+            fact_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
+          }
         }
       }
       updateSaliencyMap();
@@ -824,7 +824,10 @@ private:
         fact_area_list_.clear();
         for (unsigned int i = 0; i < msg->factList.size(); ++i)
         {
-          fact_area_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
+          if (msg->factList[i].targetId!="unknown object" && msg->factList[i].subjectId!="unknown object")
+          {
+            fact_area_list_.push_back(*(new toaster_msgs::Fact(msg->factList[i])));
+          }
         }
       }
     }
