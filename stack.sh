@@ -39,9 +39,9 @@ rosservice call /area_manager/add_area "myArea:
   poly:
     points:
     - {x: 0.5, y: -1, z: 0}
-    - {x: 1, y: 1, z: 0}
-    - {x: -1, y: -1, z: 0}
-    - {x: -1, y: 1, z: 0}
+    - {x: 0.5, y: 1, z: 0}
+    - {x:-0.5, y: 1, z: 0}
+    - {x:-0.5, y: -1, z: 0}
   insideEntities: [0]"
 
   rosservice call /database_manager/set_info "{add: true, infoType: 'FACT', agentId: 'PR2_ROBOT', facts: [
