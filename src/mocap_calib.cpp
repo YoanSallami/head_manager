@@ -118,20 +118,23 @@ int main(int argc, char** argv)
   while(ros::ok())
   {
   	ros::spinOnce();
-  	try
+  	if(!cm.object_list_.empty())
   	{
-  		toaster_msgs::Entity chess=cm->getObject("CHESSBOARD");
-  		double pos_x=cm->mocap_x_-chess.pose.position.x;
-  		double pos_y=cm->mocap_y_-chess.pose.position.y;
-  		double pos_z=cm->mocap_z_-chess.pose.position.z;
-  		ros::param::set("mocap_calib_world_x",pos_x);
-  		ros::param::set("mocap_calib_world_y",pos_y);
-  		ros::param::set("mocap_calib_world_z",pos_z);
-  		ROS_INFO("[mocap_calib] Position offset = [x:%f, y:%f, z: %f]",pos_x,pos_y,pos_z);
+  		try
+  		{
+	  		toaster_msgs::Entity chess=cm->getObject("CHESSBOARD");
+	  		double pos_x=cm->mocap_x_-chess.pose.position.x;
+	  		double pos_y=cm->mocap_y_-chess.pose.position.y;
+	  		double pos_z=cm->mocap_z_-chess.pose.position.z;
+	  		ros::param::set("mocap_calib_world_x",pos_x);
+	  		ros::param::set("mocap_calib_world_y",pos_y);
+	  		ros::param::set("mocap_calib_world_z",pos_z);
+	  		ROS_INFO("[mocap_calib] Position offset = [x:%f, y:%f, z: %f]",pos_x,pos_y,pos_z);
+	  	}
+	  	catch (HeadManagerException& e )
+	    {
+	      ROS_ERROR("[mocap_calib] Exception was caught : %s",e.description().c_str());
+	    }
   	}
-  	catch (HeadManagerException& e )
-    {
-      ROS_ERROR("[mocap_calib] Exception was caught : %s",e.description().c_str());
-    }
   }
 }
