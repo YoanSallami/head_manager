@@ -20,12 +20,8 @@ private:
 	ros::NodeHandle node_;
 	ros::Subscriber mocap_tag_sub_;
 	ros::Subscriber object_list_sub_;
-	ObjectList_t object_list_;
-	ros::Timer timer_;
-	ros::ServiceServer action_srv_;
-	bool robotActing_;
-	std::string object_;
 public:
+	ObjectList_t object_list_;
 	double mocap_x_;
 	double mocap_y_;
 	double mocap_z_;
