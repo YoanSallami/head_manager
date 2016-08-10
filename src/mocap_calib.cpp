@@ -114,7 +114,7 @@ int main(int argc, char** argv)
   while(ros::ok())
   {
   	ros::spinOnce();
-  	if(!cm.object_list_.empty())
+  	if(!cm->object_list_.empty())
   	{
   		try
   		{
