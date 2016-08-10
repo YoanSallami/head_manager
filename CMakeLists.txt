@@ -84,4 +84,8 @@ add_dependencies(sensitive_reorientation ${catkin_EXPORTED_TARGETS})
 
 add_executable(activity_states_faker src/activity_states_faker.cpp)
 target_link_libraries(activity_states_faker ${catkin_LIBRARIES})
-add_dependencies(activity_states_faker ${catkin_EXPORTED_TARGETS} head_manager_gencpp)
+add_dependencies(activity_states_faker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_executable(mocap_calib src/mocap_calib.cpp)
+target_link_libraries(mocap_calib ${catkin_LIBRARIES})
+add_dependencies(mocap_calib ${catkin_EXPORTED_TARGETS})
