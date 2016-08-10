@@ -119,9 +119,9 @@ int main(int argc, char** argv)
   		try
   		{
 	  		toaster_msgs::Entity chess=cm->getObject("CHESSBOARD");
-	  		double pos_x=cm->mocap_x_-chess.pose.position.x;
-	  		double pos_y=cm->mocap_y_-chess.pose.position.y;
-	  		double pos_z=cm->mocap_z_-chess.pose.position.z;
+	  		double pos_x=chess.pose.position.x-cm->mocap_x_;
+	  		double pos_y=chess.pose.position.y-cm->mocap_y_;
+	  		double pos_z=chess.pose.position.z-cm->mocap_z_;
 	  		ros::param::set("mocap_calib_world_x",pos_x);
 	  		ros::param::set("mocap_calib_world_y",pos_y);
 	  		ros::param::set("mocap_calib_world_z",pos_z);
