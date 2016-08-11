@@ -105,7 +105,7 @@ public:
  ****************************************************/
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "activity_states_faker");
+  ros::init(argc, argv, "mocap_calib");
   ros::NodeHandle n;
   MocapCalib * cm = new MocapCalib(n);
   ROS_INFO("[mocap_calib] Make sure that ar_track_alvar and pdg is running !");
