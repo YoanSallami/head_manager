@@ -164,7 +164,7 @@ public:
           {
             if ( it_fl->property == "IsMovingToward" && it_fl->subProperty=="direction" && it_fl->subjectId=="rightHand")
             {
-              ROS_INFO("[DEBUG] %s is moving toward %s",it_fl->subjectId.c_str(),it_fl->targetId.c_str());
+              //ROS_INFO("[DEBUG] %s is moving toward %s",it_fl->subjectId.c_str(),it_fl->targetId.c_str());
               in_area=false;
               for (FactList_t::iterator it_area = fact_area_list_.begin(); it_area < fact_area_list_.end(); ++it_area)
               {
@@ -173,7 +173,7 @@ public:
                     if (it_area->subjectId==it_fl->subjectId && it_area->targetId=="action")
                     {
                       in_area=true;
-                      ROS_INFO("[DEBUG] %s is in area %s",it_fl->subjectId.c_str(),it_area->targetId.c_str());
+                      //ROS_INFO("[DEBUG] %s is in area %s",it_fl->subjectId.c_str(),it_area->targetId.c_str());
                     }
                   }
               }
