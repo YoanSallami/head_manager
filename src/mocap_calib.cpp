@@ -118,14 +118,19 @@ int main(int argc, char** argv)
   	{
   		try
   		{
+
 	  		toaster_msgs::Entity chess=cm->getObject("CHESSBOARD");
 	  		double pos_x=chess.pose.position.x-cm->mocap_x_;
 	  		double pos_y=chess.pose.position.y-cm->mocap_y_;
 	  		double pos_z=chess.pose.position.z-cm->mocap_z_;
-	  		ros::param::set("mocap_calib_world_x",pos_x);
-	  		ros::param::set("mocap_calib_world_y",pos_y);
-	  		ros::param::set("mocap_calib_world_z",pos_z);
-	  		ROS_INFO("[mocap_calib] Position offset = [x:%f, y:%f, z: %f]",pos_x,pos_y,pos_z);
+        if (pos_x<100.0 && pos_y<100.0 && pos_x<100.0)
+        {
+          ros::param::set("mocap_calib_world_x",pos_x);
+          ros::param::set("mocap_calib_world_y",pos_y);
+          ros::param::set("mocap_calib_world_z",pos_z);
+          ROS_INFO("[mocap_calib] Position offset = [x:%f, y:%f, z: %f]",pos_x,pos_y,pos_z);
+          break;
+        }
 	  	}
 	  	catch (HeadManagerException& e )
 	    {
