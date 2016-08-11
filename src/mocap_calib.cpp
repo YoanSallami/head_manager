@@ -123,7 +123,7 @@ int main(int argc, char** argv)
 	  		double pos_x=chess.pose.position.x-cm->mocap_x_;
 	  		double pos_y=chess.pose.position.y-cm->mocap_y_;
 	  		double pos_z=chess.pose.position.z-cm->mocap_z_;
-        if (pos_x<100.0 && pos_y<100.0 && pos_x<100.0)
+        if (abs(pos_x)<100.0 && abs(pos_y)<100.0 && abs(pos_x)<100.0)
         {
           ros::param::set("mocap_calib_world_x",pos_x);
           ros::param::set("mocap_calib_world_y",pos_y);
