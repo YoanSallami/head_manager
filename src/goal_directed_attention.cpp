@@ -573,7 +573,7 @@ public:
         robotActivityState = agent_activity_map_.find(my_id_)->second;
         if (robotActivityState.activityState=="ACTING")
         {
-          ROS_INFO("[goal_directed_attention] Receiving activity object : %s",robotActivityState.object.c_str());
+          //ROS_INFO("[goal_directed_attention] Receiving activity object : %s",robotActivityState.object.c_str());
           goal_directed_attention_vizu.point = getEntity(robotActivityState.object).pose.position;
           goal_directed_attention_vizu.header.stamp = ros::Time::now();
           goal_directed_attention_vizu.header.frame_id = "map";
