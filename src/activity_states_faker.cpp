@@ -21,7 +21,7 @@ public:
 	{
 		node_ = node;
 		bool robotActing_=false;
-		action_srv_ = node_.advertiseService("robot_action", &ActivityStatesFaker::Action,this);
+		action_srv_ = node_.advertiseService("/head_manager/robot_action", &ActivityStatesFaker::Action,this);
 		pr2_pub_ = node_.advertise <supervisor_msgs::AgentActivity> ("supervisor/activity_state/PR2_ROBOT", 1);
 		human_pub_ = node_.advertise <supervisor_msgs::AgentActivity> ("supervisor/activity_state/HERAKLES_HUMAN1", 1);
 		timer_ = node_.createTimer(ros::Duration(1.0/30.0), &ActivityStatesFaker::timerCallback, this);

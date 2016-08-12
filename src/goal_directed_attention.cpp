@@ -787,7 +787,7 @@ private:
       //ROS_INFO("test");
       if (signaling_==true)
       {
-        ROS_INFO("[goal_directed_attention] Sending signaling event");
+        //ROS_INFO("[goal_directed_attention] Sending signaling event");
         state_machine_->process_event(signaling());
       } else {
         if (agent_activity_map_.find(my_id_)->second.activityState=="ACTING" &&
