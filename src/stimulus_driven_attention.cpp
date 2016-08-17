@@ -319,7 +319,6 @@ public:
    ****************************************************/
   void sendSalientStimuli(SaliencyPair_t salient)
   {
-    
     geometry_msgs::PointStamped salient_attention_point_vizu;
     head_manager::AttentionStamped salient_attention_point;
     
@@ -708,7 +707,7 @@ private:
         object_list_.clear();
         for (unsigned int i = 0; i < msg->objectList.size(); ++i)
         {
-          if (msg->objectList[i].meEntity.id!="unknown object")
+          if (msg->objectList[i].meEntity.id.find("CUBE")!=std::string::npos)
           {
             object_list_.push_back(*(new toaster_msgs::Object(msg->objectList[i])));
 

@@ -201,12 +201,14 @@ private:
   ros::Publisher focus_pub_; //!< focus publisher
   int current_signal_it_; //!< 
   ros::Time signal_it_time_; //!<
+  ros::Time waiting_time_signal_;
   GoalDirectedAttentionStateMachine * state_machine_; //!<
   double urgencyThreshold_; //!<
   ParamServer_t goal_directed_dyn_param_srv; //!<
   AckMap_t ack_map_; //!< acknowledgement map;
   head_manager::Signal current_signal_; //!<
   bool signaling_; //!<
+  double waiting_time_signal_param_;
 
 public:
   /****************************************************
@@ -543,7 +545,7 @@ public:
       {
         if (it_fl->subjectId!=my_id_ && it_fl->targetId==my_id_)
         {
-          if ( it_fl->property == "IsFacing")
+          if ( it_fl->property == "IsLookingToward" && it_fl->targetId=="pr2")
           {
             if (ack_map_.find(it_fl->subjectId)!=ack_map_.end())
             {
@@ -645,6 +647,7 @@ public:
     signaling_=true;
     current_signal_it_=0;
     signal_it_time_=ros::Time::now();
+    waiting_time_signal_=ros::Time::now();
   }
   void stopSignalFocusing()
   {
@@ -656,6 +659,13 @@ public:
     geometry_msgs::PointStamped goal_directed_attention_vizu;
     head_manager::AttentionStamped goal_directed_attention;
     head_manager::Focus focus;
+
+    ros::Duration waiting_duration(2.5);
+    if ((waiting_time_signal_-ros::Time::now()) > waiting_duration)
+    {
+      signal_it_time_=ros::Time::now();
+      current_signal_it_=0;
+    }
     if (current_signal_.entities.size()==current_signal_.durations.size())
     {
       if (current_signal_it_ <= current_signal_.entities.size()-1)
@@ -743,20 +753,20 @@ public:
   bool signalAcknowledgement()
   {
     ROS_INFO("Receivers vector size :%d",(int)current_signal_.receivers.size());
-    // if(current_signal_.receivers.size()>0)
-    // {
-    //   for (int i = 0; i < current_signal_.receivers.size(); ++i)
-    //   {
-    //     if(ack_map_.find(current_signal_.receivers[i])==ack_map_.end())
-    //     {
-    //       return(false);
-    //       if(ack_map_.find(current_signal_.receivers[i])->second!=true)
-    //       {
-    //         return(false);
-    //       }
-    //     }
-    //   }
-    // }
+    if(current_signal_.receivers.size()>0)
+    {
+      for (int i = 0; i < current_signal_.receivers.size(); ++i)
+      {
+        if(ack_map_.find(current_signal_.receivers[i])==ack_map_.end())
+        {
+          return(false);
+          if(ack_map_.find(current_signal_.receivers[i])->second!=true)
+          {
+            return(false);
+          }
+        }
+      }
+    }
     return(true);
   }
 private:
@@ -944,6 +954,7 @@ private:
   void dynParamCallback(head_manager::GoalDirectedAttentionConfig &config, uint32_t level) 
   {
     urgencyThreshold_ = config.urgency_threshold;
+    waiting_time_signal_param_=config.waiting_time_signal_param;
   }
 };
 
