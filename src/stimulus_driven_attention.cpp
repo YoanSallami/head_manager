@@ -248,7 +248,7 @@ public:
                 {
                   target->second+=it_fl->doubleValue;
                 } else {
-                  throw HeadManagerException ("Could not find "+it_fl->targetId+"::head in inhibition map.");
+                  //throw HeadManagerException ("Could not find "+it_fl->targetId+"::head in inhibition map.");
                 }
               } else {
                 // ojects
