@@ -61,7 +61,7 @@ public:
 				head_manager::Action::Response &res)
 	{
 		robotActing_=req.acting;
-		object_=req.object;
+		object_= req.object;
 		if (req.acting)
 		{
 			ROS_INFO("[activity_states_faker] Robot action start !");
