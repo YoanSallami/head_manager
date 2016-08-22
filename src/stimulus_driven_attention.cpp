@@ -186,7 +186,7 @@ public:
                   {
                     target->second+=it_fl->doubleValue;
                   } else {
-                    throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
+                    //throw HeadManagerException ("Could not find "+it_fl->targetId+" in object saliency map.");
                   }
                 }
               }
@@ -200,7 +200,7 @@ public:
                 {
                   target->second+=it_fl->doubleValue;
                 } else {
-                  throw HeadManagerException ("Could not find "+it_fl->targetId+" in looking saliency map.");
+                  //throw HeadManagerException ("Could not find "+it_fl->targetId+" in looking saliency map.");
                 }
               }else{
                 subject=lookingSaliency_map.find(it_fl->subjectId+"::head");
@@ -208,7 +208,7 @@ public:
                 {
                   subject->second+=it_fl->doubleValue;
                 } else {
-                  throw HeadManagerException ("Could not find "+it_fl->subjectId+"::head in looking saliency map.");
+                  //throw HeadManagerException ("Could not find "+it_fl->subjectId+"::head in looking saliency map.");
                 }
               }
             }
@@ -221,7 +221,7 @@ public:
                 {
                   subject->second+=it_fl->doubleValue;
                 } else {
-                  throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in moving saliency map.");
+                  //throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in moving saliency map.");
                 }
               }
               if ( it_fl->subProperty == "agent")
@@ -231,7 +231,7 @@ public:
                 {
                   subject->second+=it_fl->doubleValue;
                 } else {
-                  throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in movingsaliency map.");
+                  //throw HeadManagerException ("Could not find "+it_fl->subjectOwnerId+" "+it_fl->subjectId+" in movingsaliency map.");
                 }
               }
             }
@@ -248,7 +248,7 @@ public:
                 {
                   target->second+=it_fl->doubleValue;
                 } else {
-                  throw HeadManagerException ("Could not find "+it_fl->targetId+"::head in inhibition map.");
+                  //throw HeadManagerException ("Could not find "+it_fl->targetId+"::head in inhibition map.");
                 }
               } else {
                 // ojects
