@@ -749,22 +749,22 @@ public:
   }
   bool signalAcknowledgement()
   {
-    ROS_INFO("Receivers vector size :%d",(int)current_signal_.receivers.size());
-    if(current_signal_.receivers.size()>0)
-    {
-      for (int i = 0; i < current_signal_.receivers.size(); ++i)
-      {
-        if(ack_map_.find(current_signal_.receivers[i])==ack_map_.end())
-        {
-          return(false);
-        } else {
-          if(ack_map_.find(current_signal_.receivers[i])->second!=false)
-          {
-            return(false);
-          }
-        }
-      }
-    }
+    // ROS_INFO("Receivers vector size :%d",(int)current_signal_.receivers.size());
+    // if(current_signal_.receivers.size()>0)
+    // {
+    //   for (int i = 0; i < current_signal_.receivers.size(); ++i)
+    //   {
+    //     if(ack_map_.find(current_signal_.receivers[i])==ack_map_.end())
+    //     {
+    //       return(false);
+    //     } else {
+    //       if(ack_map_.find(current_signal_.receivers[i])->second!=false)
+    //       {
+    //         return(false);
+    //       }
+    //     }
+    //   }
+    // }
     return(true);
   }
 private:
@@ -810,19 +810,19 @@ private:
             {
               // If a human do an expected action regarding to the plan during
               // robot action we send a signal to queue
-              sig.entities[0]=msg->object;
-              sig.durations[0]=0.2;
+              sig.entities.push_back(msg->object);
+              sig.durations.push_back(0.2);
               sig.urgency=0.98;
               sig.importancy=0.9;
             } else {
               // If a human do an unexpected action regarding to the plan during
               // robot action we send a signal to queue
-              sig.entities[0]=msg->object;
-              sig.durations[0]=0.2;
-              sig.entities[1]=id+"::rightHand";
-              sig.durations[1]=0.0;
-              sig.entities[2]=id+"::head";
-              sig.durations[2]=0.5;
+              sig.entities.push_back(msg->object);
+              sig.durations.push_back(0.2);
+              sig.entities.push_back(id+"::rightHand");
+              sig.durations.push_back(0.0);
+              sig.entities.push_back(id+"::head");
+              sig.durations.push_back(0.5);
               sig.urgency=0.68;
               sig.importancy=1.0;
             }
