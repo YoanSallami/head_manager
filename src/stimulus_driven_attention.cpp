@@ -713,7 +713,7 @@ private:
 
             if( saliency_map_.find(msg->objectList[i].meEntity.id) == saliency_map_.end() )
             {
-              //ROS_INFO("[stimulus_driven_attention] Add %s to saliency map.",msg->objectList[i].meEntity.id.c_str());
+              ROS_INFO("[stimulus_driven_attention] Add %s to saliency map.",msg->objectList[i].meEntity.id.c_str());
               saliency_map_.insert(SaliencyPair_t(msg->objectList[i].meEntity.id,0.0));
             }
           }
