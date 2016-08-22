@@ -504,7 +504,6 @@ public:
    ****************************************************/
   bool selectSignal(head_manager::Signal & sig)
   {
-    ROS_INFO("test");
     double max=sig.weight;
     SignalList_t::iterator max_it;
     bool changed=false;
@@ -519,10 +518,8 @@ public:
           changed=true;
         }
       }
-      ROS_INFO("lolo");
       sig=*max_it;
       signal_list_.erase(max_it);
-      ROS_INFO("frefed");
       return(changed);
     }
     return(false);
@@ -760,7 +757,8 @@ public:
         if(ack_map_.find(current_signal_.receivers[i])==ack_map_.end())
         {
           return(false);
-          if(ack_map_.find(current_signal_.receivers[i])->second!=true)
+        } else {
+          if(ack_map_.find(current_signal_.receivers[i])->second!=false)
           {
             return(false);
           }
