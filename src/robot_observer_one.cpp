@@ -341,7 +341,7 @@ public:
     point.header.stamp = ros::Time::now();
     if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1"))
     {
-        toaster_msgs::Human agent = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second->meAgent;
+        toaster_msgs::Agent agent = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second->meAgent;
          for(int i=0 ; i< agent.skeletonNames.size() ; ++i)
         {
             if( agent.skeletonNames[i]="head")
@@ -365,7 +365,7 @@ public:
     point.header.stamp = ros::Time::now();
     if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1"))
     {
-        toaster_msgs::Human agent = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second->meAgent;
+        toaster_msgs::Agent agent = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second->meAgent;
         for(int i=0 ; i< agent.skeletonNames.size() ; ++i)
         {
             if( agent.skeletonNames[i]="rightHand")
