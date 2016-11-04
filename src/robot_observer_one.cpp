@@ -344,10 +344,10 @@ public:
         toaster_msgs::Agent agent = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second->meAgent;
          for(int i=0 ; i< agent.skeletonNames.size() ; ++i)
         {
-            if( agent.skeletonNames[i]="head")
+            if( agent.skeletonNames[i]=="head")
             {
                 point.point=agent.skeletonJoint[i].meEntity.pose.position;
-                handFind=true;
+                headFind=true;
                 break;
             }
         } 
@@ -368,7 +368,7 @@ public:
         toaster_msgs::Agent agent = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second->meAgent;
         for(int i=0 ; i< agent.skeletonNames.size() ; ++i)
         {
-            if( agent.skeletonNames[i]="rightHand")
+            if( agent.skeletonNames[i]=="rightHand")
             {
                 point.point=agent.skeletonJoint[i].meEntity.pose.position;
                 handFind=true;
@@ -377,10 +377,10 @@ public:
         } 
        
     }
-    if(headFind)
+    if(handFind)
         lookAt(point);
     else
-        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1 head.");
+        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1 hand.");
   }
   
 };
