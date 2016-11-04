@@ -1,0 +1,438 @@
+#include <ros/ros.h>
+#include <string>
+#include <cstdlib>
+#include <map>.
+
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/client/terminal_state.h>
+#include <pr2motion/InitAction.h>
+#include <pr2motion/connect_port.h>
+#include <pr2motion/Head_Move_TargetAction.h>
+#include <pr2motion/Head_Stop.h>
+#include <geometry_msgs/PointStamped.h>
+
+#include "../include/head_manager/HeadManagerException.h"
+#include "geometry_msgs/PointStamped.h"
+
+#include "toaster_msgs/ToasterHumanReader.h"
+#include "toaster_msgs/ToasterRobotReader.h"
+#include "toaster_msgs/ToasterObjectReader.h"
+#include "toaster_msgs/ObjectListStamped.h"
+#include "toaster_msgs/HumanListStamped.h"
+#include "toaster_msgs/RobotListStamped.h"
+#include "toaster_msgs/FactList.h"
+#include "toaster_msgs/Object.h"
+#include "toaster_msgs/Robot.h"
+#include "toaster_msgs/Human.h"
+#include "toaster_msgs/Fact.h"
+#include "toaster_msgs/Entity.h"
+#include "tf/transform_datatypes.h"
+
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
+#include <dynamic_reconfigure/server.h>
+#include <head_manager/StimulusDrivenAttentionConfig.h>
+#include "head_manager/AttentionStamped.h"
+
+#include "head_manager/MapStamped.h"
+
+using namespace std;
+
+//for convenience
+typedef std::map < std::string, float > SaliencyMap_t;
+typedef std::pair < std::string, float > SaliencyPair_t;
+typedef std::vector < toaster_msgs::Fact > FactList_t;
+typedef dynamic_reconfigure::Server<head_manager::StimulusDrivenAttentionConfig> ParamServer_t;
+typedef actionlib::SimpleActionClient<pr2motion::InitAction> InitActionClient_t;
+typedef actionlib::SimpleActionClient<pr2motion::Head_Move_TargetAction> HeadActionClient_t;
+
+// Forward class definition
+class Observer;
+
+/**************************************************
+* State machine definition
+***************************************************/
+// Events definition
+struct humanNear{};
+struct humanNotNear{};
+struct humanHandOnTable{};
+struct humanHandNotOnTable{};
+
+static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" };
+/**
+* @brief : State machine front definition
+*/
+struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStateMachine_>
+{
+  RobotObserver * observer_ptr_; //<! 
+  ObserverStateMachine_(RobotObserver * observer)
+  {
+    observer_ptr_ = observer;
+  }
+  // Starting state machine messages
+  template <class Event,class FSM>
+  void on_entry(Event const& ,FSM&) 
+  {
+      ROS_INFO("[robot_observer] Starting state machine.");
+  }
+
+  template <class Event,class FSM>
+  void on_exit(Event const&,FSM& ) 
+  {
+      ROS_INFO("[robot_observer] Ending state machine.");
+  }
+
+  // States definition
+  struct Waiting : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"Waiting\".");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"Waiting\".");}
+  };
+
+  struct LookingHead : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"LookingHead\".");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingHead\".");}
+  };
+
+  struct LookingHand : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"LookingHand\".");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingHand\".");}
+  };
+
+
+  // Initial state definition
+  typedef Waiting initial_state;
+  // Transition action definition
+  void focus_head(humanNear const&);
+  void refocus_head(humanHandNotOnTable const&); 
+  void focus_hand(humanHandOnTable const&);
+  void rest(humanNotNear const&); 
+  // Guard transition definition
+
+  typedef ObserverStateMachine_ sm;
+
+  // Transition table
+  struct transition_table : mpl::vector<
+       //    Start                  Event                 Next                   Action                     Guard
+       //  +----------------------+---------------------+----------------------+---------------------------+------------------------------------+
+     a_row < Waiting              , humanNear           , LookingHead          , &sm::focus_head                                                 >,
+       //  +----------------------+---------------------+----------------------+---------------------------+------------------------------------+
+     a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
+     a_row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand                                                 >,
+    a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
+       //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
+     a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >
+    a_irow < LookingHead          , humanHandOnTable                           , &sm::focus_hand                                                 >,
+      //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
+    > {};
+
+  // Replaces the default no-transition response.
+  template <class FSM,class Event>
+  void no_transition(Event const& e, FSM&,int state)
+  {
+      ROS_INFO("No transition from state %s on event %s",state_names[state],typeid(e).name());
+  }
+};
+// State machine back definition
+typedef msm::back::state_machine<ObserverStateMachine_> ObserverStateMachine;
+// Testing utilities
+
+void pstate(ObserverStateMachine const& sm)
+{
+    ROS_INFO(" -> %s", state_names[sm.current_state()[0]]);
+}
+
+class RobotObserver
+{
+public:
+  ObjectList_t object_list_; //!< object list from pdg
+  HumanList_t human_list_; //!< human list from pdg
+  RobotList_t robot_list_; //!< robot list from pdg
+  FactList_t fact_list_; //!< fact list from agent_monitor
+  FactList_t fact_area_list_; //!< fact list from area_manager
+private:
+  
+  string my_id_; //!< robot id
+  ros::NodeHandle node_; //!< node handler
+  ros::Subscriber fact_area_list_sub_;
+  ros::Subscriber fact_list_sub_; //!< fact list subscriber
+  ros::Publisher attention_pub_; //!< sensitive goal publisher
+  ros::Publisher attention_vizu_pub_; //!< sensitive goal publisher
+  ParamServer_t stimulu_driven_dyn_param_srv; //!<
+  std::string attention_id_; //!<
+  geometry_msgs::Point attention_point_; //!<
+  ToasterHumanReader * human_reader_ptr_; //!<
+  ToasterRobotReader * robot_reader_ptr_; //!<
+  ToasterObjectReader * object_reader_ptr_; //!<
+  ObserverStateMachine * state_machine_; //!<
+public:
+  /****************************************************
+   * @brief : Default constructor
+   * @param : ros node handler
+   ****************************************************/
+  RobotObserver(ros::NodeHandle& node)
+  {
+    node_=node;
+    
+    // Getting robot's id from ros param
+    if(node_.hasParam("my_robot_id"))
+    {
+      node_.getParam("my_robot_id",my_id_);
+    } else {
+      my_id_="PR2_ROBOT";
+    }
+    // Advertise subscribers
+    fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &StimulusDrivenAttention::factListCallback, this);
+    fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &StimulusDrivenAttention::factListAreaCallback, this);
+    // Advertise publishers
+    attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/attention_vizualisation", 5);
+    
+    human_reader_ptr_ = new ToasterHumanReader(node_, true);
+    robot_reader_ptr_ = new ToasterRobotReader(node_, true);
+    object_reader_ptr_ = new ToasterObjectReader(node_);
+
+    init_action_client_ = new InitActionClient_t("pr2motion/Init", true);
+    // Initialize action client for the action interface to the head controller
+    head_action_client_ = new HeadActionClient_t("pr2motion/Head_Move_Target", true);
+    // Connection to the pr2motion client
+    connect_port_srv_ = node_.serviceClient<pr2motion::connect_port>("pr2motion/connect_port");
+    head_stop_srv_ = node_.serviceClient<pr2motion::connect_port>("pr2motion/Head_Stop");
+    ROS_INFO("Waiting for pr2motion action server to start.");
+    init_action_client_->waitForServer(); //will wait for infinite time
+    head_action_client_->waitForServer(); //will wait for infinite time
+    ROS_INFO("pr2motion action server started.");
+
+    pr2motion::InitGoal goal_init;
+    init_action_client_->sendGoal(goal_init);
+
+    pr2motion::connect_port srv;
+    srv.request.local = "joint_state";
+    srv.request.remote = "joint_states";
+    if (!connect_port_srv_.call(srv)){
+      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
+    }
+    srv.request.local = "head_controller_state";
+    srv.request.remote = "/head_traj_controller/state";
+    if (!connect_port_srv_.call(srv)){
+      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
+    }
+  }
+  /****************************************************
+   * @brief : Default destructor
+   ****************************************************/
+  ~RobotObserver(){}
+
+private:
+
+  void lookAt(geometry_msgs::PointStamped p)
+  {
+    
+    std_msgs::Bool enable_detect_tag;
+    pr2motion::Head_Move_TargetGoal goal;
+    goal.head_mode.value = 0;
+    goal.head_target_frame = p.header.frame_id;
+    goal.head_target_x = p.point.x;
+    goal.head_target_y = p.point.y;
+    goal.head_target_z = p.point.z;
+
+    attention_vizu_pub_.publish(p);
+
+    head_action_client_->sendGoal(goal);
+
+    bool finishedBeforeTimeout = head_action_client_->waitForResult(ros::Duration(300.0));
+
+    if (finishedBeforeTimeout)
+    {
+      actionlib::SimpleClientGoalState state = head_action_client_->getState();
+      ROS_INFO("[sensitive_reorientation] Action finished: %s", state.toString().c_str() );
+    }
+    else
+      ROS_INFO("[sensitive_reorientation] Action did not finish before the time out.");
+  }
+  /****************************************************
+   * @brief : Update the fact list provided by agent_monitor
+   * @param : fact list
+   ****************************************************/
+  void factListCallback(const toaster_msgs::FactList::ConstPtr& msg)
+  {
+    /*
+      if (!msg->factList.empty())
+      {
+        for (unsigned int i = 0; i < msg->factList.size(); ++i)
+        {
+          if (msg->factList[i].property=="" 
+              && msg->factList[i].targetId!="unknown object" 
+              && msg->factList[i].subjectId!="unknown object")
+          {
+            //TODO send event
+          }
+        }
+      }
+    */
+  }
+  /****************************************************
+   * @brief : Update the fact list provided by area_manager
+   * @param : fact list
+   ****************************************************/
+  void factListAreaCallback(const toaster_msgs::FactList::ConstPtr& msg)
+  {
+    bool humanNear=false;
+    bool humanHandOnTable=false;
+    if (!msg->factList.empty())
+    {
+        for (unsigned int i = 0; i < msg->factList.size(); ++i)
+        {
+          if (msg->factList[i].property=="IsInArea" 
+              && msg->factList[i].targetId!="interaction" 
+              && msg->factList[i].subjectId!="HERACKLES_HUMAN1")
+          {
+            humanNear=true;
+          }
+          if (msg->factList[i].property=="IsInArea" 
+              && msg->factList[i].targetId!="action" 
+              && msg->factList[i].subjectId!="HERACKLES_HUMAN1::rightHand")
+          {
+            humanHandOnTable=true;
+          }
+        }
+        if(humanNear)
+            state_machine_->process_event(humanNear());
+        else
+            state_machine_->process_event(humanNotNear());
+        if(humanHandOnTable)
+            state_machine_->process_event(humanHandOnTable());
+        else
+            state_machine_->process_event(humanHandNotOnTable());
+    }
+  }
+
+  void rest()
+  {
+    geometry_msgs::PointStamped point;
+    point.header.frame_id = "base_link";
+    point.header.stamp = ros::Time::now();
+    point.point.x = 5; 
+    point.point.y = 0; 
+    point.point.z = 1.2;
+    lookAt(point);
+  }
+  void focusHead()
+  {
+    bool headFind=false;
+    geometry_msgs::PointStamped point;
+    point.header.frame_id = "map";
+    point.header.stamp = ros::Time::now();
+    if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1")
+    {
+        toaster_msgs::Human * agent_ptr = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second;
+        for(int i=0 ; i<agent_ptr->skeletonNames.size() ; ++i)
+        {
+            if(agent_ptr->skeletonNames[i]="head")
+            {
+                point.point=agent_ptr->skeletonJoint[i].meEntity.pose.position;
+                headFind=true;
+                break;
+            }
+        }
+    }
+    if(headFind)
+        lookAt(point);
+    else
+        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1 head.");
+  }
+  void focusHand()
+  {
+    bool handFind=false;
+    geometry_msgs::PointStamped point;
+    point.header.frame_id = "map";
+    point.header.stamp = ros::Time::now();
+    if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1")
+    {
+        toaster_msgs::Human * agent_ptr = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second;
+        for(int i=0 ; i<agent_ptr->skeletonNames.size() ; ++i)
+        {
+            if(agent_ptr->skeletonNames[i]="rightHand")
+            {
+                point.point=agent_ptr->skeletonJoint[i].meEntity.pose.position;
+                handFind=true;
+                break;
+            }
+        } 
+       
+    }
+    if(headFind)
+        lookAt(point);
+    else
+        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1 head.");
+  }
+  
+};
+
+void ObserverStateMachine_::rest(humanNotNear const&)
+{
+  try
+  {
+    observer_ptr_->rest();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::focus_head(humanNear const&)
+{
+  try
+  {
+    observer_ptr_->focusHead();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::refocus_head(humanHandNotOnTable const&)
+{
+  try
+  {
+    observer_ptr_->focusHead();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::focus_hand(humanHandOnTable const&)
+{
+  try
+  {
+    observer_ptr_->focusHand();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+/****************************************************
+ * @brief : Main process function
+ * @param : arguments count
+ * @param : arguments values
+ ****************************************************/
+int main(int argc, char** argv)
+{
+  ros::init(argc, argv, "robot_observer");
+  ros::NodeHandle n;
+  RobotObserver * ro = new RobotObserver(n);
+  while(ros::ok())
+  {
+    ros::spinOnce();    
+  }
+}

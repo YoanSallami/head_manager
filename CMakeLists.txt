@@ -86,6 +86,10 @@ add_executable(activity_states_faker src/activity_states_faker.cpp)
 target_link_libraries(activity_states_faker ${catkin_LIBRARIES})
 add_dependencies(activity_states_faker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
+add_executable(robot_observer_one src/robot_observer_one.cpp)
+target_link_libraries(robot_observer_one ${catkin_LIBRARIES})
+add_dependencies(robot_observer_one ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
 add_executable(mocap_calib src/mocap_calib.cpp)
 target_link_libraries(mocap_calib ${catkin_LIBRARIES})
 add_dependencies(mocap_calib ${catkin_EXPORTED_TARGETS})
