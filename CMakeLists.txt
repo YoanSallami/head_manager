@@ -68,7 +68,7 @@ catkin_package(
   geometry_msgs
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} $ENV{TOASTERLIB_DIR}/include ${pr2motion-genom3_INCLUDE_DIRS} $ENV{ROBOTPKG_BASE}/include)
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} $ENV{TOASTERLIB_DIR}/toaster-lib/include ${pr2motion-genom3_INCLUDE_DIRS} $ENV{ROBOTPKG_BASE}/include)
 
 add_executable(stimulus_driven_attention src/stimulus_driven_attention.cpp)
 target_link_libraries(stimulus_driven_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
