@@ -139,8 +139,8 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand                                                 >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
-     a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >
-    a_irow < LookingHead          , humanHandOnTable                           , &sm::focus_hand                                                 >,
+     a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
+    a_irow < LookingHead          , humanHandOnTable                           , &sm::focus_hand                                                 >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
 
@@ -245,8 +245,6 @@ private:
 
   void lookAt(geometry_msgs::PointStamped p)
   {
-    
-    std_msgs::Bool enable_detect_tag;
     pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
@@ -295,8 +293,8 @@ private:
    ****************************************************/
   void factListAreaCallback(const toaster_msgs::FactList::ConstPtr& msg)
   {
-    bool humanNear=false;
-    bool humanHandOnTable=false;
+    bool human_near=false;
+    bool hand_on_table=false;
     if (!msg->factList.empty())
     {
         for (unsigned int i = 0; i < msg->factList.size(); ++i)
@@ -305,20 +303,20 @@ private:
               && msg->factList[i].targetId!="interaction" 
               && msg->factList[i].subjectId!="HERACKLES_HUMAN1")
           {
-            humanNear=true;
+            human_near=true;
           }
           if (msg->factList[i].property=="IsInArea" 
               && msg->factList[i].targetId!="action" 
-              && msg->factList[i].subjectId!="HERACKLES_HUMAN1::rightHand")
+              && msg->factList[i].subjectId!="rightHand")
           {
-            humanHandOnTable=true;
+            hand_on_table=true;
           }
         }
-        if(humanNear)
+        if(human_near)
             state_machine_->process_event(humanNear());
         else
             state_machine_->process_event(humanNotNear());
-        if(humanHandOnTable)
+        if(hand_on_table)
             state_machine_->process_event(humanHandOnTable());
         else
             state_machine_->process_event(humanHandNotOnTable());
@@ -341,10 +339,10 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
-    if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1")
+    if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1"))
     {
         toaster_msgs::Human * agent_ptr = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second;
-        for(int i=0 ; i<agent_ptr->skeletonNames.size() ; ++i)
+        for(int i=0 ; i < agent_ptr->skeletonNames.size() ; ++i)
         {
             if(agent_ptr->skeletonNames[i]="head")
             {
@@ -365,7 +363,7 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
-    if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1")
+    if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1"))
     {
         toaster_msgs::Human * agent_ptr = human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"].second;
         for(int i=0 ; i<agent_ptr->skeletonNames.size() ; ++i)
