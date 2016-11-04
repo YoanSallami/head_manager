@@ -16,7 +16,13 @@
     <!--node name="run_server" pkg="database_manager" type="run_server" output="screen"/-->  
     <include file="$(find database_manager)/launch/Database.launch"/>
 
+    <node pkg="rosservice" type="rosservice" name="manage_stream" args="call --wait /pdg/manage_stream '{morseHuman: false, niutHuman: false, groupHuman: false, mocapHuman: false, adreamMocapHuman: true,
+  toasterSimuHuman: false, pr2Robot: false, spencerRobot: false, toasterSimuRobot: false,
+  toasterSimuObject: false, arObject: true}' "/>
+
     <include file="$(find ar_track_alvar)/launch/pr2_bundle_no_kinect.launch"/>
+
+    <node pkg="rostopic" type="rostopic" name="enable_ar_track_alvar" args="pub /ar_track_alvar/enable_detection std_msgs/Bool 'data: true'"/> 
 
     <node name="activity_states_faker" pkg="head_manager" type="activity_states_faker" output="screen" />
 
