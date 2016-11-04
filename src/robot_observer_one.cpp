@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <string>
 #include <cstdlib>
-#include <map>.
+#include <map>
 
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
@@ -163,9 +163,6 @@ void pstate(ObserverStateMachine const& sm)
 class RobotObserver
 {
 public:
-  ObjectList_t object_list_; //!< object list from pdg
-  HumanList_t human_list_; //!< human list from pdg
-  RobotList_t robot_list_; //!< robot list from pdg
   FactList_t fact_list_; //!< fact list from agent_monitor
   FactList_t fact_area_list_; //!< fact list from area_manager
 private:
@@ -183,6 +180,10 @@ private:
   ToasterRobotReader * robot_reader_ptr_; //!<
   ToasterObjectReader * object_reader_ptr_; //!<
   ObserverStateMachine * state_machine_; //!<
+  ros::ServiceClient connect_port_srv_;
+  ros::ServiceClient head_stop_srv_;
+  InitActionClient_t * init_action_client_; //!< initialisation client
+  HeadActionClient_t * head_action_client_; //!< interface to head controller client
 public:
   /****************************************************
    * @brief : Default constructor
@@ -200,8 +201,8 @@ public:
       my_id_="PR2_ROBOT";
     }
     // Advertise subscribers
-    fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &StimulusDrivenAttention::factListCallback, this);
-    fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &StimulusDrivenAttention::factListAreaCallback, this);
+    fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &RobotObserver::factListCallback, this);
+    fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &RobotObserver::factListAreaCallback, this);
     // Advertise publishers
     attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/attention_vizualisation", 5);
     
@@ -323,7 +324,7 @@ private:
             state_machine_->process_event(humanHandNotOnTable());
     }
   }
-
+public:
   void rest()
   {
     geometry_msgs::PointStamped point;
