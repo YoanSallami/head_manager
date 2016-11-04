@@ -42,6 +42,8 @@
 #include <boost/msm/front/state_machine_def.hpp>
 
 using namespace std;
+namespace msm = boost::msm;
+namespace mpl = boost::mpl;
 
 //for convenience
 typedef std::map < std::string, float > SaliencyMap_t;
