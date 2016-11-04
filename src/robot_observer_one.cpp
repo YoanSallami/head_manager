@@ -38,6 +38,9 @@
 
 #include "head_manager/MapStamped.h"
 
+#include <boost/msm/back/state_machine.hpp>
+#include <boost/msm/front/state_machine_def.hpp>
+
 using namespace std;
 
 //for convenience
@@ -49,7 +52,7 @@ typedef actionlib::SimpleActionClient<pr2motion::InitAction> InitActionClient_t;
 typedef actionlib::SimpleActionClient<pr2motion::Head_Move_TargetAction> HeadActionClient_t;
 
 // Forward class definition
-class Observer;
+class RobotObserver;
 
 /**************************************************
 * State machine definition
