@@ -228,13 +228,15 @@ public:
     srv.request.local = "joint_state";
     srv.request.remote = "joint_states";
     if (!connect_port_srv_.call(srv)){
-      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
+      ROS_ERROR("[robot_observer] Failed to call service pr2motion/connect_port");
     }
     srv.request.local = "head_controller_state";
     srv.request.remote = "/head_traj_controller/state";
     if (!connect_port_srv_.call(srv)){
-      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/connect_port");
+      ROS_ERROR("[robot_observer] Failed to call service pr2motion/connect_port");
     }
+    ROS_INFO("[robot_observer] READY !");
+    state_machine_->start();
   }
   /****************************************************
    * @brief : Default destructor
@@ -261,10 +263,10 @@ private:
     if (finishedBeforeTimeout)
     {
       actionlib::SimpleClientGoalState state = head_action_client_->getState();
-      ROS_INFO("[sensitive_reorientation] Action finished: %s", state.toString().c_str() );
+      ROS_INFO("[robot_observer] Action finished: %s", state.toString().c_str() );
     }
     else
-      ROS_INFO("[sensitive_reorientation] Action did not finish before the time out.");
+      ROS_INFO("[robot_observer] Action did not finish before the time out.");
   }
   /****************************************************
    * @brief : Update the fact list provided by agent_monitor
