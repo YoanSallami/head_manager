@@ -216,10 +216,10 @@ public:
     // Connection to the pr2motion client
     connect_port_srv_ = node_.serviceClient<pr2motion::connect_port>("pr2motion/connect_port");
     head_stop_srv_ = node_.serviceClient<pr2motion::connect_port>("pr2motion/Head_Stop");
-    ROS_INFO("Waiting for pr2motion action server to start.");
+    ROS_INFO("[robot_observer] Waiting for pr2motion action server to start.");
     init_action_client_->waitForServer(); //will wait for infinite time
     head_action_client_->waitForServer(); //will wait for infinite time
-    ROS_INFO("pr2motion action server started.");
+    ROS_INFO("[robot_observer] pr2motion action server started.");
 
     pr2motion::InitGoal goal_init;
     init_action_client_->sendGoal(goal_init);
@@ -337,6 +337,7 @@ private:
 public:
   void rest()
   {
+    ROS_INFO("[robot_observer] Rest");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "base_link";
     point.header.stamp = ros::Time::now();
@@ -347,6 +348,7 @@ public:
   }
   void focusHead()
   {
+    ROS_INFO("[robot_observer] Focus head");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
@@ -362,6 +364,7 @@ public:
   }
   void focusHand()
   {
+    ROS_INFO("[robot_observer] Focus hand");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
