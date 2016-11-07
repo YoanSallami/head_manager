@@ -335,52 +335,33 @@ public:
   }
   void focusHead()
   {
-    bool headFind=false;
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
     if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1"))
     {
-        toaster_msgs::Agent * agent_ptr = new toaster_msgs::Agent(*(human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"]->meAgent));
-        for(int i=0 ; i< agent_ptr->skeletonNames.size() ; ++i)
-        {
-            if( agent_ptr->skeletonNames[i]=="head")
-            {
-                point.point=agent_ptr->skeletonJoint[i].meEntity.pose.position;
-                headFind=true;
-                break;
-            }
-        } 
-    }
-    if(headFind)
+        point.point.x=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<0>();
+        point.point.y=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<1>();
+        point.point.z=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<2>();
         lookAt(point);
-    else
-        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1 head.");
+    }else {
+        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1.");
+    }
   }
   void focusHand()
   {
-    bool handFind=false;
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
     if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1"))
     {
-        toaster_msgs::Agent * agent_ptr = new toaster_msgs::Agent(*(human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"]->meAgent));
-        for(int i=0 ; i< agent_ptr->skeletonNames.size() ; ++i)
-        {
-            if( agent_ptr->skeletonNames[i]=="rightHand")
-            {
-                point.point=agent_ptr->skeletonJoint[i].meEntity.pose.position;
-                handFind=true;
-                break;
-            }
-        } 
-       
-    }
-    if(handFind)
+        point.point.x=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<0>();
+        point.point.y=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<1>();
+        point.point.z=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<2>();
         lookAt(point);
-    else
-        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1 hand.");
+    }else {
+        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1.");
+    }
   }
   
 };
