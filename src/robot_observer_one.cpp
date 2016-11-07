@@ -340,9 +340,9 @@ public:
     point.header.stamp = ros::Time::now();
     if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1"))
     {
-        point.point.x=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<0>();
-        point.point.y=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<1>();
-        point.point.z=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<2>();
+        point.point.x=human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<0>();
+        point.point.y=human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<1>();
+        point.point.z=human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"]->skeleton_["head"]->position_.get<2>();
         lookAt(point);
     }else {
         throw HeadManagerException ("Could not find HERACKLES_HUMAN_1.");
@@ -355,9 +355,9 @@ public:
     point.header.stamp = ros::Time::now();
     if(human_reader_ptr_->isPresent("HERACKLES_HUMAN_1"))
     {
-        point.point.x=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<0>();
-        point.point.y=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<1>();
-        point.point.z=human_reader_ptr_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<2>();
+        point.point.x=human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<0>();
+        point.point.y=human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<1>();
+        point.point.z=human_reader_ptr_->lastConfig_["HERACKLES_HUMAN_1"]->skeleton_["rightHand"]->position_.get<2>();
         lookAt(point);
     }else {
         throw HeadManagerException ("Could not find HERACKLES_HUMAN_1.");
