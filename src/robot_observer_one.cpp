@@ -236,6 +236,7 @@ public:
       ROS_ERROR("[robot_observer] Failed to call service pr2motion/connect_port");
     }
     ROS_INFO("[robot_observer] READY !");
+    state_machine_ = new ObserverStateMachine(boost::cref(this));
     state_machine_->start();
   }
   /****************************************************
@@ -247,7 +248,6 @@ private:
 
   void lookAt(geometry_msgs::PointStamped p)
   {
-    ROS_INFO("test");
     pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
