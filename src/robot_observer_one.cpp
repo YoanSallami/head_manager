@@ -247,6 +247,7 @@ private:
 
   void lookAt(geometry_msgs::PointStamped p)
   {
+    ROS_INFO("test");
     pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
