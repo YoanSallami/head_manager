@@ -316,13 +316,22 @@ private:
           }
         }
         if(human_near)
+        {
+            ROS_INFO("[robot_observer] process event HumanNear");
             state_machine_->process_event(humanNear());
-        else
+        } else {
+            ROS_INFO("[robot_observer] process event HumanNotNear");
             state_machine_->process_event(humanNotNear());
+        }
         if(hand_on_table)
+        {
+            ROS_INFO("[robot_observer] process event humanHandOnTable");
             state_machine_->process_event(humanHandOnTable());
-        else
+        }
+        else {
+            ROS_INFO("[robot_observer] process event humanHandNotOnTable");
             state_machine_->process_event(humanHandNotOnTable());
+        }
     }
   }
 public:
