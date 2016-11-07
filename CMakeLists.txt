@@ -87,7 +87,7 @@ target_link_libraries(activity_states_faker ${catkin_LIBRARIES})
 add_dependencies(activity_states_faker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(robot_observer_one src/robot_observer_one.cpp)
-target_link_libraries(robot_observer_one ${catkin_LIBRARIES})
+target_link_libraries(robot_observer_one ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
 add_dependencies(robot_observer_one ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(mocap_calib src/mocap_calib.cpp)
