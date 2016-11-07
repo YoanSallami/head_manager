@@ -32,7 +32,7 @@
 
     <include file="$(find pr2_teleop)/launch/teleop_joystick.launch"/>
 
-    <node pkg="rosservice" type="rosservice" name="add_area0" args="call -- wait /area_manager/add_area 'myArea:
+    <node pkg="rosservice" type="rosservice" name="add_area0" args="call --wait /area_manager/add_area 'myArea:
           id: 0
           name: 'interaction'
           myOwner: 'pr2'
@@ -51,7 +51,7 @@
             - {x: 0, y: -1, z: 0}
           insideEntities: [0]'"/>
   
-    <node pkg="rosservice" type="rosservice" name="add_area1" args="call -- wait /area_manager/add_area 'myArea:
+    <node pkg="rosservice" type="rosservice" name="add_area1" args="call --wait /area_manager/add_area 'myArea:
           id: 1
           name: 'action'
           myOwner: 'TABLE_4'
