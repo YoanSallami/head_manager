@@ -176,9 +176,9 @@ private:
   ParamServer_t stimulu_driven_dyn_param_srv; //!<
   std::string attention_id_; //!<
   geometry_msgs::Point attention_point_; //!<
-  ToasterHumanReader * human_reader_ptr_; //!<
-  ToasterRobotReader * robot_reader_ptr_; //!<
-  ToasterObjectReader * object_reader_ptr_; //!<
+  ToasterHumanReader human_reader_; //!<
+  ToasterRobotReader robot_reader_; //!<
+  ToasterObjectReader object_reader_; //!<
   ObserverStateMachine * state_machine_; //!<
   ros::ServiceClient connect_port_srv_;
   ros::ServiceClient head_stop_srv_;
@@ -206,9 +206,12 @@ public:
     // Advertise publishers
     attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/attention_vizualisation", 5);
     
-    human_reader_ptr_ = new ToasterHumanReader(node_, false);
-    robot_reader_ptr_ = new ToasterRobotReader(node_, false);
-    object_reader_ptr_ = new ToasterObjectReader(node_);
+    ToasterHumanReader human_reader(node_, false);
+    ToasterRobotReader robot_reader(node_, false);
+    ToasterObjectReader object_reader(node_);
+    human_reader_ = human_reader;
+    robot_reader_ = robot_reader;
+    object_reader_ = object_reader;
 
     init_action_client_ = new InitActionClient_t("pr2motion/Init", true);
     // Initialize action client for the action interface to the head controller
@@ -352,18 +355,18 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
-    for (std::map<std::string, Human*>::iterator it = human_reader_ptr_->lastConfig_.begin(); it != human_reader_ptr_->lastConfig_.end(); ++it) {
+    for (std::map<std::string, Human*>::iterator it = human_reader_.lastConfig_.begin(); it != human_reader_.lastConfig_.end(); ++it) {
         ROS_INFO("[robot_observer] test1");
         for(std::map<std::string, Joint*>::iterator it2 = it->second->skeleton_.begin() ; it2 != it->second->skeleton_.end() ; ++it2)
             ROS_INFO("[robot_observer] test2");
     }
 
-    if(human_reader_ptr_->isPresent("HERAKLES_HUMAN1"))
+    if(human_reader_.isPresent("HERAKLES_HUMAN1"))
     {
         
-        point.point.x=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<0>();
-        point.point.y=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<1>();
-        point.point.z=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<2>();
+        point.point.x=human_reader_.lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<0>();
+        point.point.y=human_reader_.lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<1>();
+        point.point.z=human_reader_.lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<2>();
         lookAt(point);
     }else {
         throw HeadManagerException ("Could not find HERAKLES_HUMAN_1.");
@@ -375,11 +378,11 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
-    if(human_reader_ptr_->isPresent("HERAKLES_HUMAN1"))
+    if(human_reader_.isPresent("HERAKLES_HUMAN1"))
     {
-        point.point.x=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<0>();
-        point.point.y=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<1>();
-        point.point.z=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<2>();
+        point.point.x=human_reader_.lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<0>();
+        point.point.y=human_reader_.lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<1>();
+        point.point.z=human_reader_.lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<2>();
         lookAt(point);
     }else {
         throw HeadManagerException ("Could not find HERAKLES_HUMAN_1.");
