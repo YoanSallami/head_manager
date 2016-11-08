@@ -116,8 +116,6 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       template <class Event,class FSM>
       void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingHand\".");}
   };
-
-
   // Initial state definition
   typedef Waiting initial_state;
   // Transition action definition
@@ -246,6 +244,9 @@ private:
 
   void lookAt(geometry_msgs::PointStamped p)
   {
+    pr2motion::Head_Stop stop;
+    if (!ros::service::call("pr2motion/Head_Stop", stop))
+      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/Head_Stop");
     pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
