@@ -352,7 +352,12 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
-    ROS_INFO("[robot_observer] head x position : %f",human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->getPosition().get<0>());
+    for (std::map<std::string, Human*>::iterator it = human_reader_ptr_->lastConfig_.begin(); it != human_reader_ptr_->lastConfig_.end(); ++it) {
+        ROS_INFO("[robot_observer] test1");
+        for(std::map<std::string, Joint*>::iterator it2 = it->second->skeleton_.begin() ; it2 != it->second->skeleton_.end() ; ++it2)
+            ROS_INFO("[robot_observer] test2");
+    }
+
     if(human_reader_ptr_->isPresent("HERAKLES_HUMAN1"))
     {
         
