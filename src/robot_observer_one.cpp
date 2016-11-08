@@ -134,6 +134,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
        //    Start                  Event                 Next                   Action                     Guard
        //  +----------------------+---------------------+----------------------+---------------------------+------------------------------------+
      a_row < Waiting              , humanNear           , LookingHead          , &sm::focus_head                                                 >,
+    a_irow < Waiting              , humanNotNear                               , &sm::rest                                                       >,
        //  +----------------------+---------------------+----------------------+---------------------------+------------------------------------+
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand                                                 >,
