@@ -206,7 +206,7 @@ public:
     // Advertise publishers
     attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/attention_vizualisation", 5);
     
-    ToasterHumanReader human_reader(node_, false);
+    ToasterHumanReader human_reader(node_, true);
     ToasterRobotReader robot_reader(node_, false);
     ToasterObjectReader object_reader(node_);
     human_reader_ptr_ = &human_reader;
