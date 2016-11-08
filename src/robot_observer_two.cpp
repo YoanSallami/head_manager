@@ -267,7 +267,7 @@ public:
         ROS_ERROR("[robot_observer] Failed to call service /pr2motion/Z_Head_SetMinDuration");
     state_machine_ = new ObserverStateMachine(boost::cref(this));
     state_machine_->start();
-    same_object=false;
+    same_object_=false;
     ROS_INFO("[robot_observer] Starting state machine, node ready !");
   }
   /****************************************************
@@ -326,11 +326,11 @@ private:
         }
         if(look)
         {
-            if(focus==object_focused_by_human_ && same_object==false )
+            if(focus==object_focused_by_human_ && same_object_==false )
                 same_object_=true;
                 start_time_focus_=ros::Time::now();
             if(focus=!object_focused_by_human_)
-                same_object=false;
+                same_object_=false;
             if(same_object_)
                 if(start_time_focus_-ros::Time::now()>ros::Duration(1.0))
                 {
