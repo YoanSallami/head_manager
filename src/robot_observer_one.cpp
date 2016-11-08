@@ -232,9 +232,9 @@ public:
     if (!connect_port_srv_.call(srv)){
       ROS_ERROR("[robot_observer] Failed to call service pr2motion/connect_port");
     }
-    pr2motion::Z_Head_SetMinDuration srv;
-    srv.request.head_min_duration=0.6;
-    if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv))
+    pr2motion::Z_Head_SetMinDuration srv_MinDuration;
+    srv_MinDuration.request.head_min_duration=0.6;
+    if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv_MinDuration))
         ROS_ERROR("[robot_observer] Failed to call service /pr2motion/Z_Head_SetMinDuration");
     state_machine_ = new ObserverStateMachine(boost::cref(this));
     state_machine_->start();
