@@ -149,7 +149,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   template <class FSM,class Event>
   void no_transition(Event const& e, FSM&,int state)
   {
-      ROS_INFO("No transition from state %s on event %s",state_names[state],typeid(e).name());
+      ROS_INFO("[robot_observer] No transition from state %s on event %s",state_names[state],typeid(e).name());
   }
 };
 // State machine back definition
@@ -170,6 +170,8 @@ private:
   
   string my_id_; //!< robot id
   ros::NodeHandle node_; //!< node handler
+  HumanList_t human_list_; //!< human list from pdg
+  ros::Subscriber human_list_sub_; //!< human list subscriber
   ros::Subscriber fact_area_list_sub_;
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
   ros::Publisher attention_pub_; //!< sensitive goal publisher
@@ -185,6 +187,8 @@ private:
   ros::ServiceClient head_stop_srv_;
   InitActionClient_t * init_action_client_; //!< initialisation client
   HeadActionClient_t * head_action_client_; //!< interface to head controller client
+  geometry_msgs::Point head_position_;
+  geometry_msgs::Point hand_position_;
 public:
   /****************************************************
    * @brief : Default constructor
@@ -204,6 +208,7 @@ public:
     // Advertise subscribers
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &RobotObserver::factListCallback, this);
     fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &RobotObserver::factListAreaCallback, this);
+    human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &RobotObserver::humanListCallback, this);
     // Advertise publishers
     attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/attention_vizualisation", 5);
     
@@ -334,6 +339,34 @@ private:
         state_machine_->process_event(humanHandNotOnTable());
     }
   }
+  /****************************************************
+   * @brief : Update the human list
+   * @param : human list
+   ****************************************************/
+  void humanListCallback(const toaster_msgs::HumanListStamped::ConstPtr& msg)
+  {
+    try
+    {
+      if (!msg->humanList.empty())
+      {
+        for (unsigned int i = 0; i < msg->humanList.size(); ++i)
+        {
+            if(msg->humanList[i].meAgent.meEntity.id=="HERAKLES_HUMAN1")
+                for( unsigned int j = 0 ; j < msg->humanList[i].meAgent.skeletonJoint.size() ; ++j )
+                {
+                    if(msg->humanList[i].meAgent.skeletonNames[j]=="head")
+                        head_position_=msg->humanList[i].meAgent.skeletonJoint[j].meEntity.pose.position;
+                    if(msg->humanList[i].meAgent.skeletonNames[j]=="hand")
+                        hand_position_=msg->humanList[i].meAgent.skeletonJoint[j].meEntity.pose.position;
+                }
+        }
+      }
+    }
+    catch (HeadManagerException& e )
+    {
+      ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+    }
+  }
 public:
   void rest()
   {
@@ -352,23 +385,8 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
-    for (std::map<std::string, Human*>::iterator it = human_reader_ptr_->lastConfig_.begin(); it != human_reader_ptr_->lastConfig_.end(); ++it) {
-human_reader_ptr_->lastConfig_;
-        ROS_INFO("[robot_observer] test1 ");
-        for(std::map<std::string, Joint*>::iterator it2 = it->second->skeleton_.begin() ; it2 != it->second->skeleton_.end() ; ++it2)
-            ROS_INFO("[robot_observer] test2 : %s",it2->first.c_str());
-    }
-
-    if(human_reader_ptr_->isPresent("HERAKLES_HUMAN1"))
-    {
-        
-        point.point.x=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<0>();
-        point.point.y=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<1>();
-        point.point.z=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<2>();
-        lookAt(point);
-    }else {
-        throw HeadManagerException ("Could not find HERAKLES_HUMAN_1.");
-    }
+    point.point=head_position_;
+    lookAt(point);
   }
   void focusHand()
   {
@@ -376,15 +394,8 @@ human_reader_ptr_->lastConfig_;
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
-    if(human_reader_ptr_->isPresent("HERAKLES_HUMAN1"))
-    {
-        point.point.x=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<0>();
-        point.point.y=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<1>();
-        point.point.z=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["rightHand"]->getPosition().get<2>();
-        lookAt(point);
-    }else {
-        throw HeadManagerException ("Could not find HERAKLES_HUMAN_1.");
-    }
+    point.point=hand_position_;
+    lookAt(point);
   }
   
 };
