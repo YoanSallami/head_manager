@@ -354,9 +354,8 @@ public:
     point.header.stamp = ros::Time::now();
     for (std::map<std::string, Human*>::iterator it = human_reader_ptr_->lastConfig_.begin(); it != human_reader_ptr_->lastConfig_.end(); ++it) {
         ROS_INFO("[robot_observer] test1");
-        ROS_INFO("[robot_observer] nb joint : %d",it->second->skeleton_.size());
         for(std::map<std::string, Joint*>::iterator it2 = it->second->skeleton_.begin() ; it2 != it->second->skeleton_.end() ; ++it2)
-            ROS_INFO("[robot_observer] test2");
+            ROS_INFO("[robot_observer] test2 : %s",it2->first.c_str());
     }
 
     if(human_reader_ptr_->isPresent("HERAKLES_HUMAN1"))
