@@ -344,7 +344,7 @@ public:
     point.header.stamp = ros::Time::now();
     point.point.x = 5; 
     point.point.y = 0; 
-    point.point.z = 1.2;
+    point.point.z = 0.6;
     lookAt(point);
   }
   void focusHead()
@@ -355,6 +355,7 @@ public:
     point.header.stamp = ros::Time::now();
     for (std::map<std::string, Human*>::iterator it = human_reader_ptr_->lastConfig_.begin(); it != human_reader_ptr_->lastConfig_.end(); ++it) {
         ROS_INFO("[robot_observer] test1");
+        ROS_INFO("[robot_observer] nb joint : %d",it->second->skeleton_.size());
         for(std::map<std::string, Joint*>::iterator it2 = it->second->skeleton_.begin() ; it2 != it->second->skeleton_.end() ; ++it2)
             ROS_INFO("[robot_observer] test2");
     }
@@ -404,6 +405,7 @@ void ObserverStateMachine_::focus_head(humanNear const&)
   try
   {
     observer_ptr_->focusHead();
+
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
