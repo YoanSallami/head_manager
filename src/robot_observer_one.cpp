@@ -170,7 +170,6 @@ private:
   
   string my_id_; //!< robot id
   ros::NodeHandle node_; //!< node handler
-  HumanList_t human_list_; //!< human list from pdg
   ros::Subscriber human_list_sub_; //!< human list subscriber
   ros::Subscriber fact_area_list_sub_;
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
@@ -179,9 +178,6 @@ private:
   ParamServer_t stimulu_driven_dyn_param_srv; //!<
   std::string attention_id_; //!<
   geometry_msgs::Point attention_point_; //!<
-  ToasterHumanReader * human_reader_ptr_; //!<
-  ToasterRobotReader * robot_reader_ptr_; //!<
-  ToasterObjectReader * object_reader_ptr_; //!<
   ObserverStateMachine * state_machine_; //!<
   ros::ServiceClient connect_port_srv_;
   ros::ServiceClient head_stop_srv_;
@@ -211,13 +207,6 @@ public:
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &RobotObserver::humanListCallback, this);
     // Advertise publishers
     attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/attention_vizualisation", 5);
-    
-    ToasterHumanReader human_reader(node_, true);
-    ToasterRobotReader robot_reader(node_, false);
-    ToasterObjectReader object_reader(node_);
-    human_reader_ptr_ = &human_reader;
-    robot_reader_ptr_ = &robot_reader;
-    object_reader_ptr_ = &object_reader;
 
     init_action_client_ = new InitActionClient_t("pr2motion/Init", true);
     // Initialize action client for the action interface to the head controller
