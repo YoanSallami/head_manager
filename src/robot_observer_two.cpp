@@ -329,7 +329,7 @@ private:
             if(focus==object_focused_by_human_ && same_object_==false )
                 same_object_=true;
                 start_time_focus_=ros::Time::now();
-            if(focus=!object_focused_by_human_)
+            if(focus!=object_focused_by_human_)
                 same_object_=false;
             if(same_object_)
                 if(start_time_focus_-ros::Time::now()>ros::Duration(1.0))
