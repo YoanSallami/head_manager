@@ -302,40 +302,37 @@ private:
   {
     bool human_near=false;
     bool hand_on_table=false;
-    if (!msg->factList.empty())
+    for (unsigned int i = 0; i < msg->factList.size(); ++i)
     {
-        for (unsigned int i = 0; i < msg->factList.size(); ++i)
-        {
-          if (msg->factList[i].property=="IsInArea" 
-              && msg->factList[i].targetId!="interaction" 
-              && msg->factList[i].subjectId!="HERAKLES_HUMAN1")
-          {
-            human_near=true;
-          }
-          if (msg->factList[i].property=="IsInArea" 
-              && msg->factList[i].targetId!="action" 
-              && msg->factList[i].subjectId!="rightHand")
-          {
-            hand_on_table=true;
-          }
-        }
-        if(human_near)
-        {
-            ROS_INFO("[robot_observer] process event HumanNear");
-            state_machine_->process_event(humanNear());
-        } else {
-            ROS_INFO("[robot_observer] process event HumanNotNear");
-            state_machine_->process_event(humanNotNear());
-        }
-        if(hand_on_table)
-        {
-            ROS_INFO("[robot_observer] process event humanHandOnTable");
-            state_machine_->process_event(humanHandOnTable());
-        }
-        else {
-            ROS_INFO("[robot_observer] process event humanHandNotOnTable");
-            state_machine_->process_event(humanHandNotOnTable());
-        }
+      if (msg->factList[i].property=="IsInArea" 
+          && msg->factList[i].targetId!="interaction" 
+          && msg->factList[i].subjectId!="HERAKLES_HUMAN1")
+      {
+        human_near=true;
+      }
+      if (msg->factList[i].property=="IsInArea" 
+          && msg->factList[i].targetId!="action" 
+          && msg->factList[i].subjectId!="rightHand")
+      {
+        hand_on_table=true;
+      }
+    }
+    if(human_near)
+    {
+        ROS_INFO("[robot_observer] process event HumanNear");
+        state_machine_->process_event(humanNear());
+    } else {
+        ROS_INFO("[robot_observer] process event HumanNotNear");
+        state_machine_->process_event(humanNotNear());
+    }
+    if(hand_on_table)
+    {
+        ROS_INFO("[robot_observer] process event humanHandOnTable");
+        state_machine_->process_event(humanHandOnTable());
+    }
+    else {
+        ROS_INFO("[robot_observer] process event humanHandNotOnTable");
+        state_machine_->process_event(humanHandNotOnTable());
     }
   }
 public:
