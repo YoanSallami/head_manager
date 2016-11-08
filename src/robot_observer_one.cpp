@@ -352,15 +352,16 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
+    ROS_INFO("[robot_observer] head x position : %f",human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<0>());
     if(human_reader_ptr_->isPresent("HERAKLES_HUMAN1"))
     {
-        //ROS_INFO("[robot_observer] head position : (%f;-;-)",human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->position_.get<0>());
+        
         point.point.x=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<0>();
         point.point.y=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<1>();
         point.point.z=human_reader_ptr_->lastConfig_["HERAKLES_HUMAN1"]->skeleton_["head"]->getPosition().get<2>();
         lookAt(point);
     }else {
-        throw HeadManagerException ("Could not find HERACKLES_HUMAN_1.");
+        throw HeadManagerException ("Could not find HERAKLES_HUMAN_1.");
     }
   }
   void focusHand()
