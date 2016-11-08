@@ -211,6 +211,7 @@ private:
   geometry_msgs::Point object_position_;
   bool same_object_;
   std::string object_focused_by_human_;
+  ros::Time start_time_focus_;
 public:
   /****************************************************
    * @brief : Default constructor
@@ -311,7 +312,7 @@ private:
       if (!msg->factList.empty())
       {
         bool look=false;
-        double max=0.0
+        double max=0.0;
         std::string focus;
         for (unsigned int i = 0; i < msg->factList.size(); ++i)
         {
@@ -327,11 +328,11 @@ private:
         {
             if(focus==object_focused_by_human_ && same_object==false )
                 same_object_=true;
-                time_focused_=ros::Time::now();
+                start_time_focus_=ros::Time::now();
             if(focus=!object_focused_by_human_)
                 same_object=false;
-            if(same_object)
-                if(time_focused_-ros::Time::now()>ros::Duration(1.0))
+            if(same_object_)
+                if(start_time_focus_-ros::Time::now()>ros::Duration(1.0))
                 {
                     if(focus=="RED_CUBE"){
                         object_position_=red_cube_position_;
@@ -435,13 +436,13 @@ private:
         for (unsigned int i = 0; i < msg->objectList.size(); ++i)
         {
           if (msg->objectList[i].meEntity.id=="RED_CUBE")
-            red_cube_position_=objectList[i].meEntity.pose.position;
+            red_cube_position_=msg->objectList[i].meEntity.pose.position;
           if (msg->objectList[i].meEntity.id=="BLACK_CUBE")
-            black_cube_position_=objectList[i].meEntity.pose.position;
+            black_cube_position_=msg->objectList[i].meEntity.pose.position;
           if (msg->objectList[i].meEntity.id=="BLUE_CUBE")
-            blue_cube_position_=objectList[i].meEntity.pose.position;
+            blue_cube_position_=msg->objectList[i].meEntity.pose.position;
           if (msg->objectList[i].meEntity.id=="GREEN_CUBE")
-            green_cube_position_=objectList[i].meEntity.pose.position;
+            green_cube_position_=msg->objectList[i].meEntity.pose.position;
         }
       }
     }
