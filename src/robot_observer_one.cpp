@@ -149,7 +149,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   template <class FSM,class Event>
   void no_transition(Event const& e, FSM&,int state)
   {
-      ROS_INFO("[robot_observer] No transition from state %s on event %s",state_names[state],typeid(e).name());
+      //ROS_INFO("[robot_observer] No transition from state %s on event %s",state_names[state],typeid(e).name());
   }
 };
 // State machine back definition
@@ -257,15 +257,15 @@ private:
 
     head_action_client_->sendGoal(goal);
 
-    bool finishedBeforeTimeout = head_action_client_->waitForResult(ros::Duration(300.0));
+    bool finishedBeforeTimeout = head_action_client_->waitForResult(ros::Duration(5.0));
 
     if (finishedBeforeTimeout)
     {
       actionlib::SimpleClientGoalState state = head_action_client_->getState();
-      ROS_INFO("[robot_observer] Action finished: %s", state.toString().c_str() );
+      //ROS_INFO("[robot_observer] Action finished: %s", state.toString().c_str() );
     }
     else
-      ROS_INFO("[robot_observer] Action did not finish before the time out.");
+      ROS_WARN("[robot_observer] Action did not finish before the time out.");
   }
   /****************************************************
    * @brief : Update the fact list provided by agent_monitor
@@ -345,7 +345,7 @@ private:
                 {
                     if(msg->humanList[i].meAgent.skeletonNames[j]=="head")
                         head_position_=msg->humanList[i].meAgent.skeletonJoint[j].meEntity.pose.position;
-                    if(msg->humanList[i].meAgent.skeletonNames[j]=="hand")
+                    if(msg->humanList[i].meAgent.skeletonNames[j]=="rightHand")
                         hand_position_=msg->humanList[i].meAgent.skeletonJoint[j].meEntity.pose.position;
                 }
         }
