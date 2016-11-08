@@ -206,8 +206,8 @@ public:
     // Advertise publishers
     attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/attention_vizualisation", 5);
     
-    human_reader_ptr_ = new ToasterHumanReader(node_, true);
-    robot_reader_ptr_ = new ToasterRobotReader(node_, true);
+    human_reader_ptr_ = new ToasterHumanReader(node_, false);
+    robot_reader_ptr_ = new ToasterRobotReader(node_, false);
     object_reader_ptr_ = new ToasterObjectReader(node_);
 
     init_action_client_ = new InitActionClient_t("pr2motion/Init", true);
