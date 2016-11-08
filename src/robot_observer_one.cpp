@@ -305,14 +305,14 @@ private:
     for (unsigned int i = 0; i < msg->factList.size(); ++i)
     {
       if (msg->factList[i].property=="IsInArea" 
-          && msg->factList[i].targetId!="interaction" 
-          && msg->factList[i].subjectId!="HERAKLES_HUMAN1")
+          && msg->factList[i].targetId=="interaction" 
+          && msg->factList[i].subjectId=="HERAKLES_HUMAN1")
       {
         human_near=true;
       }
       if (msg->factList[i].property=="IsInArea" 
-          && msg->factList[i].targetId!="action" 
-          && msg->factList[i].subjectId!="rightHand")
+          && msg->factList[i].targetId=="action" 
+          && msg->factList[i].subjectId=="rightHand")
       {
         hand_on_table=true;
       }
@@ -329,8 +329,7 @@ private:
     {
         ROS_INFO("[robot_observer] process event humanHandOnTable");
         state_machine_->process_event(humanHandOnTable());
-    }
-    else {
+    } else {
         ROS_INFO("[robot_observer] process event humanHandNotOnTable");
         state_machine_->process_event(humanHandNotOnTable());
     }
@@ -342,7 +341,7 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "base_link";
     point.header.stamp = ros::Time::now();
-    point.point.x = 5; 
+    point.point.x = 3; 
     point.point.y = 0; 
     point.point.z = 0.6;
     lookAt(point);
