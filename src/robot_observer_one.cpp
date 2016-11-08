@@ -9,6 +9,7 @@
 #include <pr2motion/connect_port.h>
 #include <pr2motion/Head_Move_TargetAction.h>
 #include <pr2motion/Head_Stop.h>
+#include <pr2motion/Z_Head_SetMinDuration.h>
 #include <geometry_msgs/PointStamped.h>
 
 #include "../include/head_manager/HeadManagerException.h"
@@ -231,9 +232,13 @@ public:
     if (!connect_port_srv_.call(srv)){
       ROS_ERROR("[robot_observer] Failed to call service pr2motion/connect_port");
     }
-    ROS_INFO("[robot_observer] READY !");
+    pr2motion::Z_Head_SetMinDuration srv;
+    srv.request.head_min_duration=0.6;
+    if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv))
+        ROS_ERROR("[robot_observer] Failed to call service /pr2motion/Z_Head_SetMinDuration");
     state_machine_ = new ObserverStateMachine(boost::cref(this));
     state_machine_->start();
+    ROS_INFO("[robot_observer] Starting state machine, node ready !");
   }
   /****************************************************
    * @brief : Default destructor
