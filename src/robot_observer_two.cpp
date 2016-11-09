@@ -339,6 +339,7 @@ private:
                 max_point=msg->factList[i].doubleValue;
                 focus_pointing=msg->factList[i].targetId;
                 point_somewhere=true;
+             }
           }
         }
         if(look_somewhere)
@@ -409,7 +410,7 @@ private:
                     }
                 }
             object_focused_by_human_hand_=focus_pointing;
-       }
+        }
      }
   }
   /****************************************************
