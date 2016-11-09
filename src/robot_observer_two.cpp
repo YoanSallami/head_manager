@@ -334,7 +334,13 @@ private:
             if(focus!=object_focused_by_human_)
                 same_object_=false;
             if(same_object_)
-                if(ros::Time::now()-start_time_focus_>ros::Duration(1.0))
+                if(ros::Time::now()-start_time_focus_>ros::Duration(0.3))
+                {
+                    if(focus=="pr2"){
+                        state_machine_->process_event(humanLookingRobot());
+                    }
+                }
+                if(ros::Time::now()-start_time_focus_>ros::Duration(0.6))
                 {
                     ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks the same object for 1 sec");
                     if(focus=="RED_CUBE"){
@@ -542,6 +548,16 @@ void ObserverStateMachine_::focus_object(humanLookingObject const&)
   try
   {
     observer_ptr_->focusObject();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::ack_head(humanLookingRobot const&)
+{
+  try
+  {
+    observer_ptr_->focusHead();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
