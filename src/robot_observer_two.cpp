@@ -212,9 +212,12 @@ private:
   geometry_msgs::Point blue_cube_position_;
   geometry_msgs::Point green_cube_position_;
   geometry_msgs::Point object_position_;
-  bool same_object_;
-  std::string object_focused_by_human_;
-  ros::Time start_time_focus_;
+  bool same_object_look_;
+  bool same_object_point_;
+  std::string object_focused_by_human_head_;
+  ros::Time start_time_focus_look_;
+  std::string object_focused_by_human_hand_;
+  ros::Time start_time_focus_point_;
 public:
   /****************************************************
    * @brief : Default constructor
@@ -315,76 +318,97 @@ private:
       if (!msg->factList.empty())
       {
         bool look_somewhere=false;
-        double max=0.0;
-        std::string focus;
+        bool point_somewhere=false;
+        double max_look=0.0;
+        double max_point=0.0;
+        std::string focus_head;
+        std::string focus_pointing;
         for (unsigned int i = 0; i < msg->factList.size(); ++i)
         {
           if (msg->factList[i].property=="IsLookingToward" 
               && msg->factList[i].subjectId=="HERAKLES_HUMAN1")
-            if (msg->factList[i].doubleValue>max){
-                max=msg->factList[i].doubleValue;
-                focus=msg->factList[i].targetId;
+            if (msg->factList[i].doubleValue>max_look){
+                max_look=msg->factList[i].doubleValue;
+                focus_head=msg->factList[i].targetId;
                 look_somewhere=true;
             }
-          if (msg->factList[i].property=="IsMovingToward"
-              && msg->factList[i].subProperty=="direction"  
-              && msg->factList[i].subjectId=="rightHand")
+          if (msg->factList[i].property=="IsPointingToward"
+              && msg->factList[i].subjectId=="HERAKLES_HUMAN1")
           {
-                if(msg->factList[i].targetId=="RED_CUBE"){
-                        object_position_=red_cube_position_;
-                        state_machine_->process_event(humanHandPointing());
-                    }
-                if(msg->factList[i].targetId=="BLACK_CUBE"){
-                    object_position_=black_cube_position_;
-                    state_machine_->process_event(humanHandPointing());
-                }
-                if(msg->factList[i].targetId=="GREEN_CUBE2"){
-                    object_position_=green_cube_position_;
-                    state_machine_->process_event(humanHandPointing());
-                }
-                if(msg->factList[i].targetId=="BLUE_CUBE"){
-                    object_position_=blue_cube_position_;
-                    state_machine_->process_event(humanHandPointing());
-                }
+                if (msg->factList[i].doubleValue>max_point){
+                max_point=msg->factList[i].doubleValue;
+                focus_pointing=msg->factList[i].targetId;
+                point_somewhere=true;
           }
         }
         if(look_somewhere)
         {
             //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks %s, %d",focus.c_str(),same_object_);
-            if(focus==object_focused_by_human_ && same_object_==false ){
-                same_object_=true;
-                start_time_focus_=ros::Time::now();
+            if(focus_head==object_focused_by_human_head_ && same_object_look_==false ){
+                same_object_look_=true;
+                start_time_focus_look_=ros::Time::now();
             }
-            if(focus!=object_focused_by_human_)
-                same_object_=false;
-            if(same_object_)
-                if(ros::Time::now()-start_time_focus_>ros::Duration(0.3))
+            if(focus_head!=object_focused_by_human_head_)
+                same_object_look_=false;
+            if(same_object_look_)
+                if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.3))
                 {
-                    if(focus=="pr2"){
+                    if(focus_head=="pr2"){
                         state_machine_->process_event(humanLookingRobot());
                     }
                 }
-                if(ros::Time::now()-start_time_focus_>ros::Duration(0.8))
+                if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.8))
                 {
                     //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks the same object for 1 sec");
-                    if(focus=="RED_CUBE"){
+                    if(focus_head=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanLookingObject());
                     }
-                    if(focus=="BLACK_CUBE"){
+                    if(focus_head=="BLACK_CUBE"){
                         object_position_=black_cube_position_;
                         state_machine_->process_event(humanLookingObject());
                     }
-                    if(focus=="GREEN_CUBE2"){
+                    if(focus_head=="GREEN_CUBE2"){
                         object_position_=green_cube_position_;
                         state_machine_->process_event(humanLookingObject());
                     }
-                    if(focus=="BLUE_CUBE"){
+                    if(focus_head=="BLUE_CUBE"){
                         object_position_=blue_cube_position_;
                         state_machine_->process_event(humanLookingObject());
                     }
                 }
-            object_focused_by_human_=focus;
+            object_focused_by_human_head_=focus_head;
+       }
+        if(point_somewhere)
+        {
+            //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks %s, %d",focus.c_str(),same_object_);
+            if(focus_pointing==object_focused_by_human_hand_ && same_object_point_==false ){
+                same_object_point_=true;
+                start_time_focus_point_=ros::Time::now();
+            }
+            if(focus_pointing!=object_focused_by_human_hand_)
+                same_object_point_=false;
+            if(same_object_point_)
+                if(ros::Time::now()-start_time_focus_point_>ros::Duration(0.8))
+                {
+                    if(focus_pointing=="RED_CUBE"){
+                        object_position_=red_cube_position_;
+                        state_machine_->process_event(humanPointingObject());
+                    }
+                    if(focus_pointing=="BLACK_CUBE"){
+                        object_position_=black_cube_position_;
+                        state_machine_->process_event(humanPointingObject());
+                    }
+                    if(focus_pointing=="GREEN_CUBE2"){
+                        object_position_=green_cube_position_;
+                        state_machine_->process_event(humanPointingObject());
+                    }
+                    if(focus_pointing=="BLUE_CUBE"){
+                        object_position_=blue_cube_position_;
+                        state_machine_->process_event(humanPointingObject());
+                    }
+                }
+            object_focused_by_human_hand_=focus_pointing;
        }
      }
   }
