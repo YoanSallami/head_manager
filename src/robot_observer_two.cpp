@@ -281,7 +281,7 @@ private:
   {
     pr2motion::Head_Stop stop;
     if (!ros::service::call("pr2motion/Head_Stop", stop))
-      ROS_ERROR("[sensitive_reorientation] Failed to call service pr2motion/Head_Stop");
+      ROS_ERROR("[robot_observer] Failed to call service pr2motion/Head_Stop");
     pr2motion::Head_Move_TargetGoal goal;
     goal.head_mode.value = 0;
     goal.head_target_frame = p.header.frame_id;
@@ -311,7 +311,7 @@ private:
   {
       if (!msg->factList.empty())
       {
-        bool look=false;
+        bool look_somewhere=false;
         double max=0.0;
         std::string focus;
         for (unsigned int i = 0; i < msg->factList.size(); ++i)
@@ -321,11 +321,12 @@ private:
             if (msg->factList[i].doubleValue>max){
                 max=msg->factList[i].doubleValue;
                 focus=msg->factList[i].targetId;
-                look=true;
+                look_somewhere=true;
             }
         }
-        if(look)
+        if(look_somewhere)
         {
+            ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks %s",focus.c_str());
             if(focus==object_focused_by_human_ && same_object_==false )
                 same_object_=true;
                 start_time_focus_=ros::Time::now();
@@ -334,6 +335,7 @@ private:
             if(same_object_)
                 if(start_time_focus_-ros::Time::now()>ros::Duration(1.0))
                 {
+                    ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks the same object for 1 sec");
                     if(focus=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanLookingObject());
