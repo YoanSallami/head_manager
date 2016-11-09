@@ -326,7 +326,8 @@ private:
                 focus=msg->factList[i].targetId;
                 look_somewhere=true;
             }
-          if (msg->factList[i].property=="IsMovingToward" 
+          if (msg->factList[i].property=="IsMovingToward"
+              && msg->factList[i].subProperty=="direction"  
               && msg->factList[i].subjectId=="rightHand")
           {
                 if(focus=="RED_CUBE"){
@@ -586,7 +587,7 @@ void ObserverStateMachine_::ack_head(humanLookingRobot const&)
   }
 }
 
-void ObserverStateMachine_::focus_pointing_object(humanHandPointing const&)
+void ObserverStateMachine_::focus_object_pointed(humanHandPointing const&)
 {
   try
   {
