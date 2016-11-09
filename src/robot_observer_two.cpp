@@ -340,7 +340,7 @@ private:
                         state_machine_->process_event(humanLookingRobot());
                     }
                 }
-                if(ros::Time::now()-start_time_focus_>ros::Duration(0.6))
+                if(ros::Time::now()-start_time_focus_>ros::Duration(0.8))
                 {
                     ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks the same object for 1 sec");
                     if(focus=="RED_CUBE"){
