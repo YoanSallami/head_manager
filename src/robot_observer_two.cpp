@@ -330,19 +330,19 @@ private:
               && msg->factList[i].subProperty=="direction"  
               && msg->factList[i].subjectId=="rightHand")
           {
-                if(focus=="RED_CUBE"){
+                if(msg->factList[i].targetId=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanHandPointing());
                     }
-                if(focus=="BLACK_CUBE"){
+                if(msg->factList[i].targetId=="BLACK_CUBE"){
                     object_position_=black_cube_position_;
                     state_machine_->process_event(humanHandPointing());
                 }
-                if(focus=="GREEN_CUBE2"){
+                if(msg->factList[i].targetId=="GREEN_CUBE2"){
                     object_position_=green_cube_position_;
                     state_machine_->process_event(humanHandPointing());
                 }
-                if(focus=="BLUE_CUBE"){
+                if(msg->factList[i].targetId=="BLUE_CUBE"){
                     object_position_=blue_cube_position_;
                     state_machine_->process_event(humanHandPointing());
                 }
@@ -413,18 +413,18 @@ private:
     }
     if(human_near)
     {
-        ROS_INFO("[robot_observer] process event HumanNear");
+        //ROS_INFO("[robot_observer] process event HumanNear");
         state_machine_->process_event(humanNear());
     } else {
-        ROS_INFO("[robot_observer] process event HumanNotNear");
+        //ROS_INFO("[robot_observer] process event HumanNotNear");
         state_machine_->process_event(humanNotNear());
     }
     if(hand_on_table)
     {
-        ROS_INFO("[robot_observer] process event humanHandOnTable");
+        //ROS_INFO("[robot_observer] process event humanHandOnTable");
         state_machine_->process_event(humanHandOnTable());
     } else {
-        ROS_INFO("[robot_observer] process event humanHandNotOnTable");
+        //ROS_INFO("[robot_observer] process event humanHandNotOnTable");
         state_machine_->process_event(humanHandNotOnTable());
     }
   }
