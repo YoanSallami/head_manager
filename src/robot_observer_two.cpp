@@ -160,7 +160,6 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >,
      a_row < LookingHand          , humanHandPointing   , LookingObject        , &sm::focus_object_pointed                                       >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
-     a_row < LookingObject        , humanHandOnTable    , LookingHand          , &sm::focus_hand                                                 >,
      a_row < LookingObject        , humanLookingRobot   , LookingHead          , &sm::ack_head                                                   >,
     a_irow < LookingObject        , humanHandPointing                          , &sm::focus_object_pointed                                       >,
     a_irow < LookingObject        , humanLookingObject                         , &sm::focus_object                                               >
