@@ -273,7 +273,8 @@ public:
         ROS_ERROR("[robot_observer] Failed to call service /pr2motion/Z_Head_SetMinDuration");
     state_machine_ = new ObserverStateMachine(boost::cref(this));
     state_machine_->start();
-    same_object_=false;
+    same_object_look_=false;
+    same_object_point_=false;
     ROS_INFO("[robot_observer] Starting state machine, node ready !");
   }
   /****************************************************
@@ -344,7 +345,6 @@ private:
         }
         if(look_somewhere)
         {
-            //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks %s, %d",focus.c_str(),same_object_);
             if(focus_head==object_focused_by_human_head_ && same_object_look_==false ){
                 same_object_look_=true;
                 start_time_focus_look_=ros::Time::now();
@@ -382,7 +382,6 @@ private:
        }
         if(point_somewhere)
         {
-            //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks %s, %d",focus.c_str(),same_object_);
             if(focus_pointing==object_focused_by_human_hand_ && same_object_point_==false ){
                 same_object_point_=true;
                 start_time_focus_point_=ros::Time::now();
@@ -394,19 +393,19 @@ private:
                 {
                     if(focus_pointing=="RED_CUBE"){
                         object_position_=red_cube_position_;
-                        state_machine_->process_event(humanPointingObject());
+                        state_machine_->process_event(humanHandPointing());
                     }
                     if(focus_pointing=="BLACK_CUBE"){
                         object_position_=black_cube_position_;
-                        state_machine_->process_event(humanPointingObject());
+                        state_machine_->process_event(humanHandPointing());
                     }
                     if(focus_pointing=="GREEN_CUBE2"){
                         object_position_=green_cube_position_;
-                        state_machine_->process_event(humanPointingObject());
+                        state_machine_->process_event(humanHandPointing());
                     }
                     if(focus_pointing=="BLUE_CUBE"){
                         object_position_=blue_cube_position_;
-                        state_machine_->process_event(humanPointingObject());
+                        state_machine_->process_event(humanHandPointing());
                     }
                 }
             object_focused_by_human_hand_=focus_pointing;
