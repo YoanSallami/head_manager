@@ -67,6 +67,7 @@ struct humanHandOnTable{};
 struct humanHandNotOnTable{};
 struct humanLookingRobot{};
 struct humanLookingObject{};
+struct humanHandPointing{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" };
 /**
@@ -327,23 +328,24 @@ private:
             }
           if (msg->factList[i].property=="IsMovingToward" 
               && msg->factList[i].subjectId=="rightHand")
+          {
                 if(focus=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanHandPointing());
                     }
-                    if(focus=="BLACK_CUBE"){
-                        object_position_=black_cube_position_;
-                        state_machine_->process_event(humanHandPointing());
-                    }
-                    if(focus=="GREEN_CUBE2"){
-                        object_position_=green_cube_position_;
-                        state_machine_->process_event(humanHandPointing());
-                    }
-                    if(focus=="BLUE_CUBE"){
-                        object_position_=blue_cube_position_;
-                        state_machine_->process_event(humanHandPointing());
-                    }
-            }
+                if(focus=="BLACK_CUBE"){
+                    object_position_=black_cube_position_;
+                    state_machine_->process_event(humanHandPointing());
+                }
+                if(focus=="GREEN_CUBE2"){
+                    object_position_=green_cube_position_;
+                    state_machine_->process_event(humanHandPointing());
+                }
+                if(focus=="BLUE_CUBE"){
+                    object_position_=blue_cube_position_;
+                    state_machine_->process_event(humanHandPointing());
+                }
+          }
         }
         if(look_somewhere)
         {
