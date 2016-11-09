@@ -392,7 +392,7 @@ private:
             if(same_object_point_)
                 if(ros::Time::now()-start_time_focus_point_>ros::Duration(0.8))
                 {
-                    ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is pointing %s",focus_point_.c_str());
+                    ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is pointing %s",focus_pointing.c_str());
                     if(focus_pointing=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanHandPointing());
