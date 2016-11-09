@@ -334,7 +334,7 @@ private:
             if(focus!=object_focused_by_human_)
                 same_object_=false;
             if(same_object_)
-                if(ros::Time::now()-start_time_focus>ros::Duration(1.0))
+                if(ros::Time::now()-start_time_focus_>ros::Duration(1.0))
                 {
                     ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks the same object for 1 sec");
                     if(focus=="RED_CUBE"){
