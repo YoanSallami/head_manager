@@ -382,6 +382,7 @@ private:
        }
         if(point_somewhere)
         {
+            //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is pointing somewhere");
             if(focus_pointing==object_focused_by_human_hand_ && same_object_point_==false ){
                 same_object_point_=true;
                 start_time_focus_point_=ros::Time::now();
@@ -391,6 +392,7 @@ private:
             if(same_object_point_)
                 if(ros::Time::now()-start_time_focus_point_>ros::Duration(0.8))
                 {
+                    ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is pointing %",focus_point.c_str());
                     if(focus_pointing=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanHandPointing());
@@ -511,7 +513,7 @@ private:
 public:
   void rest()
   {
-    ROS_INFO("[robot_observer] Rest");
+    //ROS_INFO("[robot_observer] Rest");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "base_link";
     point.header.stamp = ros::Time::now();
@@ -522,7 +524,7 @@ public:
   }
   void focusHead()
   {
-    ROS_INFO("[robot_observer] Focus head");
+    //ROS_INFO("[robot_observer] Focus head");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
@@ -531,7 +533,7 @@ public:
   }
   void focusHand()
   {
-    ROS_INFO("[robot_observer] Focus hand");
+    //ROS_INFO("[robot_observer] Focus hand");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
@@ -540,7 +542,7 @@ public:
   }
   void focusObject()
   {
-    ROS_INFO("[robot_observer] Focus object");
+    //ROS_INFO("[robot_observer] Focus object");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
