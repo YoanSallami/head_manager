@@ -138,6 +138,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void rest(humanNotNear const&); 
   void focus_object(humanLookingObject const&);
   void ack_head(humanLookingRobot const&);
+  void focus_object_pointed(humanHandPointing const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -156,6 +157,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >,
+     a_row < LookingHand          , humanHandPointing   , LookingObject        , &sm::focus_object_pointed                                       >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingObject        , humanHandOnTable    , LookingHand          , &sm::focus_hand                                                 >,
      a_row < LookingObject        , humanLookingRobot   , LookingHead          , &sm::ack_head                                                   >,
@@ -323,10 +325,29 @@ private:
                 focus=msg->factList[i].targetId;
                 look_somewhere=true;
             }
+          if (msg->factList[i].property=="IsMovingToward" 
+              && msg->factList[i].subjectId=="rightHand")
+                if(focus=="RED_CUBE"){
+                        object_position_=red_cube_position_;
+                        state_machine_->process_event(humanHandPointing());
+                    }
+                    if(focus=="BLACK_CUBE"){
+                        object_position_=black_cube_position_;
+                        state_machine_->process_event(humanHandPointing());
+                    }
+                    if(focus=="GREEN_CUBE2"){
+                        object_position_=green_cube_position_;
+                        state_machine_->process_event(humanHandPointing());
+                    }
+                    if(focus=="BLUE_CUBE"){
+                        object_position_=blue_cube_position_;
+                        state_machine_->process_event(humanHandPointing());
+                    }
+            }
         }
         if(look_somewhere)
         {
-            ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks %s, %d",focus.c_str(),same_object_);
+            //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks %s, %d",focus.c_str(),same_object_);
             if(focus==object_focused_by_human_ && same_object_==false ){
                 same_object_=true;
                 start_time_focus_=ros::Time::now();
@@ -342,7 +363,7 @@ private:
                 }
                 if(ros::Time::now()-start_time_focus_>ros::Duration(0.8))
                 {
-                    ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks the same object for 1 sec");
+                    //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks the same object for 1 sec");
                     if(focus=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanLookingObject());
@@ -351,7 +372,7 @@ private:
                         object_position_=black_cube_position_;
                         state_machine_->process_event(humanLookingObject());
                     }
-                    if(focus=="GREEN_CUBE"){
+                    if(focus=="GREEN_CUBE2"){
                         object_position_=green_cube_position_;
                         state_machine_->process_event(humanLookingObject());
                     }
@@ -450,7 +471,7 @@ private:
             black_cube_position_=msg->objectList[i].meEntity.pose.position;
           if (msg->objectList[i].meEntity.id=="BLUE_CUBE")
             blue_cube_position_=msg->objectList[i].meEntity.pose.position;
-          if (msg->objectList[i].meEntity.id=="GREEN_CUBE")
+          if (msg->objectList[i].meEntity.id=="GREEN_CUBE2")
             green_cube_position_=msg->objectList[i].meEntity.pose.position;
         }
       }
@@ -558,6 +579,16 @@ void ObserverStateMachine_::ack_head(humanLookingRobot const&)
   try
   {
     observer_ptr_->focusHead();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::focus_pointing_object(humanHandPointing const&)
+{
+  try
+  {
+    observer_ptr_->focusObject();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
