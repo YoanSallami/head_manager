@@ -347,7 +347,7 @@ private:
         }
         if(look_somewhere)
         {
-            ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is looking %s - %d",focus_head.c_str(),same_object_look_);
+            //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is looking %s - %d",focus_head.c_str(),same_object_look_);
             if(focus_head==object_focused_by_human_head_ && same_object_look_==false ){
                 same_object_look_=true;
                 start_time_focus_look_=ros::Time::now();
@@ -364,7 +364,6 @@ private:
                 }
                 if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.8))
                 {
-                    //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 looks the same object for 1 sec");
                     if(focus_head=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanLookingObject());
