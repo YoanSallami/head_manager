@@ -347,7 +347,7 @@ private:
         }
         if(look_somewhere)
         {
-            ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is looking %s",focus_pointing.c_str());
+            ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is looking %s",focus_head.c_str());
             if(focus_head==object_focused_by_human_head_ && same_object_look_==false ){
                 same_object_look_=true;
                 start_time_focus_look_=ros::Time::now();
