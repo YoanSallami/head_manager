@@ -355,6 +355,7 @@ private:
             if(focus_head!=object_focused_by_human_head_)
                 same_object_look_=false;
             if(same_object_look_)
+            {
                 if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.3))
                 {
                     if(focus_head=="pr2"){
@@ -382,7 +383,8 @@ private:
                     }
                 }
             object_focused_by_human_head_=focus_head;
-       }
+            }
+        }
         if(point_somewhere)
         {
             //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is pointing somewhere");
