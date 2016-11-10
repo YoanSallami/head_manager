@@ -382,8 +382,8 @@ private:
                         state_machine_->process_event(humanLookingObject());
                     }
                 }
-            object_focused_by_human_head_=focus_head;
             }
+            object_focused_by_human_head_=focus_head;
         }
         if(point_somewhere)
         {
@@ -415,7 +415,7 @@ private:
                         state_machine_->process_event(humanHandPointing());
                     }
                 }
-            object_focused_by_human_hand_=focus_pointing;
+           object_focused_by_human_hand_=focus_pointing;
         }
      }
   }
