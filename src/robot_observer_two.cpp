@@ -386,7 +386,7 @@ private:
         }
         if(look_somewhere)
         {
-            //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is looking %s - %d",focus_head.c_str(),same_object_look_);
+           ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is looking %s - %d",focus_head.c_str(),same_object_look_);
             if(focus_head==object_focused_by_human_head_ && same_object_look_==false ){
                 same_object_look_=true;
                 start_time_focus_look_=ros::Time::now();
@@ -422,38 +422,6 @@ private:
                 }
             }
             object_focused_by_human_head_=focus_head;
-        }
-        if(point_somewhere)
-        {
-            //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is pointing somewhere");
-            if(focus_pointing==object_focused_by_human_hand_ && same_object_point_==false ){
-                same_object_point_=true;
-                start_time_focus_point_=ros::Time::now();
-            }
-            if(focus_pointing!=object_focused_by_human_hand_)
-                same_object_point_=false;
-            if(same_object_point_)
-                if(ros::Time::now()-start_time_focus_point_>ros::Duration(0.4))
-                {
-                    //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is pointing %s - %d",focus_pointing.c_str(),same_object_point_);
-                    if(focus_pointing=="RED_CUBE"){
-                        object_position_=red_cube_position_;
-                        state_machine_->process_event(humanHandPointing());
-                    }
-                    if(focus_pointing=="BLACK_CUBE"){
-                        object_position_=black_cube_position_;
-                        state_machine_->process_event(humanHandPointing());
-                    }
-                    if(focus_pointing=="GREEN_CUBE2"){
-                        object_position_=green_cube_position_;
-                        state_machine_->process_event(humanHandPointing());
-                    }
-                    if(focus_pointing=="BLUE_CUBE"){
-                        object_position_=blue_cube_position_;
-                        state_machine_->process_event(humanHandPointing());
-                    }
-                }
-           object_focused_by_human_hand_=focus_pointing;
         }
      }
   }
