@@ -718,11 +718,11 @@ void ObserverStateMachine_::focus_object_pointed(humanHandPointing const&)
   }
 }
 
-void ObserverStateMachine_::focus_action(humanActing const&)
+void ObserverStateMachine_::focus_action(humanActing const& a)
 {
   try
   {
-    observer_ptr_->focusAction(humanActing.action_detected);
+    observer_ptr_->focusAction(a.action_detected);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
