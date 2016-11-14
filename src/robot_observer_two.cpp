@@ -728,6 +728,26 @@ void ObserverStateMachine_::focus_action(humanActing const& a)
   }
 }
 
+void ObserverStateMachine_::action_ack(humanActAck const& a)
+{
+  try
+  {
+    observer_ptr_->focusHead();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::action_not_ack(humanActNotAck const& a)
+{
+  try
+  {
+    observer_ptr_->focusHand();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
 /****************************************************
  * @brief : Main process function
  * @param : arguments count
