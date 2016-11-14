@@ -558,7 +558,7 @@ private:
         {
             for(int i = 0 ; i < msg->actions.size() ; ++i)
             {
-                for(int j = 0 ; j < msg->actions[i].size() ; ++j)
+                for(int j = 0 ; j < msg->actions[i].actors.size() ; ++j)
                 {
                     if(msg->actions[i].actors[j] == "HERAKLES_HUMAN1")
                     {
@@ -642,7 +642,7 @@ public:
     if(action.ackNeeded)
         state_machine_->process_event(humanActAck());
     else
-        state_machine_->process_event(humanNotActAck());
+        state_machine_->process_event(humanActNotAck());
   }
   
 };
