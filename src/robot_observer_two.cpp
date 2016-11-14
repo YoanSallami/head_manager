@@ -233,7 +233,7 @@ private:
   HeadActionClient_t * head_action_client_; //!< interface to head controller client
   geometry_msgs::Point head_position_;
   geometry_msgs::Point hand_position_;
-  geometry_msgs::Point action_position_;
+  geometry_msgs::Point current_action_position_;
   geometry_msgs::Point black_cube_position_;
   geometry_msgs::Point red_cube_position_;
   geometry_msgs::Point blue_cube_position_;
