@@ -70,7 +70,6 @@ struct humanHandNotOnTable{};
 struct humanLookingRobot{};
 struct humanLookingObject{};
 struct humanHandPointing{};
-struct humanActing{};
 struct humanActing{
   humanActing(supervisor_msgs::Action action_detected):action_detected(action_detected){}
   supervisor_msgs::Action action_detected;
