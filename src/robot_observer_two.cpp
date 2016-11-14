@@ -556,29 +556,29 @@ private:
     {
         if(!msg->actions.empty())
         {
-            for(std::vector<supervisor_msgs::Action>::iterator it = msg->actions.begin() ; it != msg->actions.end() ; ++it)
+            for(int i = 0 ; i < msg->actions.size() ; ++i)
             {
-                for(std::string::iterator it2 = it->actors.begin() ; it2 != it->actors.end() ; ++it2)
+                for(int j = 0 ; j < msg->actions[i].size() ; ++j)
                 {
-                    if(it2 == "HERAKLES_HUMAN1")
+                    if(msg->actions[i].actors[j] == "HERAKLES_HUMAN1")
                     {
-                        if(it->focusTarget=="RED_CUBE"){
+                        if(msg->actions[i].focusTarget=="RED_CUBE"){
                             current_action_position_=red_cube_position_;
                             state_machine_->process_event(humanActing(*it));
                         }
-                        if(it->focusTarget=="BLACK_CUBE"){
+                        if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             current_action_position_=black_cube_position_;
                             state_machine_->process_event(humanActing(*it));
                         }
-                        if(it->focusTarget=="BLUE_CUBE"){
+                        if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             current_action_position_=blue_cube_position_;
                             state_machine_->process_event(humanActing(*it));
                         }
-                        if(it->focusTarget=="GREEN_CUBE2"){
+                        if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             current_action_position_=green_cube_position_;
                             state_machine_->process_event(humanActing(*it));
                         }
-                        if(it->focusTarget=="PLACEMAT_RED"){
+                        if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             current_action_position_=placemat_position_;
                             state_machine_->process_event(humanActing(*it));
                         }
