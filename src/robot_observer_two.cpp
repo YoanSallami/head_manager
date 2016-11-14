@@ -564,23 +564,23 @@ private:
                     {
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             current_action_position_=red_cube_position_;
-                            state_machine_->process_event(humanActing(*it));
+                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             current_action_position_=black_cube_position_;
-                            state_machine_->process_event(humanActing(*it));
+                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             current_action_position_=blue_cube_position_;
-                            state_machine_->process_event(humanActing(*it));
+                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             current_action_position_=green_cube_position_;
-                            state_machine_->process_event(humanActing(*it));
+                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             current_action_position_=placemat_position_;
-                            state_machine_->process_event(humanActing(*it));
+                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                     }
                 } 
