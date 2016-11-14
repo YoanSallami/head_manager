@@ -562,6 +562,7 @@ private:
                 {
                     if(msg->actions[i].actors[j] == "HERAKLES_HUMAN1")
                     {
+                        ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             current_action_position_=red_cube_position_;
                             state_machine_->process_event(humanActing(msg->actions[i]));
