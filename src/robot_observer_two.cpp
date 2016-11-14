@@ -1,3 +1,8 @@
+#define FUSION_MAX_VECTOR_SIZE 25
+#define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+#define BOOST_MPL_LIMIT_VECTOR_SIZE 30 //or whatever you need                       
+#define BOOST_MPL_LIMIT_MAP_SIZE 30 //or whatever you need 
+
 #include <ros/ros.h>
 #include <string>
 #include <cstdlib>
@@ -43,8 +48,7 @@
 
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/front/state_machine_def.hpp>
-
-#define FUSION_MAX_VECTOR_SIZE 25
+        
 
 using namespace std;
 namespace msm = boost::msm;
