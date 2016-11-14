@@ -74,6 +74,8 @@ struct humanActing{
   humanActing(supervisor_msgs::Action action_detected):action_detected(action_detected){}
   supervisor_msgs::Action action_detected;
 };
+struct humanActNotAck{};
+struct humanActAck{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" };
 /**
