@@ -637,7 +637,7 @@ public:
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
-    point.point=action_position_;
+    point.point=current_action_position_;
     lookAt(point);
     if(action.ackNeeded)
         state_machine_->process_event(humanActAck());
