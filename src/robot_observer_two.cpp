@@ -28,6 +28,8 @@
 #include "toaster_msgs/Fact.h"
 #include "toaster_msgs/Entity.h"
 #include "tf/transform_datatypes.h"
+#include "supervisor_msgs/Action.h"
+#include "supervisor_msgs/ActionList.h"
 
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
@@ -68,6 +70,11 @@ struct humanHandNotOnTable{};
 struct humanLookingRobot{};
 struct humanLookingObject{};
 struct humanHandPointing{};
+struct humanActing{};
+struct humanActing{
+  humanActing(supervisor_msgs::Action action_detected):action_detected(action_detected){}
+  supervisor_msgs::Action action_detected;
+};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" };
 /**
@@ -129,6 +136,14 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       template <class Event,class FSM>
       void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingObject\".");}
   };
+  struct LookingAction : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"LookingAction\".");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingAction\".");}
+  };
 
   // Initial state definition
   typedef Waiting initial_state;
@@ -140,6 +155,9 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_object(humanLookingObject const&);
   void ack_head(humanLookingRobot const&);
   void focus_object_pointed(humanHandPointing const&);
+  void focus_action(humanActing const&);
+  void action_not_ack(humanActNotAck const&);
+  void action_ack(humanActAck const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -164,7 +182,12 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingObject        , humanLookingRobot   , LookingHead          , &sm::ack_head                                                   >,
     a_irow < LookingObject        , humanHandPointing                          , &sm::focus_object_pointed                                       >,
-    a_irow < LookingObject        , humanLookingObject                         , &sm::focus_object                                               >
+    a_irow < LookingObject        , humanLookingObject                         , &sm::focus_object                                               >,
+      //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
+     a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
+    a_irow < LookingAction        , humanActing                                , &sm::focus_action                                               >,
+     a_row < LookingAction        , humanActNotAck      , LookingHand          , &sm::action_not_ack                                             >,
+     a_row < LookingAction        , humanActAck         , LookingHead          , &sm::action_ack                                                 >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
 
@@ -190,36 +213,41 @@ public:
   FactList_t fact_list_; //!< fact list from agent_monitor
   FactList_t fact_area_list_; //!< fact list from area_manager
 private:
-  
   string my_id_; //!< robot id
   ros::NodeHandle node_; //!< node handler
+  // Subscribers
   ros::Subscriber human_list_sub_; //!< human list subscriber
   ros::Subscriber object_list_sub_; //!< human list subscriber
+  ros::Subscriber current_action_list_sub_; //!< current_action
   ros::Subscriber fact_area_list_sub_;
   ros::Subscriber fact_list_sub_; //!< fact list subscriber
+  // Publishers
   ros::Publisher attention_pub_; //!< sensitive goal publisher
   ros::Publisher attention_vizu_pub_; //!< sensitive goal publisher
+  // Services
+  ros::ServiceClient connect_port_srv_; //!<
+  ros::ServiceClient head_stop_srv_; //!<
   ParamServer_t stimulu_driven_dyn_param_srv; //!<
-  std::string attention_id_; //!<
-  geometry_msgs::Point attention_point_; //!<
-  ObserverStateMachine * state_machine_; //!<
-  ros::ServiceClient connect_port_srv_;
-  ros::ServiceClient head_stop_srv_;
   InitActionClient_t * init_action_client_; //!< initialisation client
   HeadActionClient_t * head_action_client_; //!< interface to head controller client
   geometry_msgs::Point head_position_;
   geometry_msgs::Point hand_position_;
+  geometry_msgs::Point action_position_;
   geometry_msgs::Point black_cube_position_;
   geometry_msgs::Point red_cube_position_;
   geometry_msgs::Point blue_cube_position_;
   geometry_msgs::Point green_cube_position_;
   geometry_msgs::Point object_position_;
+  geometry_msgs::Point placemat_position_;
   bool same_object_look_;
   bool same_object_point_;
   std::string object_focused_by_human_head_;
   ros::Time start_time_focus_look_;
   std::string object_focused_by_human_hand_;
   ros::Time start_time_focus_point_;
+  std::string attention_id_; //!<
+  geometry_msgs::Point attention_point_; //!<
+  ObserverStateMachine * state_machine_; //!<
 public:
   /****************************************************
    * @brief : Default constructor
@@ -241,6 +269,7 @@ public:
     fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &RobotObserver::factListAreaCallback, this);
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &RobotObserver::humanListCallback, this);
     object_list_sub_ = node_.subscribe("/pdg/objectList", 1, &RobotObserver::objectListCallback, this);
+    current_action_list_sub_ = node_.subscribe("/human_monitor/current_humans_action", 1, &RobotObserver::CurrentActionListCallback, this);
     // Advertise publishers
     attention_vizu_pub_ = node_.advertise<geometry_msgs::PointStamped>("head_manager/attention_vizualisation", 5);
 
@@ -380,6 +409,10 @@ private:
                         object_position_=blue_cube_position_;
                         state_machine_->process_event(humanLookingObject());
                     }
+                     if(focus_head=="PLACEMAT_RED"){
+                        object_position_=placemat_position_;
+                        state_machine_->process_event(humanLookingObject());
+                    }
                 }
             }
             object_focused_by_human_head_=focus_head;
@@ -506,12 +539,56 @@ private:
             blue_cube_position_=msg->objectList[i].meEntity.pose.position;
           if (msg->objectList[i].meEntity.id=="GREEN_CUBE2")
             green_cube_position_=msg->objectList[i].meEntity.pose.position;
+          if (msg->objectList[i].meEntity.id=="PLACEMAT_RED")
+            placemat_position_=msg->objectList[i].meEntity.pose.position;
         }
       }
     }
     catch (HeadManagerException& e )
     {
-      ROS_ERROR("[stimulus_driven_attention] Exception was caught : %s",e.description().c_str());
+      ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+    }
+  }
+  void CurrentActionListCallback(const supervisor_msgs::ObjectListStamped::ConstPtr& msg)
+  {
+    try
+    {
+        if(!msg->actions.empty())
+        {
+            for(std::vector<supervisor_msgs::Action>::iterator it = msg->actions.begin() ; it != msg->actions.end() ; ++it)
+            {
+                for(std::string::iterator it2 = it->actors.begin() ; it2 != it->actors.end() ; ++it2)
+                {
+                    if(it2 == "HERAKLES_HUMAN1")
+                    {
+                        if(it->focusTarget=="RED_CUBE"){
+                            current_action_position_=red_cube_position_;
+                            state_machine_->process_event(humanActing(*it));
+                        }
+                        if(it->focusTarget=="BLACK_CUBE"){
+                            current_action_position_=black_cube_position_;
+                            state_machine_->process_event(humanActing(*it));
+                        }
+                        if(it->focusTarget=="BLUE_CUBE"){
+                            current_action_position_=blue_cube_position_;
+                            state_machine_->process_event(humanActing(*it));
+                        }
+                        if(it->focusTarget=="GREEN_CUBE2"){
+                            current_action_position_=green_cube_position_;
+                            state_machine_->process_event(humanActing(*it));
+                        }
+                        if(it->focusTarget=="PLACEMAT_RED"){
+                            current_action_position_=placemat_position_;
+                            state_machine_->process_event(humanActing(*it));
+                        }
+                    }
+                } 
+            }    
+        }
+    }
+    catch (HeadManagerException& e )
+    {
+      ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
     }
   }
 public:
@@ -552,6 +629,19 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=object_position_;
     lookAt(point);
+  }
+  void focusAction(supervisor_msgs::Action action)
+  {
+    //ROS_INFO("[robot_observer] Focus object");
+    geometry_msgs::PointStamped point;
+    point.header.frame_id = "map";
+    point.header.stamp = ros::Time::now();
+    point.point=action_position_;
+    lookAt(point);
+    if(action.ackNeeded)
+        state_machine_->process_event(humanActAck());
+    else
+        state_machine_->process_event(humanNotActAck());
   }
   
 };
@@ -622,6 +712,16 @@ void ObserverStateMachine_::focus_object_pointed(humanHandPointing const&)
   try
   {
     observer_ptr_->focusObject();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::focus_action(humanActing const&)
+{
+  try
+  {
+    observer_ptr_->focusAction(humanActing.action_detected);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
