@@ -419,10 +419,6 @@ private:
                         object_position_=blue_cube_position_;
                         state_machine_->process_event(humanLookingObject());
                     }
-                     if(focus_head=="PLACEMAT_RED"){
-                        object_position_=placemat_position_;
-                        state_machine_->process_event(humanLookingObject());
-                    }
                 }
             }
             object_focused_by_human_head_=focus_head;
