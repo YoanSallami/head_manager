@@ -29,7 +29,7 @@
 #include "toaster_msgs/Entity.h"
 #include "tf/transform_datatypes.h"
 #include "supervisor_msgs/Action.h"
-#include "supervisor_msgs/ActionList.h"
+#include "supervisor_msgs/ActionsList.h"
 
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
@@ -549,7 +549,7 @@ private:
       ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
     }
   }
-  void CurrentActionListCallback(const supervisor_msgs::ObjectListStamped::ConstPtr& msg)
+  void CurrentActionListCallback(const supervisor_msgs::ActionsList::ConstPtr& msg)
   {
     try
     {
