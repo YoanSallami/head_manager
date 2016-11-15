@@ -694,7 +694,7 @@ void ObserverStateMachine_::stay_focus(humanNear const& a)
   }
 }
 
-bool ObserverStateMachine_::enable()
+bool ObserverStateMachine_::enable(Ack const&)
 {
   return(observer_ptr_->isEnable());
 }
