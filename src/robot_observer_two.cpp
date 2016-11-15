@@ -79,6 +79,7 @@ struct humanActing{
   supervisor_msgs::Action action_detected;
 };
 struct humanAck{};
+struct wait{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" };
 /**
@@ -159,6 +160,8 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_object(humanLookingObject const&);
   void focus_action(humanActing const&);
   void ack(humanAck const&);
+  void stay_focus(humanNear const&);
+  void enable();
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -182,9 +185,10 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >,
      a_row < LookingHand          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
-     a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action                                               >,
+     a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action          ,&sm::enable                         >,
      a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-     a_row < LookingObject        , humanAck            , LookingHead          , &sm::ack                                                        >,
+       row < LookingObject        , humanAck            , LookingHead          , &sm::ack                   ,&sm::enable                         >,
+    a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanActing                                , &sm::focus_action                                               >,
@@ -249,6 +253,9 @@ private:
   std::string attention_id_; //!<
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
+  ros::Timer waiting_timer;
+  bool timer_on_;
+  bool enable_event_;
 public:
   /****************************************************
    * @brief : Default constructor
@@ -265,6 +272,9 @@ public:
     } else {
       my_id_="PR2_ROBOT";
     }
+    waiting_timer = node_.createTimer(ros::Duration(0.4), &RobotObserver::timerCallback, this, true);
+    timer_on_=false;
+    enable_event_=true;
     // Advertise subscribers
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &RobotObserver::factListCallback, this);
     fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &RobotObserver::factListAreaCallback, this);
@@ -341,6 +351,20 @@ private:
     }
     else
       ROS_WARN("[robot_observer] Action did not finish before the time out.");
+  }
+  void timerCallback(const ros::TimerEvent& event)
+  {
+    if(!timer_on_)
+    {
+        timer_on_=true;
+        ROS_INFO("[robot_observer] Timer ready to fire.");
+    } else {
+        enable_event_=true;
+    }
+  }
+  bool isEnable()
+  {
+    return (enable_event_);
   }
   /****************************************************
    * @brief : Update the fact list provided by agent_monitor
@@ -655,6 +679,11 @@ void ObserverStateMachine_::focus_action(humanActing const& a)
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
+}
+
+bool ObserverStateMachine_::enable()
+{
+  return(observer_ptr_->isEnable());
 }
 
 void ObserverStateMachine_::ack(humanAck const&)
