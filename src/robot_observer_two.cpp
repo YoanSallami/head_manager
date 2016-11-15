@@ -81,7 +81,7 @@ struct humanActing{
   supervisor_msgs::Action action_detected;
 };
 struct humanActNotAck{};
-struct humanActAck{};
+struct humanAck{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" };
 /**
@@ -164,7 +164,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_object_pointed(humanHandPointing const&);
   void focus_action(humanActing const&);
   void action_not_ack(humanActNotAck const&);
-  void action_ack(humanActAck const&);
+  void ack(humanAck const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -190,14 +190,11 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action                                               >,
      a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-     a_row < LookingObject        , humanLookingRobot   , LookingHead          , &sm::ack_head                                                   >,
-    a_irow < LookingObject        , humanHandPointing                          , &sm::focus_object_pointed                                       >,
-    a_irow < LookingObject        , humanLookingObject                         , &sm::focus_object                                               >,
+     a_row < LookingObject        , humanAck            , LookingHead          , &sm::ack                                                        >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanActing                                , &sm::focus_action                                               >,
-     a_row < LookingAction        , humanActNotAck      , LookingHand          , &sm::action_not_ack                                             >,
-     a_row < LookingAction        , humanActAck         , LookingHead          , &sm::action_ack                                                 >
+     a_row < LookingAction        , humanActNotAck      , LookingHand          , &sm::action_not_ack                                             >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
 
@@ -604,6 +601,7 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=object_position_;
     lookAt(point);
+    state_machine_->process_event(humanAck());
   }
   void focusAction(supervisor_msgs::Action action)
   {
@@ -614,7 +612,7 @@ public:
     point.point=current_action_position_;
     lookAt(point);
     //if(action.ackNeeded)
-    state_machine_->process_event(humanActAck());
+    state_machine_->process_event(humanAck());
     //else
       //  state_machine_->process_event(humanActNotAck());
   }
@@ -706,7 +704,15 @@ void ObserverStateMachine_::action_ack(humanActAck const& a)
 {
   try
   {
+    pr2motion::Z_Head_SetMinDuration srv_MinDuration;
+    srv_MinDuration.request.head_min_duration=0.3;
+    if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv_MinDuration))
+        throw("Failed to call service /pr2motion/Z_Head_SetMinDuration");
     observer_ptr_->focusHead();
+    pr2motion::Z_Head_SetMinDuration srv_MinDuration;
+    srv_MinDuration.request.head_min_duration=0.6;
+    if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv_MinDuration))
+        throw("Failed to call service /pr2motion/Z_Head_SetMinDuration");
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }

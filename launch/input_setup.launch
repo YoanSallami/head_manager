@@ -1,8 +1,8 @@
 <launch>
 	<rosparam>
-    mocap_calib_world_x: 6.3
+    mocap_calib_world_x: 6.2
     mocap_calib_world_y: 2.89
-    mocap_calib_world_z: 0.15
+    mocap_calib_world_z: 0.0
     </rosparam>
 	<!-- Launch the pdg -->
 	<node name="pdg" pkg="pdg" type="pdg"/>
