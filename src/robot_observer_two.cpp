@@ -716,8 +716,8 @@ void ObserverStateMachine_::ack(Ack const&)
   try
   {
     observer_ptr_->enable_event_=false;
-    waiting_timer_.setPeriod(ros::Duration(2.0));
-    waiting_timer_.start();
+    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(2.0));
+    observer_ptr_->waiting_timer_.start();
     observer_ptr_->focusHead();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
