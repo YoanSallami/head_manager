@@ -706,7 +706,6 @@ void ObserverStateMachine_::ack(humanAck const&)
     if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv_MinDuration))
         throw("Failed to call service /pr2motion/Z_Head_SetMinDuration");
     observer_ptr_->focusHead();
-    pr2motion::Z_Head_SetMinDuration srv_MinDuration;
     srv_MinDuration.request.head_min_duration=0.6;
     if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv_MinDuration))
         throw("Failed to call service /pr2motion/Z_Head_SetMinDuration");
