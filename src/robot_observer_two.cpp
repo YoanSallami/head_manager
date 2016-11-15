@@ -716,7 +716,7 @@ void ObserverStateMachine_::ack(Ack const&)
   try
   {
     observer_ptr_->enable_event_=false;
-    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(2.0));
+    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
     observer_ptr_->waiting_timer_.start();
     observer_ptr_->focusHead();
   } catch (HeadManagerException& e ) {
