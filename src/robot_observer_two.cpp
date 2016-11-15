@@ -400,7 +400,7 @@ private:
                 same_object_look_=false;
             if(same_object_look_)
             {
-                if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.7))
+                if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.6))
                 {
                     if(focus_head=="RED_CUBE"){
                         object_position_=red_cube_position_;
