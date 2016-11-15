@@ -78,7 +78,7 @@ struct humanActing{
   humanActing(supervisor_msgs::Action action_detected):action_detected(action_detected){}
   supervisor_msgs::Action action_detected;
 };
-struct humanAck{};
+struct Ack{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" };
 /**
@@ -158,9 +158,9 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void rest(humanNotNear const&); 
   void focus_object(humanLookingObject const&);
   void focus_action(humanActing const&);
-  void ack(humanAck const&);
+  void ack(Ack const&);
   void stay_focus(humanNear const&);
-  void enable(void const&);
+  void enable(Ack const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -184,14 +184,14 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >,
      a_row < LookingHand          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
-       row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action          ,&sm::enable                         >,
+     a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action                                               >,
      a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-       row < LookingObject        , humanAck            , LookingHead          , &sm::ack                   ,&sm::enable                         >,
+       row < LookingObject        , Ack                 , LookingHead          , &sm::ack                   ,&sm::enable                         >,
     a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanActing                                , &sm::focus_action                                               >,
-     a_row < LookingAction        , humanAck            , LookingHead          , &sm::ack                                                        >
+     a_row < LookingAction        , Ack                 , LookingHead          , &sm::ack                                                        >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
 
@@ -252,7 +252,7 @@ private:
   std::string attention_id_; //!<
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
-  ros::Timer waiting_timer;
+  ros::Timer waiting_timer_;
   bool timer_on_;
   bool enable_event_;
 public:
@@ -271,7 +271,7 @@ public:
     } else {
       my_id_="PR2_ROBOT";
     }
-    waiting_timer = node_.createTimer(ros::Duration(0.4), &RobotObserver::timerCallback, this, true);
+    waiting_timer_ = node_.createTimer(ros::Duration(0.4), &RobotObserver::timerCallback, this, true);
     timer_on_=false;
     enable_event_=true;
     // Advertise subscribers
@@ -406,18 +406,22 @@ private:
                     if(focus_head=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanLookingObject());
+                        waiting_timer_.start();
                     }
                     if(focus_head=="BLACK_CUBE"){
                         object_position_=black_cube_position_;
                         state_machine_->process_event(humanLookingObject());
+                        waiting_timer_.start();
                     }
                     if(focus_head=="GREEN_CUBE2"){
                         object_position_=green_cube_position_;
                         state_machine_->process_event(humanLookingObject());
+                        waiting_timer_.start();
                     }
                     if(focus_head=="BLUE_CUBE"){
                         object_position_=blue_cube_position_;
                         state_machine_->process_event(humanLookingObject());
+                        waiting_timer_.start();
                     }
                 }
             }
@@ -604,7 +608,7 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=object_position_;
     lookAt(point);
-    state_machine_->process_event(humanAck());
+    state_machine_->process_event(Ack());
   }
   void focusAction(supervisor_msgs::Action action)
   {
@@ -614,7 +618,7 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=current_action_position_;
     lookAt(point);
-    state_machine_->process_event(humanAck());
+    state_machine_->process_event(Ack());
   }
   
 };
@@ -680,12 +684,22 @@ void ObserverStateMachine_::focus_action(humanActing const& a)
   }
 }
 
+void ObserverStateMachine_::stay_focus(humanNear const& a)
+{
+  try
+  {
+    observer_ptr_->focusObject();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
 bool ObserverStateMachine_::enable()
 {
   return(observer_ptr_->isEnable());
 }
 
-void ObserverStateMachine_::ack(humanAck const&)
+void ObserverStateMachine_::ack(Ack const&)
 {
   try
   {
