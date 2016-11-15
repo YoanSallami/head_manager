@@ -157,10 +157,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_hand(humanHandOnTable const&);
   void rest(humanNotNear const&); 
   void focus_object(humanLookingObject const&);
-  void ack_head(humanLookingRobot const&);
-  void focus_object_pointed(humanHandPointing const&);
   void focus_action(humanActing const&);
-  void action_not_ack(humanActNotAck const&);
   void ack(humanAck const&);
   // Guard transition definition
 
@@ -368,15 +365,7 @@ private:
                 focus_head=msg->factList[i].targetId;
                 look_somewhere=true;
             }
-          if (msg->factList[i].property=="IsPointingToward"
-              && msg->factList[i].subjectId=="HERAKLES_HUMAN1")
-          {
-                if (msg->factList[i].doubleValue>max_point){
-                max_point=msg->factList[i].doubleValue;
-                focus_pointing=msg->factList[i].targetId;
-                point_somewhere=true;
-             }
-          }
+
         }
         if(look_somewhere)
         {
@@ -389,12 +378,6 @@ private:
                 same_object_look_=false;
             if(same_object_look_)
             {
-                if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.3))
-                {
-                    if(focus_head=="pr2"){
-                        state_machine_->process_event(humanLookingRobot());
-                    }
-                }
                 if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.8))
                 {
                     if(focus_head=="RED_CUBE"){
@@ -664,16 +647,6 @@ void ObserverStateMachine_::focus_object(humanLookingObject const&)
   }
 }
 
-void ObserverStateMachine_::ack_head(humanLookingRobot const&)
-{
-  try
-  {
-    observer_ptr_->focusHead();
-  } catch (HeadManagerException& e ) {
-    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
-  }
-}
-
 void ObserverStateMachine_::focus_action(humanActing const& a)
 {
   try
@@ -696,16 +669,6 @@ void ObserverStateMachine_::ack(humanAck const&)
     srv_MinDuration.request.head_min_duration=0.6;
     if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv_MinDuration))
         throw("Failed to call service /pr2motion/Z_Head_SetMinDuration");
-  } catch (HeadManagerException& e ) {
-    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
-  }
-}
-
-void ObserverStateMachine_::action_not_ack(humanActNotAck const&)
-{
-  try
-  {
-    observer_ptr_->focusHand();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
