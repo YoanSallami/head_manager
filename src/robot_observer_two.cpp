@@ -79,7 +79,6 @@ struct humanActing{
   supervisor_msgs::Action action_detected;
 };
 struct humanAck{};
-struct wait{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" };
 /**
@@ -185,7 +184,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >,
      a_row < LookingHand          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
-     a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action          ,&sm::enable                         >,
+       row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action          ,&sm::enable                         >,
      a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
        row < LookingObject        , humanAck            , LookingHead          , &sm::ack                   ,&sm::enable                         >,
     a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
