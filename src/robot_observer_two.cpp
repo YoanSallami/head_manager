@@ -322,7 +322,6 @@ public:
    * @brief : Default destructor
    ****************************************************/
   ~RobotObserver(){}
-
 private:
 
   void lookAt(geometry_msgs::PointStamped p)
@@ -361,10 +360,7 @@ private:
         enable_event_=true;
     }
   }
-  bool isEnable()
-  {
-    return (enable_event_);
-  }
+  
   /****************************************************
    * @brief : Update the fact list provided by agent_monitor
    * @param : fact list
@@ -571,6 +567,10 @@ private:
     }
   }
 public:
+  bool isEnable()
+  {
+    return (enable_event_);
+  }
   void rest()
   {
     //ROS_INFO("[robot_observer] Rest");
