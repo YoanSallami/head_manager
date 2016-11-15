@@ -160,7 +160,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_action(humanActing const&);
   void ack(Ack const&);
   void stay_focus(humanNear const&);
-  void enable(Ack const&);
+  bool enable(Ack const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
