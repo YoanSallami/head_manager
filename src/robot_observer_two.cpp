@@ -611,10 +611,7 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=current_action_position_;
     lookAt(point);
-    //if(action.ackNeeded)
     state_machine_->process_event(humanAck());
-    //else
-      //  state_machine_->process_event(humanActNotAck());
   }
   
 };
@@ -700,7 +697,7 @@ void ObserverStateMachine_::focus_action(humanActing const& a)
   }
 }
 
-void ObserverStateMachine_::action_ack(humanActAck const& a)
+void ObserverStateMachine_::ack(humanAck const&)
 {
   try
   {
@@ -718,7 +715,7 @@ void ObserverStateMachine_::action_ack(humanActAck const& a)
   }
 }
 
-void ObserverStateMachine_::action_not_ack(humanActNotAck const& a)
+void ObserverStateMachine_::action_not_ack(humanActNotAck const&)
 {
   try
   {
