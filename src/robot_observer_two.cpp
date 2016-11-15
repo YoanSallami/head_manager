@@ -161,6 +161,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void ack(Ack const&);
   void stay_focus(humanNear const&);
   bool enable(Ack const&);
+  bool enable_hand(humanHandOnTable const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -175,7 +176,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
-     a_row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand                                                 >,
+       row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand           , &sm::enable_hand                    >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      a_row < LookingHand          , humanActing         , LookingAction        , &sm::focus_action                                               >,
@@ -213,9 +214,11 @@ void pstate(ObserverStateMachine const& sm)
 
 class RobotObserver
 {
-public:
+protected:
   FactList_t fact_list_; //!< fact list from agent_monitor
   FactList_t fact_area_list_; //!< fact list from area_manager
+  ros::Timer waiting_timer_;
+  bool enable_event_;
 private:
   string my_id_; //!< robot id
   ros::NodeHandle node_; //!< node handler
@@ -252,9 +255,8 @@ private:
   std::string attention_id_; //!<
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
-  ros::Timer waiting_timer_;
   bool timer_on_;
-  bool enable_event_;
+  
 public:
   /****************************************************
    * @brief : Default constructor
@@ -576,10 +578,6 @@ private:
     }
   }
 public:
-  bool isEnable()
-  {
-    return (enable_event_);
-  }
   void rest()
   {
     //ROS_INFO("[robot_observer] Rest");
@@ -705,21 +703,22 @@ void ObserverStateMachine_::stay_focus(humanNear const& a)
 
 bool ObserverStateMachine_::enable(Ack const&)
 {
-  return(observer_ptr_->isEnable());
+  return(observer_ptr_->enable_event_);
+}
+
+bool ObserverStateMachine_::enable_hand(humanHandOnTable const&)
+{
+  return(observer_ptr_->enable_event_);
 }
 
 void ObserverStateMachine_::ack(Ack const&)
 {
   try
   {
-    pr2motion::Z_Head_SetMinDuration srv_MinDuration;
-    srv_MinDuration.request.head_min_duration=0.3;
-    if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv_MinDuration))
-        throw("Failed to call service /pr2motion/Z_Head_SetMinDuration");
+    observer_ptr_->enable_event_=false;
+    waiting_timer_.setPeriod(ros::Duration(2.0));
+    waiting_timer_.start();
     observer_ptr_->focusHead();
-    srv_MinDuration.request.head_min_duration=0.6;
-    if(!ros::service::call("/pr2motion/Z_Head_SetMinDuration",srv_MinDuration))
-        throw("Failed to call service /pr2motion/Z_Head_SetMinDuration");
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
