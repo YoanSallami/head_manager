@@ -214,7 +214,7 @@ void pstate(ObserverStateMachine const& sm)
 
 class RobotObserver
 {
-protected:
+public:
   FactList_t fact_list_; //!< fact list from agent_monitor
   FactList_t fact_area_list_; //!< fact list from area_manager
   ros::Timer waiting_timer_;
