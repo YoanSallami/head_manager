@@ -80,7 +80,7 @@ struct humanActing{
 };
 struct Ack{};
 
-static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" };
+static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" , "LookingAction"};
 /**
 * @brief : State machine front definition
 */
@@ -157,7 +157,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_hand(humanHandOnTable const&);
   void rest(humanNotNear const&); 
   void focus_object(humanLookingObject const&);
-  void focus_action(humanActing const&);
+  void focus_action(humanNear const&);
   void ack(Ack const&);
   void stay_focus(humanNear const&);
   bool enable(Ack const&);
@@ -187,12 +187,12 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action                                               >,
      a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-       row < LookingObject        , Ack                 , LookingHead          , &sm::ack                   ,&sm::enable                         >,
+       row < LookingObject        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable                        >,
     a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-    a_irow < LookingAction        , humanActing                                , &sm::focus_action                                               >,
-     a_row < LookingAction        , Ack                 , LookingHead          , &sm::ack                                                        >
+    a_irow < LookingAction        , humanNear                                  , &sm::focus_action                                               >,
+       row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable                        >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
 
@@ -549,22 +549,37 @@ private:
                         ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             current_action_position_=red_cube_position_;
+                            enable_event_=false;
+                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             current_action_position_=black_cube_position_;
+                            enable_event_=false;
+                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             current_action_position_=blue_cube_position_;
+                            enable_event_=false;
+                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             current_action_position_=green_cube_position_;
+                            enable_event_=false;
+                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             current_action_position_=placemat_position_;
+                            enable_event_=false;
+                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                     }
