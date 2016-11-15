@@ -271,7 +271,7 @@ public:
     } else {
       my_id_="PR2_ROBOT";
     }
-    waiting_timer_ = node_.createTimer(ros::Duration(0.4), &RobotObserver::timerCallback, this, true);
+    waiting_timer_ = node_.createTimer(ros::Duration(1.0), &RobotObserver::timerCallback, this, true);
     timer_on_=false;
     enable_event_=true;
     // Advertise subscribers
@@ -402,21 +402,25 @@ private:
                     if(focus_head=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         state_machine_->process_event(humanLookingObject());
+                        enable_event_=false;
                         waiting_timer_.start();
                     }
                     if(focus_head=="BLACK_CUBE"){
                         object_position_=black_cube_position_;
                         state_machine_->process_event(humanLookingObject());
+                        enable_event_=false;
                         waiting_timer_.start();
                     }
                     if(focus_head=="GREEN_CUBE2"){
                         object_position_=green_cube_position_;
                         state_machine_->process_event(humanLookingObject());
+                        enable_event_=false;
                         waiting_timer_.start();
                     }
                     if(focus_head=="BLUE_CUBE"){
                         object_position_=blue_cube_position_;
                         state_machine_->process_event(humanLookingObject());
+                        enable_event_=false;
                         waiting_timer_.start();
                     }
                 }
