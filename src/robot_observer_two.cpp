@@ -357,7 +357,7 @@ private:
         timer_on_=true;
         ROS_INFO("[robot_observer] Timer ready to fire.");
     } else {
-        ROS_INFO("[robot_observer] Timer fired !");
+        //ROS_INFO("[robot_observer] Timer fired !");
         enable_event_=true;
     }
   }
