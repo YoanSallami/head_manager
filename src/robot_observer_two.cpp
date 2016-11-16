@@ -220,6 +220,8 @@ public:
   FactList_t fact_area_list_; //!< fact list from area_manager
   ros::Timer waiting_timer_;
   bool enable_event_;
+  supervisor_msgs::Action current_action_;
+  supervisor_msgs::Action next_action_;  
 private:
   string my_id_; //!< robot id
   ros::NodeHandle node_; //!< node handler
@@ -257,8 +259,7 @@ private:
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
   bool timer_on_;
-  supervisor_msgs::Action current_action_;
-  supervisor_msgs::Action next_action_;  
+  
   
 public:
   /****************************************************
@@ -728,7 +729,7 @@ void ObserverStateMachine_::stay_focus_action(humanNear const&)
 {
   try
   {
-    observer_ptr_->focusAction(current_action_);
+    observer_ptr_->focusAction(observer_ptr_->current_action_);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
