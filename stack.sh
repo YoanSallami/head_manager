@@ -35,6 +35,6 @@ rosservice call /area_manager/add_area "myArea:
     points:
     - {x: 0.4, y: -0.8, z: 0}
     - {x: 0.4, y: 0.8, z: 0}
-    - {x: -0.6, y: 0.8, z: 0}
-    - {x: -0.6, y: -0.8, z: 0}
+    - {x: -0.45, y: 0.8, z: 0}
+    - {x: -0.45, y: -0.8, z: 0}
   insideEntities: [0]"
