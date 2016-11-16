@@ -94,6 +94,10 @@ add_executable(robot_observer_two src/robot_observer_two.cpp)
 target_link_libraries(robot_observer_two ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
 add_dependencies(robot_observer_two ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
+add_executable(robot_observer_three src/robot_observer_three.cpp)
+target_link_libraries(robot_observer_three ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+add_dependencies(robot_observer_three ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
 add_executable(mocap_calib src/mocap_calib.cpp)
 target_link_libraries(mocap_calib ${catkin_LIBRARIES})
 add_dependencies(mocap_calib ${catkin_EXPORTED_TARGETS})
