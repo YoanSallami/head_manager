@@ -197,7 +197,6 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      a_row < LookingHand          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHand          , humanActing         , LookingAction        , &sm::focus_action                                               >,
-     
      a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >,
      a_row < LookingHand          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
@@ -209,7 +208,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
-       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , sm::enable_next_action             >,
+       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::enable_next_action            >,
        row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable                        >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
