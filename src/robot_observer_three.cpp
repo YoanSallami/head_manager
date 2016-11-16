@@ -626,41 +626,21 @@ private:
                 {
                     if(msg->actions[i].actors[j] == "HERAKLES_HUMAN1")
                     {
-                        ROS_INFO("[robot_observer] Action detected");
+                        //ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             next_action_position_=red_cube_position_;
-                            enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
-                            waiting_timer_.start();
-                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             next_action_position_=black_cube_position_;
-                            enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
-                            waiting_timer_.start();
-                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             next_action_position_=blue_cube_position_;
-                            enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
-                            waiting_timer_.start();
-                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             next_action_position_=green_cube_position_;
-                            enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
-                            waiting_timer_.start();
-                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             next_action_position_=placemat_position_;
-                            enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
-                            waiting_timer_.start();
-                            state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                     }
                 } 
