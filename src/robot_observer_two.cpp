@@ -409,28 +409,28 @@ private:
                     if(focus_head=="RED_CUBE"){
                         object_position_=red_cube_position_;
                         enable_event_=false;
-                        waiting_timer_.setPeriod(ros::Duration(2.0));
+                        waiting_timer_.setPeriod(ros::Duration(1.0));
                         waiting_timer_.start();
                         state_machine_->process_event(humanLookingObject());
                     }
                     if(focus_head=="BLACK_CUBE"){
                         object_position_=black_cube_position_;
                         enable_event_=false;
-                        waiting_timer_.setPeriod(ros::Duration(2.0));
+                        waiting_timer_.setPeriod(ros::Duration(1.0));
                         waiting_timer_.start();
                         state_machine_->process_event(humanLookingObject());
                     }
                     if(focus_head=="GREEN_CUBE2"){
                         object_position_=green_cube_position_;
                         enable_event_=false;
-                        waiting_timer_.setPeriod(ros::Duration(2.0));
+                        waiting_timer_.setPeriod(ros::Duration(1.0));
                         waiting_timer_.start();
                         state_machine_->process_event(humanLookingObject());
                     }
                     if(focus_head=="BLUE_CUBE"){
                         object_position_=blue_cube_position_;
                         enable_event_=false;
-                        waiting_timer_.setPeriod(ros::Duration(2.0));
+                        waiting_timer_.setPeriod(ros::Duration(1.0));
                         waiting_timer_.start();
                         state_machine_->process_event(humanLookingObject());
                     }
@@ -555,7 +555,7 @@ private:
                             current_action_position_=red_cube_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.setPeriod(ros::Duration(1.2));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
@@ -563,7 +563,7 @@ private:
                             current_action_position_=black_cube_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.setPeriod(ros::Duration(1.2));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
@@ -571,7 +571,7 @@ private:
                             current_action_position_=blue_cube_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.setPeriod(ros::Duration(1.2));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
@@ -579,7 +579,7 @@ private:
                             current_action_position_=green_cube_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.setPeriod(ros::Duration(1.2));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
@@ -587,7 +587,7 @@ private:
                             current_action_position_=placemat_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(2.0));
+                            waiting_timer_.setPeriod(ros::Duration(1.2));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }

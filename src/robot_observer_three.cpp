@@ -239,6 +239,8 @@ public:
   FactList_t fact_area_list_; //!< fact list from area_manager
   ros::Timer waiting_timer_;
   bool enable_event_;
+  supervisor_msgs::Action next_action_;
+  supervisor_msgs::Action current_action_;
 private:
   string my_id_; //!< robot id
   ros::NodeHandle node_; //!< node handler
@@ -278,7 +280,7 @@ private:
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
   bool timer_on_;
-  supervisor_msgs::Action next_action_;
+
   
 public:
   /****************************************************
@@ -573,6 +575,7 @@ private:
                         ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             current_action_position_=red_cube_position_;
+                            current_action_=msg->actions[i];
                             object_position_=current_action_position_;
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.5));
@@ -581,6 +584,7 @@ private:
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             current_action_position_=black_cube_position_;
+                            current_action_=msg->actions[i];
                             object_position_=current_action_position_;
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.5));
@@ -589,7 +593,7 @@ private:
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             current_action_position_=blue_cube_position_;
-                            object_position_=current_action_position_;
+                            current_action_=msg->actions[i];
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.5));
                             waiting_timer_.start();
@@ -597,7 +601,7 @@ private:
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             current_action_position_=green_cube_position_;
-                            object_position_=current_action_position_;
+                            current_action_=msg->actions[i];
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.5));
                             waiting_timer_.start();
@@ -605,6 +609,7 @@ private:
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             current_action_position_=placemat_position_;
+                            current_action_=msg->actions[i];
                             object_position_=current_action_position_;
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.5));
@@ -636,22 +641,27 @@ private:
                         //ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             next_action_position_=red_cube_position_;
+                            next_action_=msg->actions[i];
                             state_machine_->process_event(GoToNextAction(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             next_action_position_=black_cube_position_;
+                            next_action_=msg->actions[i];
                             state_machine_->process_event(GoToNextAction(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             next_action_position_=blue_cube_position_;
+                            next_action_=msg->actions[i];
                             state_machine_->process_event(GoToNextAction(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             next_action_position_=green_cube_position_;
+                            next_action_=msg->actions[i];
                             state_machine_->process_event(GoToNextAction(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             next_action_position_=placemat_position_;
+                            next_action_=msg->actions[i];
                             state_machine_->process_event(GoToNextAction(msg->actions[i]));
                         }
                     }
