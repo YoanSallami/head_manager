@@ -257,6 +257,8 @@ private:
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
   bool timer_on_;
+  supervisor_msgs::Action current_action_;
+  supervisor_msgs::Action next_action_;  
   
 public:
   /****************************************************
@@ -550,6 +552,7 @@ private:
                         ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             current_action_position_=red_cube_position_;
+                            current_action_=msg->actions[i];
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(2.0));
                             waiting_timer_.start();
@@ -557,6 +560,7 @@ private:
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             current_action_position_=black_cube_position_;
+                            current_action_=msg->actions[i];
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(2.0));
                             waiting_timer_.start();
@@ -564,6 +568,7 @@ private:
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             current_action_position_=blue_cube_position_;
+                            current_action_=msg->actions[i];
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(2.0));
                             waiting_timer_.start();
@@ -571,6 +576,7 @@ private:
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             current_action_position_=green_cube_position_;
+                            current_action_=msg->actions[i];
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(2.0));
                             waiting_timer_.start();
@@ -578,6 +584,7 @@ private:
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             current_action_position_=placemat_position_;
+                            current_action_=msg->actions[i];
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(2.0));
                             waiting_timer_.start();
@@ -717,11 +724,11 @@ void ObserverStateMachine_::stay_focus(humanNear const& a)
   }
 }
 
-void ObserverStateMachine_::stay_focus_action(humanNear const& a)
+void ObserverStateMachine_::stay_focus_action(humanNear const&)
 {
   try
   {
-    observer_ptr_->focusAction();
+    observer_ptr_->focusAction(current_action_);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }

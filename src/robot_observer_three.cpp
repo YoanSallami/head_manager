@@ -775,9 +775,9 @@ void ObserverStateMachine_::focus_action(humanActing const& a)
 {
   try
   {
-    enable_event_=false;
-    waiting_timer_.setPeriod(ros::Duration(1.5));
-    waiting_timer_.start();
+    observer_ptr_->enable_event_=false;
+    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
+    observer_ptr_->waiting_timer_.start();
     observer_ptr_->focusAction(a.action_detected);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
@@ -788,9 +788,9 @@ void ObserverStateMachine_::focus_next_action(GoToNextAction const& a)
 {
   try
   {
-    enable_event_=false;
-    waiting_timer_.setPeriod(ros::Duration(1.5));
-    waiting_timer_.start();
+    observer_ptr_->enable_event_=false;
+    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
+    observer_ptr_->waiting_timer_.start();
     observer_ptr_->focusAction(a.action_detected);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
