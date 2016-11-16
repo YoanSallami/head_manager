@@ -277,6 +277,7 @@ private:
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
   bool timer_on_;
+  supervisor_msgs::Action next_action_;
   
 public:
   /****************************************************
@@ -629,18 +630,23 @@ private:
                         //ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             next_action_position_=red_cube_position_;
+                            next_action_=msg->actions[i];
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             next_action_position_=black_cube_position_;
+                            next_action_=msg->actions[i];
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             next_action_position_=blue_cube_position_;
+                            next_action_=msg->actions[i];
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             next_action_position_=green_cube_position_;
+                            next_action_=msg->actions[i];
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             next_action_position_=placemat_position_;
+                            next_action_=msg->actions[i];
                         }
                     }
                 } 
@@ -704,7 +710,7 @@ public:
     {
         state_machine_->process_event(Ack());
     } else {
-        state_machine_->process_event(Ack());
+        state_machine_->process_event(GoToNextAction(next_action_));
     }
   }
   
