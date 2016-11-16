@@ -177,6 +177,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void stay_focus_next_action(humanNear const&);
   bool enable(Ack const&);
   bool enable_hand(humanHandOnTable const&);
+  bool enable_next_action(GoToNextAction const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -787,9 +788,6 @@ void ObserverStateMachine_::focus_action(humanActing const& a)
 {
   try
   {
-    observer_ptr_->enable_event_=false;
-    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
-    observer_ptr_->waiting_timer_.start();
     observer_ptr_->focusAction(a.action_detected);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
