@@ -173,6 +173,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_next_action(GoToNextAction const&);
   void ack(Ack const&);
   void stay_focus(humanNear const&);
+  void stay_focus_action(humanNear const&);
   bool enable(Ack const&);
   bool enable_hand(humanHandOnTable const&);
   // Guard transition definition
