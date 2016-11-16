@@ -80,7 +80,7 @@ struct humanActing{
 };
 struct Ack{};
 struct GoToNextAction{
-  humanActing(supervisor_msgs::Action action_detected):action_detected(action_detected){}
+  GoToNextAction(supervisor_msgs::Action action_detected):action_detected(action_detected){}
   supervisor_msgs::Action action_detected;
 };
 
@@ -205,12 +205,12 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-    a_irow < LookingAction        , humanNear                                  , &sm::focus_action                                               >,
-     a_row < LookingAction        , GotoNextAction      , LookingNextAction    , &sm::focus_next_action                                          >,
+    a_irow < LookingAction        , humanNear                                  , &sm::stay_focus                                                 >,
+     a_row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action                                          >,
        row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable                        >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
-    a_irow < LookingNextAction    , humanNear                                  , &sm::stay_focus  s                                               >,
+    a_irow < LookingNextAction    , humanNear                                  , &sm::stay_focus                                                 >,
        row < LookingNextAction    , Ack                 , LookingHead          , &sm::ack                   , &sm::enable                        >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
