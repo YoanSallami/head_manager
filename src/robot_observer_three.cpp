@@ -174,6 +174,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void ack(Ack const&);
   void stay_focus(humanNear const&);
   void stay_focus_action(humanNear const&);
+  void stay_focus_next_action(humanNear const&);
   bool enable(Ack const&);
   bool enable_hand(humanHandOnTable const&);
   // Guard transition definition
@@ -206,12 +207,12 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-    a_irow < LookingAction        , humanNear                                  , &sm::stay_focus                                                 >,
+    a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
      a_row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action                                          >,
        row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable                        >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
-    a_irow < LookingNextAction    , humanNear                                  , &sm::stay_focus                                                 >,
+    a_irow < LookingNextAction    , humanNear                                  , &sm::stay_focus_next_action                                     >,
        row < LookingNextAction    , Ack                 , LookingHead          , &sm::ack                   , &sm::enable                        >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
@@ -822,7 +823,17 @@ void ObserverStateMachine_::stay_focus_action(humanNear const& a)
 {
   try
   {
-    observer_ptr_->focusAction();
+    observer_ptr_->focusAction(observer_ptr_->current_action_);
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::stay_focus_next_action(humanNear const& a)
+{
+  try
+  {
+    observer_ptr_->focusAction(observer_ptr_->next_action_);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
