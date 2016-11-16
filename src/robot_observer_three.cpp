@@ -718,13 +718,22 @@ public:
   void focusAction(supervisor_msgs::Action action)
   {
     //ROS_INFO("[robot_observer] Focus object");
-    enable_event_=false;
-    waiting_timer_.setPeriod(ros::Duration(1.5));
-    waiting_timer_.start();
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
     point.point=current_action_position_;
+    lookAt(point);
+    if(action.ackNeeded)
+        state_machine_->process_event(Ack());
+  }
+  
+  void focusNextAction(supervisor_msgs::Action action)
+  {
+    //ROS_INFO("[robot_observer] Focus object");
+    geometry_msgs::PointStamped point;
+    point.header.frame_id = "map";
+    point.header.stamp = ros::Time::now();
+    point.point=next_action_position_;
     lookAt(point);
     if(action.ackNeeded)
         state_machine_->process_event(Ack());
@@ -800,7 +809,7 @@ void ObserverStateMachine_::focus_next_action(GoToNextAction const& a)
     observer_ptr_->enable_event_=false;
     observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
     observer_ptr_->waiting_timer_.start();
-    observer_ptr_->focusAction(a.action_detected);
+    observer_ptr_->focusNextAction(a.action_detected);
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
