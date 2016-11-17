@@ -79,6 +79,7 @@ struct humanActing{
   supervisor_msgs::Action action_detected;
 };
 struct Ack{};
+struct NAck{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" , "LookingAction"};
 /**
