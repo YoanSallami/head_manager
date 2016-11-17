@@ -99,11 +99,11 @@ target_link_libraries(robot_observer_2.5 ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR
 add_dependencies(robot_observer_2.5 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 
-add_executable(robot_observer_3.0 src/robot_observer_three.cpp)
+add_executable(robot_observer_3.0 src/robot_observer_3.0.cpp)
 target_link_libraries(robot_observer_3.0 ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
 add_dependencies(robot_observer_3.0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_executable(robot_observer_3.5 src/robot_observer_three.cpp)
+add_executable(robot_observer_3.5 src/robot_observer_3.5.cpp)
 target_link_libraries(robot_observer_3.5 ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
 add_dependencies(robot_observer_3.5 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
