@@ -70,33 +70,42 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} $ENV{TOASTERLIB_DIR}/toaster-lib/include ${pr2motion-genom3_INCLUDE_DIRS} $ENV{ROBOTPKG_BASE}/include)
 
-add_executable(stimulus_driven_attention src/stimulus_driven_attention.cpp)
-target_link_libraries(stimulus_driven_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(stimulus_driven_attention ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+#add_executable(stimulus_driven_attention src/stimulus_driven_attention.cpp)
+#target_link_libraries(stimulus_driven_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+#add_dependencies(stimulus_driven_attention ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
-add_executable(goal_directed_attention src/goal_directed_attention.cpp)
-target_link_libraries(goal_directed_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(goal_directed_attention ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+#add_executable(goal_directed_attention src/goal_directed_attention.cpp)
+#target_link_libraries(goal_directed_attention ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+#add_dependencies(goal_directed_attention ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
-add_executable(sensitive_reorientation src/sensitive_reorientation.cpp)
-target_link_libraries(sensitive_reorientation ${catkin_LIBRARIES})
-add_dependencies(sensitive_reorientation ${catkin_EXPORTED_TARGETS})
+#add_executable(sensitive_reorientation src/sensitive_reorientation.cpp)
+#target_link_libraries(sensitive_reorientation ${catkin_LIBRARIES})
+#add_dependencies(sensitive_reorientation ${catkin_EXPORTED_TARGETS})
 
-add_executable(activity_states_faker src/activity_states_faker.cpp)
-target_link_libraries(activity_states_faker ${catkin_LIBRARIES})
-add_dependencies(activity_states_faker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#add_executable(activity_states_faker src/activity_states_faker.cpp)
+#target_link_libraries(activity_states_faker ${catkin_LIBRARIES})
+#add_dependencies(activity_states_faker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_executable(robot_observer_one src/robot_observer_one.cpp)
-target_link_libraries(robot_observer_one ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(robot_observer_one ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_executable(robot_observer_1.0 src/robot_observer_1.0.cpp)
+target_link_libraries(robot_observer_1.0 ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+add_dependencies(robot_observer_1.0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_executable(robot_observer_two src/robot_observer_two.cpp)
-target_link_libraries(robot_observer_two ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(robot_observer_two ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_executable(robot_observer_2.0 src/robot_observer_2.0.cpp)
+target_link_libraries(robot_observer_2.0 ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+add_dependencies(robot_observer_2.0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_executable(robot_observer_three src/robot_observer_three.cpp)
-target_link_libraries(robot_observer_three ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
-add_dependencies(robot_observer_three ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_executable(robot_observer_2.5 src/robot_observer_2.5.cpp)
+target_link_libraries(robot_observer_2.5 ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+add_dependencies(robot_observer_2.5 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+
+add_executable(robot_observer_3.0 src/robot_observer_three.cpp)
+target_link_libraries(robot_observer_3.0 ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+add_dependencies(robot_observer_3.0 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_executable(robot_observer_3.5 src/robot_observer_three.cpp)
+target_link_libraries(robot_observer_3.5 ${catkin_LIBRARIES} $ENV{TOASTERLIB_DIR}/lib/libtoaster.so)
+add_dependencies(robot_observer_3.5 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(mocap_calib src/mocap_calib.cpp)
 target_link_libraries(mocap_calib ${catkin_LIBRARIES})
