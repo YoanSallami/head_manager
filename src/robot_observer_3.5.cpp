@@ -804,7 +804,7 @@ bool ObserverStateMachine_::human_disengage(GoToNextAction const&)
   if(observer_ptr_->previous_action_.name=="place")
     return(observer_ptr_->human_disengage_ && observer_ptr_->enable_event_);
   else
-    return(true);
+    return(false);
 }
 
 bool ObserverStateMachine_::enable_next_action(GoToNextAction const&)
