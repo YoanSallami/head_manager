@@ -73,7 +73,6 @@ struct humanNear{};
 struct humanNotNear{};
 struct humanHandOnTable{};
 struct humanHandNotOnTable{};
-struct humanLookingObject{};
 struct humanActing{};
 struct Ack{};
 struct GoToNextAction{};
@@ -107,10 +106,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   {
       // every (optional) entry/exit methods get the event passed.
       template <class Event,class FSM>
-      void on_entry(Event const&,FSM& ) {
-        ROS_INFO("[robot_observer] Entering state: \"Waiting\"."); 
-        observer_ptr_->task_started_=false;
-      }
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"Waiting\".");}
       template <class Event,class FSM>
       void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"Waiting\".");}
   };
@@ -170,7 +166,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_next_action(GoToNextAction const&);
   void ack(Ack const&);
   void stay_focus(humanNear const&);
-  void stay_focus_action(humanNear const&);
+  void stay_focus_action(humanHandOnTable const&);
   void stay_focus_next_action(humanHandOnTable const&);
   bool enable_ack(Ack const&);
   bool enable_ack_end(humanHandOnTable const&);
@@ -190,19 +186,17 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
        //  +----------------------+---------------------+----------------------+----------------------------+------------------------------------+
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
-     //a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
        row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end_disengage      >,
        row < LookingHead          , humanHandOnTable    , LookingAction        , &sm::stay_focus_action     , &sm::enable_ack_end                >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+----------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-    a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
+    a_irow < LookingAction        , humanHandOnTable                           , &sm::stay_focus_action                                          >,
        row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::human_disengage               >,
        row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable_ack                    >,
       //  +-----------------------+---------------------+-----------------------+----------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingNextAction    , humanActing         , LookingAction        , &sm::focus_action                                               >,
-    //a_irow < LookingNextAction    ,                                            , &sm::change_focus_next_action                                   >,
     a_irow < LookingNextAction    , humanHandOnTable                           , &sm::stay_focus_next_action                                     >,
      a_row < LookingNextAction    , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
@@ -666,6 +660,7 @@ public:
     point.point.y = 0; 
     point.point.z = 0.6;
     lookAt(point);
+    task_started_=false;
   }
   void focusHead()
   {
@@ -795,17 +790,7 @@ void ObserverStateMachine_::focus_next_action(GoToNextAction const& a)
   }
 }
 
-void ObserverStateMachine_::stay_focus(humanNear const& a)
-{
-  try
-  {
-    observer_ptr_->focusObject();
-  } catch (HeadManagerException& e ) {
-    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
-  }
-}
-
-void ObserverStateMachine_::stay_focus_action(humanNear const& a)
+void ObserverStateMachine_::stay_focus_action(humanHandOnTable const& a)
 {
   try
   {
