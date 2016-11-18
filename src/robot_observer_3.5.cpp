@@ -170,7 +170,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void rest(humanNotNear const&); 
   void focus_object(humanLookingObject const&);
   void focus_action(humanActing const&);
-  void focus_next_action(GoToNextAction const&);
+  void focus_next_action(humanHandOnTable const&);
   void ack(Ack const&);
   void stay_focus(humanNear const&);
   void stay_focus_action(humanNear const&);
@@ -193,7 +193,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
      //a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
-       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::focus_hand           , &sm::enable_ack_end                 >,
+       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::focus_next_action    , &sm::enable_ack_end                 >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      //a_row < LookingHand          , humanNotNear        , Waiting              , &sm::rest                                                       >,
@@ -431,7 +431,7 @@ private:
             if(msg->factList[i].property=="Distance"
                && msg->factList[i].subjectId=="rightHand"
                && msg->factList[i].targetId==previous_action_.focusTarget
-               && msg->factList[i].doubleValue>0.3 )
+               && msg->factList[i].doubleValue>0.37 )
             {
                human_disengaged_=true;
             }
@@ -746,7 +746,7 @@ public:
     lookAt(point);
     state_machine_->process_event(Ack());
   }
-  void focusAction(supervisor_msgs::Action action)
+  void focusAction()
   {
     //ROS_INFO("[robot_observer] Focus object");
     geometry_msgs::PointStamped point;
@@ -754,11 +754,11 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=current_action_position_;
     lookAt(point);
-    if(action.ackNeeded)
+    if(current_action_.ackNeeded)
         state_machine_->process_event(Ack());
   }
   
-  void focusNextAction(supervisor_msgs::Action action)
+  void focusNextAction()
   {
     //ROS_INFO("[robot_observer] Focus object");
     geometry_msgs::PointStamped point;
@@ -766,7 +766,7 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=next_action_position_;
     lookAt(point);
-    if(action.ackNeeded)
+    if(next_action_.ackNeeded)
         state_machine_->process_event(Ack());
   }
   
@@ -823,24 +823,24 @@ void ObserverStateMachine_::focus_object(humanLookingObject const&)
   }
 }
 
-void ObserverStateMachine_::focus_action(humanActing const& a)
+void ObserverStateMachine_::focus_action(humanActing const&)
 {
   try
   {
-    observer_ptr_->focusAction(a.action_detected);
+    observer_ptr_->focusAction();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
 }
 
-void ObserverStateMachine_::focus_next_action(GoToNextAction const& a)
+void ObserverStateMachine_::focus_next_action(humanHandOnTable const& a)
 {
   try
   {
     observer_ptr_->enable_event_=false;
     observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
     observer_ptr_->waiting_timer_.start();
-    observer_ptr_->focusNextAction(a.action_detected);
+    observer_ptr_->focusNextAction();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
