@@ -793,7 +793,7 @@ bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 
 bool ObserverStateMachine_::enable_ack_end_disengage(humanHandOnTable const&)
 {
-  if(observer_ptr_->previous_action_.name=="place")
+  if(observer_ptr_->previous_action_.name!="place")
     return(observer_ptr_->human_disengage_ || observer_ptr_->enable_event_);
   else
     return(false);
