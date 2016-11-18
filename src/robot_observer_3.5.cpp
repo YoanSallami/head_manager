@@ -175,8 +175,8 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void stay_focus(humanNear const&);
   void stay_focus_action(humanNear const&);
   void stay_focus_next_action(humanNear const&);
-  bool enable(Ack const&);
-  bool enable_hand(humanHandOnTable const&);
+  bool enable_ack(Ack const&);
+  bool enable_ack_end(humanHandOnTable const&);
   bool enable_next_action(GoToNextAction const&);
   bool human_disengaged(GoToNextAction const&);
   // Guard transition definition
@@ -193,7 +193,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
      //a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
-       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::focus_hand           , &sm::enable_hand                    >,
+       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::focus_hand           , &sm::enable_ack_end                 >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      //a_row < LookingHand          , humanNotNear        , Waiting              , &sm::rest                                                       >,
