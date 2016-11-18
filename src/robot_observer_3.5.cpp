@@ -182,6 +182,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   bool enable_ack_end(humanHandOnTable const&);
   bool enable_next_action(GoToNextAction const&);
   bool human_disengage(GoToNextAction const&);
+  bool human_disengage_before_ack_end(humanHandOnTable const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -201,7 +202,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
     a_row < AckState              , humanNotNear        , Waiting              , &sm::rest                                                        >,
     a_row < AckState              , humanActing         , LookingAction        , &sm::focus_action                                                >,
-      row < AckState              , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action     , &sm::human_disengage                >,
+      row < AckState              , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::human_disengage_before_ack_end >,
       row < AckState              , humanHandOnTable    , LookingAction        , &sm::refocus_action        , &sm::enable_ack_end                 >,
    a_irow < AckState              , humanNear                                  , &sm::focus_head                                                  >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
@@ -856,6 +857,14 @@ bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 }
 
 bool ObserverStateMachine_::human_disengage(GoToNextAction const&)
+{
+  if(observer_ptr_->previous_action_.name=="place")
+    return(observer_ptr_->human_disengage_ && observer_ptr_->enable_event_);
+  else
+    return(true);
+}
+
+bool ObserverStateMachine_::human_disengage_before_ack(humanHandOnTable const&)
 {
   if(observer_ptr_->previous_action_.name=="place")
     return(observer_ptr_->human_disengage_ && observer_ptr_->enable_event_);
