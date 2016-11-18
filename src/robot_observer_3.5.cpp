@@ -203,7 +203,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
-       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::human_disengaged              >,
+       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::enable_next_action            >,
        row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable_ack                    >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
@@ -430,51 +430,6 @@ private:
                human_disengaged_=true;
             }
           }
-        }
-        if(look_somewhere)
-        {
-           //ROS_INFO("[robot_observer] HERAKLES_HUMAN1 is looking %s - %d",focus_head.c_str(),same_object_look_);
-            if(focus_head==object_focused_by_human_head_ && same_object_look_==false ){
-                same_object_look_=true;
-                start_time_focus_look_=ros::Time::now();
-            }
-            if(focus_head!=object_focused_by_human_head_)
-                same_object_look_=false;
-            if(same_object_look_)
-            {
-                if(ros::Time::now()-start_time_focus_look_>ros::Duration(0.6))
-                {
-                    if(focus_head=="RED_CUBE"){
-                        object_position_=red_cube_position_;
-                        enable_event_=false;
-                        waiting_timer_.setPeriod(ros::Duration(1.5));
-                        waiting_timer_.start();
-                        state_machine_->process_event(humanLookingObject());
-                    }
-                    if(focus_head=="BLACK_CUBE"){
-                        object_position_=black_cube_position_;
-                        enable_event_=false;
-                        waiting_timer_.setPeriod(ros::Duration(1.5));
-                        waiting_timer_.start();
-                        state_machine_->process_event(humanLookingObject());
-                    }
-                    if(focus_head=="GREEN_CUBE2"){
-                        object_position_=green_cube_position_;
-                        enable_event_=false;
-                        waiting_timer_.setPeriod(ros::Duration(1.5));
-                        waiting_timer_.start();
-                        state_machine_->process_event(humanLookingObject());
-                    }
-                    if(focus_head=="BLUE_CUBE"){
-                        object_position_=blue_cube_position_;
-                        enable_event_=false;
-                        waiting_timer_.setPeriod(ros::Duration(1.5));
-                        waiting_timer_.start();
-                        state_machine_->process_event(humanLookingObject());
-                    }
-                }
-            }
-            object_focused_by_human_head_=focus_head;
         }
      }
   }
