@@ -214,7 +214,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingNextAction    , humanActing         , LookingAction        , &sm::focus_action                                               >,
-    a_irow < LookingNextAction    ,                                            , &sm::change_focus_next_action                                   >,
+    //a_irow < LookingNextAction    ,                                            , &sm::change_focus_next_action                                   >,
     a_irow < LookingNextAction    , humanNear                                  , &sm::stay_focus_next_action                                     >,
        row < LookingNextAction    , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
