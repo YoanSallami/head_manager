@@ -74,15 +74,9 @@ struct humanNotNear{};
 struct humanHandOnTable{};
 struct humanHandNotOnTable{};
 struct humanLookingObject{};
-struct humanActing{
-  humanActing(supervisor_msgs::Action action_detected):action_detected(action_detected){}
-  supervisor_msgs::Action action_detected;
-};
+struct humanActing{};
 struct Ack{};
-struct GoToNextAction{
-  GoToNextAction(supervisor_msgs::Action action_detected):action_detected(action_detected){}
-  supervisor_msgs::Action action_detected;
-};
+struct GoToNextAction{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" , "LookingAction", "LookingNextAction" };
 /**
