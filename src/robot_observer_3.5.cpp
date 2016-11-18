@@ -322,8 +322,6 @@ public:
         ROS_ERROR("[robot_observer] Failed to call service /pr2motion/Z_Head_SetMinDuration");
     state_machine_ = new ObserverStateMachine(boost::cref(this));
     state_machine_->start();
-    same_object_look_=false;
-    same_object_point_=false;
     ROS_INFO("[robot_observer] Starting state machine, node ready !");
     human_disengage_=false;
   }
