@@ -817,7 +817,7 @@ void ObserverStateMachine_::stay_focus_next_action(humanHandOnTable const& a)
 {
   try
   {
-    observer_ptr_->focusAction();
+    observer_ptr_->focusNextAction();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
