@@ -408,7 +408,7 @@ private:
         double max_point=0.0;
         std::string focus_head;
         std::string focus_pointing;
-        uman_disengage_=false;
+        human_disengage_=false;
         for (unsigned int i = 0; i < msg->factList.size(); ++i)
         {
           if (msg->factList[i].property=="IsLookingToward" 
