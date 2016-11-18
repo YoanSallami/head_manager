@@ -551,7 +551,7 @@ private:
                             previous_action_=msg->actions[i];
                             object_position_=current_action_position_;
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(1.5));
+                            waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing());
                         }
@@ -562,7 +562,7 @@ private:
                             previous_action_=msg->actions[i];
                             object_position_=current_action_position_;
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(1.5));
+                            waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing());
                         }
@@ -572,7 +572,7 @@ private:
                             current_action_=msg->actions[i];
                             previous_action_=msg->actions[i];
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(1.5));
+                            waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing());
                         }
@@ -582,7 +582,7 @@ private:
                             current_action_=msg->actions[i];
                             previous_action_=msg->actions[i];
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(1.5));
+                            waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing());
                         }
@@ -593,7 +593,7 @@ private:
                             previous_action_=msg->actions[i];
                             object_position_=current_action_position_;
                             enable_event_=false;
-                            waiting_timer_.setPeriod(ros::Duration(1.5));
+                            waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
                             state_machine_->process_event(humanActing());
                         }
@@ -785,7 +785,7 @@ void ObserverStateMachine_::focus_next_action(GoToNextAction const& a)
   try
   {
     observer_ptr_->enable_event_=false;
-    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
+    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.0));
     observer_ptr_->waiting_timer_.start();
     observer_ptr_->focusNextAction();
   } catch (HeadManagerException& e ) {
