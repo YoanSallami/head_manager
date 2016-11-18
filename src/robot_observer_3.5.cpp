@@ -78,7 +78,7 @@ struct humanActing{};
 struct Ack{};
 struct GoToNextAction{};
 
-static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" , "LookingAction", "LookingNextAction" };
+static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" , "LookingAction", "LookingNextAction" , "AckState"};
 /**
 * @brief : State machine front definition
 */
@@ -154,6 +154,14 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       template <class Event,class FSM>
       void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingNextAction\".");}
   };
+  struct AckState : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"AckState\".");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"AckState\".");}
+  };
 
   // Initial state definition
   typedef Waiting initial_state;
@@ -188,7 +196,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
      //a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
-       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end                 >,
+       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action,                                    >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
     a_row < AckState              , humanNotNear        , Waiting              , &sm::rest                                                        >,
