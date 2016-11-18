@@ -161,11 +161,9 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void refocus_head(humanHandNotOnTable const&); 
   void focus_hand(humanHandOnTable const&);
   void rest(humanNotNear const&); 
-  void focus_object(humanLookingObject const&);
   void focus_action(humanActing const&);
   void focus_next_action(GoToNextAction const&);
   void ack(Ack const&);
-  void stay_focus(humanNear const&);
   void stay_focus_action(humanHandOnTable const&);
   void stay_focus_next_action(humanHandOnTable const&);
   bool enable_ack(Ack const&);
