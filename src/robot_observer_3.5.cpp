@@ -623,27 +623,27 @@ private:
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             next_action_position_=red_cube_position_;
                             next_action_=msg->actions[i];
-                            state_machine_->process_event(GoToNextAction());
+                            //state_machine_->process_event(GoToNextAction());
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             next_action_position_=black_cube_position_;
                             next_action_=msg->actions[i];
-                            state_machine_->process_event(GoToNextAction());
+                            //state_machine_->process_event(GoToNextAction());
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             next_action_position_=blue_cube_position_;
                             next_action_=msg->actions[i];
-                            state_machine_->process_event(GoToNextAction());
+                            //state_machine_->process_event(GoToNextAction());
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             next_action_position_=green_cube_position_;
                             next_action_=msg->actions[i];
-                            state_machine_->process_event(GoToNextAction());
+                            //state_machine_->process_event(GoToNextAction());
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             next_action_position_=placemat_position_;
                             next_action_=msg->actions[i];
-                            state_machine_->process_event(GoToNextAction());
+                            //state_machine_->process_event(GoToNextAction());
                         }
                     }
                 } 
@@ -705,6 +705,8 @@ public:
     lookAt(point);
     if(current_action_.ackNeeded)
         state_machine_->process_event(Ack());
+    else
+        state_machine_->process_event(GoToNextAction());
   }
   
   void focusNextAction()
