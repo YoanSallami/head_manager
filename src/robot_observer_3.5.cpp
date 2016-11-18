@@ -427,8 +427,9 @@ private:
           if(previous_action_.focusTarget!="")
           {
             if(msg->factList[i].property=="Distance"
-               && msg->factList[i].subjectId==previous_action_.focusTarget
-                && msg->factList[i].doubleValue>0.3 )
+               && msg->factList[i].subjectId=="rightHand"
+               && msg->factList[i].targetId==previous_action_.focusTarget
+               && msg->factList[i].doubleValue>0.3 )
             {
                human_disengaged_=true;
             }
@@ -880,7 +881,12 @@ bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 
 bool ObserverStateMachine_::human_disengaged(GoToNextAction const&)
 {
-  return(observer_ptr_->human_disengaged_);
+  if(!observer_ptr_->human_disengaged_)
+    return(false);
+  else {
+    observer_ptr_->human_disengaged_=false;
+    return(true);
+  }
 }
 
 bool ObserverStateMachine_::enable_next_action(GoToNextAction const&)
