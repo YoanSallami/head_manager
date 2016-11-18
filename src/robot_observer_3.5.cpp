@@ -878,7 +878,7 @@ bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
   return(observer_ptr_->enable_event_);
 }
 
-bool ObserverStateMachine_::human_disengaged(GotoNextAction const&)
+bool ObserverStateMachine_::human_disengaged(GoToNextAction const&)
 {
   return(observer_ptr_->human_disengaged_);
 }
