@@ -196,7 +196,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
      //a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
-       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action,                                    >,
+       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action                                     >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
     a_row < AckState              , humanNotNear        , Waiting              , &sm::rest                                                        >,
