@@ -760,8 +760,6 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=next_action_position_;
     lookAt(point);
-    if(next_action_.ackNeeded)
-        state_machine_->process_event(Ack());
   }
   
 };
