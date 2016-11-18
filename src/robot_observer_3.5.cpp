@@ -259,14 +259,6 @@ private:
   geometry_msgs::Point green_cube_position_;
   geometry_msgs::Point object_position_;
   geometry_msgs::Point placemat_position_;
-  bool same_object_look_;
-  bool same_object_point_;
-  std::string object_focused_by_human_head_;
-  ros::Time start_time_focus_look_;
-  std::string object_focused_by_human_hand_;
-  ros::Time start_time_focus_point_;
-  std::string attention_id_; //!<
-  geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
   bool timer_on_;
 
@@ -680,16 +672,6 @@ public:
     point.point=hand_position_;
     lookAt(point);
   }
-  void focusObject()
-  {
-    //ROS_INFO("[robot_observer] Focus object");
-    geometry_msgs::PointStamped point;
-    point.header.frame_id = "map";
-    point.header.stamp = ros::Time::now();
-    point.point=object_position_;
-    lookAt(point);
-    state_machine_->process_event(Ack());
-  }
   void focusAction()
   {
     //ROS_INFO("[robot_observer] Focus object");
@@ -752,16 +734,6 @@ void ObserverStateMachine_::focus_hand(humanHandOnTable const&)
   try
   {
     observer_ptr_->focusHand();
-  } catch (HeadManagerException& e ) {
-    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
-  }
-}
-
-void ObserverStateMachine_::focus_object(humanLookingObject const&)
-{
-  try
-  {
-    observer_ptr_->focusObject();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
