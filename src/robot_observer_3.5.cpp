@@ -164,11 +164,11 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void rest(humanNotNear const&); 
   void focus_object(humanLookingObject const&);
   void focus_action(humanActing const&);
-  void focus_next_action(humanHandOnTable const&);
+  void focus_next_action(GoToNextAction const&);
   void ack(Ack const&);
   void stay_focus(humanNear const&);
   void stay_focus_action(humanNear const&);
-  void stay_focus_next_action(humanNear const&);
+  void stay_focus_next_action(humanHandOnTable const&);
   bool enable_ack(Ack const&);
   bool enable_ack_end(humanHandOnTable const&);
   bool enable_next_action(GoToNextAction const&);
@@ -187,7 +187,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
      //a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
-       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::focus_next_action    , &sm::enable_ack_end                 >,
+       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end                 >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      //a_row < LookingHand          , humanNotNear        , Waiting              , &sm::rest                                                       >,
@@ -209,7 +209,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingNextAction    , humanActing         , LookingAction        , &sm::focus_action                                               >,
     //a_irow < LookingNextAction    ,                                            , &sm::change_focus_next_action                                   >,
-    a_irow < LookingNextAction    , humanNear                                  , &sm::stay_focus_next_action                                     >,
+    a_irow < LookingNextAction    , humanHandOnTable                           , &sm::stay_focus_next_action                                     >,
      a_row < LookingNextAction    , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
@@ -827,7 +827,7 @@ void ObserverStateMachine_::focus_action(humanActing const&)
   }
 }
 
-void ObserverStateMachine_::focus_next_action(humanHandOnTable const& a)
+void ObserverStateMachine_::focus_next_action(GoToNextAction const& a)
 {
   try
   {
@@ -860,7 +860,7 @@ void ObserverStateMachine_::stay_focus_action(humanNear const& a)
   }
 }
 
-void ObserverStateMachine_::stay_focus_next_action(humanNear const& a)
+void ObserverStateMachine_::stay_focus_next_action(humanHandOnTable const& a)
 {
   try
   {
