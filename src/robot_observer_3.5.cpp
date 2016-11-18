@@ -107,7 +107,10 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   {
       // every (optional) entry/exit methods get the event passed.
       template <class Event,class FSM>
-      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"Waiting\".");}
+      void on_entry(Event const&,FSM& ) {
+        ROS_INFO("[robot_observer] Entering state: \"Waiting\"."); 
+        observer_ptr_->task_started_=false;
+      }
       template <class Event,class FSM>
       void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"Waiting\".");}
   };
@@ -187,8 +190,8 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
      //a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
-       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end                 >,
-       row < LookingHead          , humanHandOnTable    , LookingAction        , &sm::stay_focus_action     , &sm::enable_ack_end                 >,
+       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end_disengage      >,
+       row < LookingHead          , humanHandOnTable    , LookingAction        , &sm::stay_focus_action     , &sm::enable_ack_end                >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+----------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
@@ -231,6 +234,7 @@ public:
   supervisor_msgs::Action next_action_;
   supervisor_msgs::Action current_action_;
   supervisor_msgs::Action previous_action_;
+  bool task_started_;
 private:
   string my_id_; //!< robot id
   ros::NodeHandle node_; //!< node handler
@@ -270,7 +274,6 @@ private:
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
   bool timer_on_;
-  bool task_started_;
 
   
 public:
@@ -544,6 +547,7 @@ private:
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
+                            task_started_=true;
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
@@ -555,6 +559,7 @@ private:
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
+                            task_started_=true;
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
@@ -565,6 +570,7 @@ private:
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
+                            task_started_=true;
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
@@ -575,6 +581,7 @@ private:
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
+                            task_started_=true;
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
@@ -586,6 +593,7 @@ private:
                             enable_event_=false;
                             waiting_timer_.setPeriod(ros::Duration(1.0));
                             waiting_timer_.start();
+                            task_started_=true;
                             state_machine_->process_event(humanActing());
                         }
                     }
@@ -825,6 +833,14 @@ bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 {
   if(observer_ptr_->previous_action_.name=="place")
     return(observer_ptr_->human_disengage_ && observer_ptr_->enable_event_);
+  else
+    return(false);
+}
+
+bool ObserverStateMachine_::enable_ack_end_disengage(humanHandOnTable const&)
+{
+  if(observer_ptr_->previous_action_.name=="place")
+    return(observer_ptr_->human_disengage_ || observer_ptr_->enable_event_);
   else
     return(false);
 }
