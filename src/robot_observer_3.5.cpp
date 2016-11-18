@@ -286,6 +286,7 @@ private:
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
   bool timer_on_;
+  bool task_started_;
 
   
 public:
@@ -307,6 +308,7 @@ public:
     waiting_timer_ = node_.createTimer(ros::Duration(1.0), &RobotObserver::timerCallback, this, true);
     timer_on_=false;
     enable_event_=true;
+    task_started_=false;
     // Advertise subscribers
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &RobotObserver::factListCallback, this);
     fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &RobotObserver::factListAreaCallback, this);
@@ -424,7 +426,7 @@ private:
                 look_somewhere=true;
             }
           }
-          if(previous_action_.focusTarget!="")
+          if(task_started_)
           {
             if(msg->factList[i].property=="Distance"
                && msg->factList[i].subjectId=="rightHand"
@@ -594,6 +596,7 @@ private:
                     {
                         ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
+                            task_started_=true;
                             current_action_position_=red_cube_position_;
                             current_action_=msg->actions[i];
                             previous_action_=msg->actions[i];
@@ -604,6 +607,7 @@ private:
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
+                            task_started_=true;
                             current_action_position_=black_cube_position_;
                             current_action_=msg->actions[i];
                             previous_action_=msg->actions[i];
@@ -614,6 +618,7 @@ private:
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
+                            task_started_=true;
                             current_action_position_=blue_cube_position_;
                             current_action_=msg->actions[i];
                             previous_action_=msg->actions[i];
@@ -623,6 +628,7 @@ private:
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
+                            task_started_=true;
                             current_action_position_=green_cube_position_;
                             current_action_=msg->actions[i];
                             previous_action_=msg->actions[i];
@@ -632,6 +638,7 @@ private:
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
+                            task_started_=true;
                             current_action_position_=placemat_position_;
                             current_action_=msg->actions[i];
                             previous_action_=msg->actions[i];
