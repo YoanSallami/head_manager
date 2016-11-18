@@ -164,6 +164,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void rest(humanNotNear const&); 
   void focus_object(humanLookingObject const&);
   void focus_action(humanActing const&);
+  void refocus_action(humanHandOnTable const&);
   void focus_next_action(GoToNextAction const&);
   void ack(Ack const&);
   void stay_focus(humanNear const&);
@@ -190,21 +191,16 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
        row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end                 >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
-     //a_row < LookingHand          , humanNotNear        , Waiting              , &sm::rest                                                       >,
-     //a_row < LookingHand          , humanActing         , LookingAction        , &sm::focus_action                                               >,
-     //a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
-    //a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >,
-     //a_row < LookingHand          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
-      //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
-     //a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-     //a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action                                               >,
-       //row < LookingObject        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable                        >,
-    //a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
+    a_row < AckState              , humanNotNear        , Waiting              , &sm::rest                                                        >,
+    a_row < AckState              , humanActing         , LookingAction        , &sm::focus_action                                                >,
+      row < AckState              , humanHandOnTable    , LookingNextAction    , &sm::focus_next_action     , &sm::human_disengage                >,
+      row < AckState              , humanHandOnTable    , LookingAction        , &sm::refocus_action        , &sm::enable_ack_end                 >,
+   a_irow < AckState              , humanNear                                  , &sm::focus_head                                                  >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
        row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::human_disengage               >,
-       row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable_ack                    >,
+       row < LookingAction        , Ack                 , AckState             , &sm::ack                   , &sm::enable_ack                    >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingNextAction    , humanActing         , LookingAction        , &sm::focus_action                                               >,
@@ -238,6 +234,7 @@ public:
   ros::Timer waiting_timer_;
   bool enable_event_;
   bool human_disengage_;
+  bool item_placed_;
   supervisor_msgs::Action next_action_;
   supervisor_msgs::Action current_action_;
   supervisor_msgs::Action previous_action_;
@@ -348,6 +345,7 @@ public:
     same_object_point_=false;
     ROS_INFO("[robot_observer] Starting state machine, node ready !");
     human_disengage_=false;
+    item_placed_=false;
   }
   /****************************************************
    * @brief : Default destructor
@@ -783,6 +781,16 @@ void ObserverStateMachine_::focus_action(humanActing const&)
   }
 }
 
+void ObserverStateMachine_::refocus_action(humanHandOnTable const&)
+{
+  try
+  {
+    observer_ptr_->focusAction();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
 void ObserverStateMachine_::focus_next_action(GoToNextAction const& a)
 {
   try
@@ -833,7 +841,10 @@ bool ObserverStateMachine_::enable_ack(Ack const&)
 
 bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 {
-  return(observer_ptr_->enable_event_);
+  if(observer_ptr_->previous_action_.name!="place")
+    return(false);
+  else
+    return(observer_ptr_->enable_event_);
 }
 
 bool ObserverStateMachine_::human_disengage(GoToNextAction const&)
