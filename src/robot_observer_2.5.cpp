@@ -178,7 +178,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
        //  +----------------------+---------------------+----------------------+---------------------------+------------------------------------+
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
-     a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
+     //a_row < LookingHead          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
        row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand           , &sm::enable_ack_end                 >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
@@ -186,12 +186,12 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingHand          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >,
-     a_row < LookingHand          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
+     //a_row < LookingHand          , humanLookingObject  , LookingObject        , &sm::focus_object                                               >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
-     a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action                                               >,
-     a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
-       row < LookingObject        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable_ack                    >,
-    a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
+     //a_row < LookingObject        , humanActing         , LookingAction        , &sm::focus_action                                               >,
+     //a_row < LookingObject        , humanNotNear        , Waiting              , &sm::rest                                                       >,
+       //row < LookingObject        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable_ack                    >,
+    //a_irow < LookingObject        , humanNear                                  , &sm::stay_focus                                                 >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
