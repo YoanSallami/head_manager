@@ -172,7 +172,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   bool enable_ack(Ack const&);
   bool enable_ack_end(humanHandOnTable const&);
   bool enable_next_action(GoToNextAction const&);
-  bool human_engage_action(GoToNextAction const&);
+  bool human_disengage(GoToNextAction const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -203,7 +203,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
-       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::enable_next_action            >,
+       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::human_disengage               >,
        row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable_ack                    >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
@@ -237,7 +237,7 @@ public:
   FactList_t fact_area_list_; //!< fact list from area_manager
   ros::Timer waiting_timer_;
   bool enable_event_;
-  bool human_engage_action_;
+  bool human_disengage_;
   supervisor_msgs::Action next_action_;
   supervisor_msgs::Action current_action_;
   supervisor_msgs::Action previous_action_;
@@ -347,7 +347,7 @@ public:
     same_object_look_=false;
     same_object_point_=false;
     ROS_INFO("[robot_observer] Starting state machine, node ready !");
-    human_engage_action_=false;
+    human_disengage_=false;
   }
   /****************************************************
    * @brief : Default destructor
@@ -408,6 +408,7 @@ private:
         double max_point=0.0;
         std::string focus_head;
         std::string focus_pointing;
+        uman_disengage_=false;
         for (unsigned int i = 0; i < msg->factList.size(); ++i)
         {
           if (msg->factList[i].property=="IsLookingToward" 
@@ -424,10 +425,10 @@ private:
           {
             if(msg->factList[i].property=="Distance"
                && msg->factList[i].subjectId=="rightHand"
-               && msg->factList[i].targetId==next_action_.focusTarget
-               && msg->factList[i].doubleValue<0.35 )
+               && msg->factList[i].targetId=="PLACEMAT_RED"
+               && msg->factList[i].doubleValue>0.30 )
             {
-               human_engage_action_=true;
+               human_disengage_=true;
             }
           }
         }
@@ -835,14 +836,12 @@ bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
   return(observer_ptr_->enable_event_);
 }
 
-bool ObserverStateMachine_::human_engage_action(GoToNextAction const&)
+bool ObserverStateMachine_::human_disengage(GoToNextAction const&)
 {
-  if(!observer_ptr_->human_engage_action_)
-    return(false);
-  else {
-    observer_ptr_->human_engage_action_=false;
+  if(observer_ptr_->previous_action_.name=="place")
+    return(observer_ptr_->human_disengage_ && observer_ptr_->enable_event_);
+  else
     return(true);
-  }
 }
 
 bool ObserverStateMachine_::enable_next_action(GoToNextAction const&)
