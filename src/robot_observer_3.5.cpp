@@ -203,7 +203,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
-       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::human_engage_action           >,
+       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::enable_next_action            >,
        row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable_ack                    >,
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
@@ -589,7 +589,7 @@ private:
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             task_started_=true;
                             current_action_position_=placemat_position_;
-                            current_action_=msg->actions[i];
+                            current_action_ =msg->actions[i];
                             previous_action_=msg->actions[i];
                             object_position_=current_action_position_;
                             enable_event_=false;
