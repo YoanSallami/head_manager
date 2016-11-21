@@ -195,7 +195,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingNextAction    , humanActing         , LookingAction        , &sm::focus_action                                               >,
     a_irow < LookingNextAction    , humanHandOnTable                           , &sm::stay_focus_next_action                                     >
-   //  a_row < LookingNextAction    , humanHandNotOnTable , LookingHead          , &sm::refocus_head          ,                                     >
+     a_row < LookingNextAction    , humanHandNotOnTable , LookingHead          , &sm::refocus_head          ,                                     >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
 
@@ -816,7 +816,7 @@ void ObserverStateMachine_::ack(Ack const&)
   try
   {
     observer_ptr_->enable_event_=false;
-    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
+    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.0));
     observer_ptr_->waiting_timer_.start();
     observer_ptr_->focusHead();
   } catch (HeadManagerException& e ) {
