@@ -320,7 +320,7 @@ private:
     {
         stop_moving_start_time_=ros::Time::now();    
     }
-    if(ros::Time::now()-stop_moving_start_time_>ros::Duration(0.5))
+    if(ros::Time::now()-stop_moving_start_time_>ros::Duration(1.5))
     {
         state_machine_->process_event(humanHandStop());
     } else {
