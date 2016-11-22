@@ -97,27 +97,27 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   {
       // every (optional) entry/exit methods get the event passed.
       template <class Event,class FSM>
-      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"Waiting\".");}
+      void on_entry(Event const&,FSM& ) {}//ROS_INFO("[robot_observer] Entering state: \"Waiting\".");}
       template <class Event,class FSM>
-      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"Waiting\".");}
+      void on_exit(Event const&,FSM& ) {}//ROS_INFO("[robot_observer] Leaving state: \"Waiting\".");}
   };
 
   struct LookingHead : public msm::front::state<> 
   {
       // every (optional) entry/exit methods get the event passed.
       template <class Event,class FSM>
-      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"LookingHead\".");}
+      void on_entry(Event const&,FSM& ) {}//ROS_INFO("[robot_observer] Entering state: \"LookingHead\".");}
       template <class Event,class FSM>
-      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingHead\".");}
+      void on_exit(Event const&,FSM& ) {}//ROS_INFO("[robot_observer] Leaving state: \"LookingHead\".");}
   };
 
   struct LookingHand : public msm::front::state<> 
   {
       // every (optional) entry/exit methods get the event passed.
       template <class Event,class FSM>
-      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"LookingHand\".");}
+      void on_entry(Event const&,FSM& ) {}//ROS_INFO("[robot_observer] Entering state: \"LookingHand\".");}
       template <class Event,class FSM>
-      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingHand\".");}
+      void on_exit(Event const&,FSM& ) {}//ROS_INFO("[robot_observer] Leaving state: \"LookingHand\".");}
   };
   // Initial state definition
   typedef Waiting initial_state;
@@ -311,7 +311,7 @@ private:
       if (msg->factList[i].property=="IsMoving"
           && msg->factList[i].subjectId=="rightHand")
           {
-            ROS_INFO("HUMAN HAND MOVING");
+            //ROS_INFO("HUMAN HAND MOVING");
             human_is_moving=true;
           }
     }
@@ -322,8 +322,10 @@ private:
     }
     if(ros::Time::now()-stop_moving_start_time_>ros::Duration(1.5))
     {
+        ROS_INFO("[robot_observer] HUMAN HAND STOP");
         state_machine_->process_event(humanHandStop());
     } else {
+        ROS_INFO("[robot_observer] HUMAN HAND MOVING");
         state_machine_->process_event(humanHandMove());
     }
     human_is_moving_=human_is_moving;
