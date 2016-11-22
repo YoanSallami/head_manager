@@ -346,6 +346,7 @@ private:
       if (msg->factList[i].property=="IsMoving"
           && msg->factList[i].subjectId=="rightHand")
       {
+        ROS_INFO("HUMAN HAND MOVING");
         human_is_moving=true;
       }
     }
