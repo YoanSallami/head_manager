@@ -140,11 +140,11 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < Waiting              , humanNotNear                               , &sm::rest                                                       >,
        //  +----------------------+---------------------+----------------------+---------------------------+------------------------------------+
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
-     a_row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand                                                 >,
+     a_row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand           , &sm::enable_ack                     >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
-       row < LookingHand          , humanHandStop       , LookingHead          , &sm::ack                  , &sm::enable_ack                     >,
+       row < LookingHand          , humanHandStop       , LookingHead          , &sm::ack                                                        >,
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
@@ -212,6 +212,8 @@ public:
     }
     // Advertise subscribers
     waiting_timer_ = node_.createTimer(ros::Duration(2.0), &RobotObserver::timerCallback, this, true);
+    timer_on_=false;
+    enable_event_=true;
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &RobotObserver::factListCallback, this);
     fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &RobotObserver::factListAreaCallback, this);
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &RobotObserver::humanListCallback, this);
@@ -473,6 +475,24 @@ void ObserverStateMachine_::focus_hand(humanHandOnTable const&)
   try
   {
     observer_ptr_->focusHand();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+bool ObserverStateMachine_::enable_ack(Ack const&)
+{
+  return(observer_ptr_->enable_event_);
+}
+
+void ObserverStateMachine_::ack(humanHandStop const&)
+{
+  try
+  {
+    observer_ptr_->enable_event_=false;
+    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
+    observer_ptr_->waiting_timer_.start();
+    observer_ptr_->focusHead();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
