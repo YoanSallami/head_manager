@@ -314,8 +314,6 @@ private:
             ROS_INFO("HUMAN HAND MOVING");
             human_is_moving=true;
           }
-        
-      }
     }
     
     if(!human_is_moving && human_is_moving_)
