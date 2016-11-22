@@ -305,20 +305,30 @@ private:
    ****************************************************/
   void factListCallback(const toaster_msgs::FactList::ConstPtr& msg)
   {
-    /*
-      if (!msg->factList.empty())
-      {
-        for (unsigned int i = 0; i < msg->factList.size(); ++i)
-        {
-          if (msg->factList[i].property=="" 
-              && msg->factList[i].targetId!="unknown object" 
-              && msg->factList[i].subjectId!="unknown object")
+    bool human_is_moving=false;
+    for (unsigned int i = 0; i < msg->factList.size(); ++i)
+    {
+      if (msg->factList[i].property=="IsMoving"
+          && msg->factList[i].subjectId=="rightHand")
           {
-            //TODO send event
+            ROS_INFO("HUMAN HAND MOVING");
+            human_is_moving=true;
           }
-        }
+        
       }
-    */
+    }
+    
+    if(!human_is_moving && human_is_moving_)
+    {
+        stop_moving_start_time_=ros::Time::now();    
+    }
+    if(ros::Time::now()-stop_moving_start_time_>ros::Duration(0.5))
+    {
+        state_machine_->process_event(humanHandStop());
+    } else {
+        state_machine_->process_event(humanHandMove());
+    }
+    human_is_moving_=human_is_moving;
   }
   /****************************************************
    * @brief : Update the fact list provided by area_manager
@@ -328,7 +338,6 @@ private:
   {
     bool human_near=false;
     bool hand_on_table=false;
-    bool human_is_moving=false;
     for (unsigned int i = 0; i < msg->factList.size(); ++i)
     {
       if (msg->factList[i].property=="IsInArea" 
@@ -343,23 +352,7 @@ private:
       {
         hand_on_table=true;
       }
-      if (msg->factList[i].property=="IsMoving"
-          && msg->factList[i].subjectId=="rightHand")
-      {
-        ROS_INFO("HUMAN HAND MOVING");
-        human_is_moving=true;
-      }
-    }
-    if(!human_is_moving && human_is_moving_)
-    {
-        stop_moving_start_time_=ros::Time::now();    
-    }
-    if(ros::Time::now()-stop_moving_start_time_>ros::Duration(0.5))
-    {
-        state_machine_->process_event(humanHandStop());
-    } else
-    {
-        state_machine_->process_event(humanHandMove());
+      
     }
     if(human_near)
     {
@@ -377,7 +370,6 @@ private:
         //ROS_INFO("[robot_observer] process event humanHandNotOnTable");
         state_machine_->process_event(humanHandNotOnTable());
     }
-    human_is_moving_=human_is_moving;
   }
   /****************************************************
    * @brief : Update the human list
