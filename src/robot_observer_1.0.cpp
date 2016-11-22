@@ -321,7 +321,7 @@ private:
         ROS_INFO("[robot_observer] start time human hand stop");
         stop_moving_start_time_=ros::Time::now();    
     }else{
-        if(ros::Time::now()-stop_moving_start_time_>ros::Duration(1.5))
+        if(ros::Time::now()-stop_moving_start_time_>ros::Duration(2.0))
         {
             ROS_INFO("[robot_observer] HUMAN HAND STOP");
             state_machine_->process_event(humanHandStop());
