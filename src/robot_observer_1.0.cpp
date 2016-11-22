@@ -320,14 +320,15 @@ private:
     {
         ROS_INFO("[robot_observer] start time human hand stop");
         stop_moving_start_time_=ros::Time::now();    
-    }
-    if(ros::Time::now()-stop_moving_start_time_>ros::Duration(1.5))
-    {
-        ROS_INFO("[robot_observer] HUMAN HAND STOP");
-        state_machine_->process_event(humanHandStop());
-    } else {
-        ROS_INFO("[robot_observer] HUMAN HAND MOVING");
-        state_machine_->process_event(humanHandMove());
+    }else{
+        if(ros::Time::now()-stop_moving_start_time_>ros::Duration(1.5))
+        {
+            ROS_INFO("[robot_observer] HUMAN HAND STOP");
+            state_machine_->process_event(humanHandStop());
+        } else {
+            ROS_INFO("[robot_observer] HUMAN HAND MOVING");
+            state_machine_->process_event(humanHandMove());
+        }
     }
     human_is_moving_=human_is_moving;
   }
