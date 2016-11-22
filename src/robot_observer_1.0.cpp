@@ -65,6 +65,8 @@ struct humanNear{};
 struct humanNotNear{};
 struct humanHandOnTable{};
 struct humanHandNotOnTable{};
+struct humanHandStop{};
+struct humanHandMove{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" };
 /**
@@ -123,7 +125,9 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_head(humanNear const&);
   void refocus_head(humanHandNotOnTable const&); 
   void focus_hand(humanHandOnTable const&);
-  void rest(humanNotNear const&); 
+  void rest(humanNotNear const&);
+  void ack(humanHandStop const&);
+  bool enable_ack(humanHandStop const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -140,6 +144,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
+       row < LookingHand          , humanHandStop       , LookingHead          , &sm::ack                  , &sm::enable_ack                     >,
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
@@ -165,6 +170,9 @@ class RobotObserver
 public:
   FactList_t fact_list_; //!< fact list from agent_monitor
   FactList_t fact_area_list_; //!< fact list from area_manager
+  bool human_is_moving_;
+  bool enable_event_;
+  ros::Timer waiting_timer_;
 private:
   
   string my_id_; //!< robot id
@@ -182,8 +190,10 @@ private:
   ros::ServiceClient head_stop_srv_;
   InitActionClient_t * init_action_client_; //!< initialisation client
   HeadActionClient_t * head_action_client_; //!< interface to head controller client
-  geometry_msgs::Point head_position_;
-  geometry_msgs::Point hand_position_;
+  geometry_msgs::Point head_position_; //!< 
+  geometry_msgs::Point hand_position_; //!< 
+  ros::Time stop_moving_start_time_; //!<
+  bool timer_on_;
 public:
   /****************************************************
    * @brief : Default constructor
@@ -201,6 +211,7 @@ public:
       my_id_="PR2_ROBOT";
     }
     // Advertise subscribers
+    waiting_timer_ = node_.createTimer(ros::Duration(2.0), &RobotObserver::timerCallback, this, true);
     fact_list_sub_ = node_.subscribe("/agent_monitor/factList", 1, &RobotObserver::factListCallback, this);
     fact_area_list_sub_ = node_.subscribe("/area_manager/factList", 1, &RobotObserver::factListAreaCallback, this);
     human_list_sub_ = node_.subscribe("/pdg/humanList", 1, &RobotObserver::humanListCallback, this);
@@ -239,6 +250,8 @@ public:
     state_machine_ = new ObserverStateMachine(boost::cref(this));
     state_machine_->start();
     ROS_INFO("[robot_observer] Starting state machine, node ready !");
+    human_is_moving_=false;
+    stop_moving_start_time_=ros::Time::now();
   }
   /****************************************************
    * @brief : Default destructor
@@ -273,6 +286,17 @@ private:
     else
       ROS_WARN("[robot_observer] Action did not finish before the time out.");
   }
+  void timerCallback(const ros::TimerEvent& event)
+  {
+    if(!timer_on_)
+    {
+        timer_on_=true;
+        ROS_INFO("[robot_observer] Timer ready to fire.");
+    } else {
+        //ROS_INFO("[robot_observer] Timer fired !");
+        enable_event_=true;
+    }
+  }
   /****************************************************
    * @brief : Update the fact list provided by agent_monitor
    * @param : fact list
@@ -302,6 +326,7 @@ private:
   {
     bool human_near=false;
     bool hand_on_table=false;
+    bool human_is_moving=false;
     for (unsigned int i = 0; i < msg->factList.size(); ++i)
     {
       if (msg->factList[i].property=="IsInArea" 
@@ -316,23 +341,40 @@ private:
       {
         hand_on_table=true;
       }
+      if (msg->factList[i].property=="IsMoving"
+          && msg->factList[i].subjectId=="rightHand")
+      {
+        human_is_moving=true;
+      }
+    }
+    if(!human_is_moving && human_is_moving_)
+    {
+        stop_moving_start_time_=ros::Time::now();    
+    }
+    if(ros::Time::now()-stop_moving_start_time_>ros::Duration(0.5))
+    {
+        state_machine_->process_event(humanHandStop());
+    } else
+    {
+        state_machine_->process_event(humanHandMove());
     }
     if(human_near)
     {
-        ROS_INFO("[robot_observer] process event HumanNear");
+        //ROS_INFO("[robot_observer] process event HumanNear");
         state_machine_->process_event(humanNear());
     } else {
-        ROS_INFO("[robot_observer] process event HumanNotNear");
+        //ROS_INFO("[robot_observer] process event HumanNotNear");
         state_machine_->process_event(humanNotNear());
     }
     if(hand_on_table)
     {
-        ROS_INFO("[robot_observer] process event humanHandOnTable");
+        //ROS_INFO("[robot_observer] process event humanHandOnTable");
         state_machine_->process_event(humanHandOnTable());
     } else {
-        ROS_INFO("[robot_observer] process event humanHandNotOnTable");
+        //ROS_INFO("[robot_observer] process event humanHandNotOnTable");
         state_machine_->process_event(humanHandNotOnTable());
     }
+    human_is_moving_=human_is_moving;
   }
   /****************************************************
    * @brief : Update the human list
@@ -365,7 +407,7 @@ private:
 public:
   void rest()
   {
-    ROS_INFO("[robot_observer] Rest");
+    //ROS_INFO("[robot_observer] Rest");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "base_link";
     point.header.stamp = ros::Time::now();
@@ -376,7 +418,7 @@ public:
   }
   void focusHead()
   {
-    ROS_INFO("[robot_observer] Focus head");
+    //ROS_INFO("[robot_observer] Focus head");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
@@ -385,7 +427,7 @@ public:
   }
   void focusHand()
   {
-    ROS_INFO("[robot_observer] Focus hand");
+    //ROS_INFO("[robot_observer] Focus hand");
     geometry_msgs::PointStamped point;
     point.header.frame_id = "map";
     point.header.stamp = ros::Time::now();
