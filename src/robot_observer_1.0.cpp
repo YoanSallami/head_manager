@@ -316,8 +316,9 @@ private:
           }
     }
     
-    if(!human_is_moving && human_is_moving_)
+    if(human_is_moving)
     {
+        ROS_INFO("[robot_observer] start time human hand stop");
         stop_moving_start_time_=ros::Time::now();    
     }
     if(ros::Time::now()-stop_moving_start_time_>ros::Duration(1.5))
