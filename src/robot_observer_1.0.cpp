@@ -127,7 +127,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_hand(humanHandOnTable const&);
   void rest(humanNotNear const&);
   void ack(humanHandStop const&);
-  bool enable_ack(humanHandStop const&);
+  bool enable_ack_end(humanHandOnTable const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -140,7 +140,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < Waiting              , humanNotNear                               , &sm::rest                                                       >,
        //  +----------------------+---------------------+----------------------+---------------------------+------------------------------------+
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
-       row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand           , &sm::enable_ack                     >,
+       row < LookingHead          , humanHandOnTable    , LookingHand          , &sm::focus_hand           , &sm::enable_ack_end                 >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
@@ -480,7 +480,7 @@ void ObserverStateMachine_::focus_hand(humanHandOnTable const&)
   }
 }
 
-bool ObserverStateMachine_::enable_ack(Ack const&)
+bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 {
   return(observer_ptr_->enable_event_);
 }
