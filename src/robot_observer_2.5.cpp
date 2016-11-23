@@ -518,7 +518,6 @@ private:
                     {
                         ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
-                            next_action_=current_action_;
                             current_action_position_=red_cube_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
@@ -527,7 +526,6 @@ private:
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
-                            next_action_=current_action_;
                             current_action_position_=black_cube_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
@@ -536,7 +534,6 @@ private:
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
-                            next_action_=current_action_;
                             current_action_position_=blue_cube_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
@@ -545,7 +542,6 @@ private:
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
-                            next_action_=current_action_;
                             current_action_position_=green_cube_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;
@@ -554,7 +550,6 @@ private:
                             state_machine_->process_event(humanActing(msg->actions[i]));
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
-                            next_action_=current_action_;
                             current_action_position_=placemat_position_;
                             current_action_=msg->actions[i];
                             enable_event_=false;

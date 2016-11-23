@@ -517,7 +517,7 @@ private:
                     {
                         ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
-                            next_action_=current_action_;
+                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=red_cube_position_;
                             current_action_=msg->actions[i];
@@ -530,7 +530,7 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
-                            next_action_=current_action_;
+                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=black_cube_position_;
                             current_action_=msg->actions[i];
@@ -543,7 +543,7 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
-                            next_action_=current_action_;
+                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=blue_cube_position_;
                             current_action_=msg->actions[i];
@@ -555,7 +555,7 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
-                            next_action_=current_action_;
+                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=green_cube_position_;
                             current_action_=msg->actions[i];
@@ -567,7 +567,7 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
-                            next_action_=current_action_;
+                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=placemat_position_;
                             current_action_ =msg->actions[i];
@@ -595,35 +595,38 @@ private:
     {
         if(!msg->actions.empty())
         {
-            for(int i = 0 ; i < msg->actions.size() ; ++i)
+            if(enable_event_)
             {
-                for(int j = 0 ; j < msg->actions[i].actors.size() ; ++j)
+                for(int i = 0 ; i < msg->actions.size() ; ++i)
                 {
-                    if(msg->actions[i].actors[j] == "HERAKLES_HUMAN1")
+                    for(int j = 0 ; j < msg->actions[i].actors.size() ; ++j)
                     {
-                        if(msg->actions[i].focusTarget=="RED_CUBE"){
-                            next_action_position_=red_cube_position_;
-                            next_action_=msg->actions[i];
+                        if(msg->actions[i].actors[j] == "HERAKLES_HUMAN1")
+                        {
+                            if(msg->actions[i].focusTarget=="RED_CUBE"){
+                                next_action_position_=red_cube_position_;
+                                next_action_=msg->actions[i];
+                            }
+                            if(msg->actions[i].focusTarget=="BLACK_CUBE"){
+                                next_action_position_=black_cube_position_;
+                                next_action_=msg->actions[i];
+                            }
+                            if(msg->actions[i].focusTarget=="BLUE_CUBE"){
+                                next_action_position_=blue_cube_position_;
+                                next_action_=msg->actions[i];
+                            }
+                            if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
+                                next_action_position_=green_cube_position_;
+                                next_action_=msg->actions[i];
+                            }
+                            if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
+                                next_action_position_=placemat_position_;
+                                next_action_=msg->actions[i];
+                            }
                         }
-                        if(msg->actions[i].focusTarget=="BLACK_CUBE"){
-                            next_action_position_=black_cube_position_;
-                            next_action_=msg->actions[i];
-                        }
-                        if(msg->actions[i].focusTarget=="BLUE_CUBE"){
-                            next_action_position_=blue_cube_position_;
-                            next_action_=msg->actions[i];
-                        }
-                        if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
-                            next_action_position_=green_cube_position_;
-                            next_action_=msg->actions[i];
-                        }
-                        if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
-                            next_action_position_=placemat_position_;
-                            next_action_=msg->actions[i];
-                        }
-                    }
+                    } 
                 } 
-            }    
+            }   
         }
     }
     catch (HeadManagerException& e )
