@@ -77,6 +77,7 @@ struct humanActing{};
 struct Ack{};
 struct humanHandStop{};
 struct humanHandMove{};
+struct endTask{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" , "LookingAction", "LookingNextAction" };
 /**
@@ -154,6 +155,14 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       template <class Event,class FSM>
       void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"LookingNextAction\".");}
   };
+  struct EndTask : public msm::front::state<> 
+  {
+      // every (optional) entry/exit methods get the event passed.
+      template <class Event,class FSM>
+      void on_entry(Event const&,FSM& ) {ROS_INFO("[robot_observer] Entering state: \"EndTask\".");}
+      template <class Event,class FSM>
+      void on_exit(Event const&,FSM& ) {ROS_INFO("[robot_observer] Leaving state: \"EndTask\".");}
+  };
 
   // Initial state definition
   typedef Waiting initial_state;
@@ -162,6 +171,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void refocus_head(humanHandNotOnTable const&); 
   void focus_hand(humanHandOnTable const&);
   void rest(humanNotNear const&); 
+  void end(humanNear const&); 
   void focus_action(humanActing const&);
   void focus_next_action(humanHandMove const&);
   void ack(humanHandStop const&);
@@ -178,18 +188,24 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   struct transition_table : mpl::vector<
        //    Start                  Event                 Next                   Action                     Guard
        //  +----------------------+---------------------+----------------------+----------------------------+------------------------------------+
+     a_row < EndTask              , humanNotNear        , Waiting              , &sm::rest                                                       >,
+    a_irow < EndTask              , endTask                                    , &sm::end                                                        >,
+       //  +----------------------+---------------------+----------------------+----------------------------+------------------------------------+
      a_row < Waiting              , humanNear           , LookingHead          , &sm::focus_head                                                 >,
     a_irow < Waiting              , humanNotNear                               , &sm::rest                                                       >,
        //  +----------------------+---------------------+----------------------+----------------------------+------------------------------------+
+     a_row < LookingHead          , endTask             , EndTask              , &sm::end                                                        >,
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
        row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end                >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+----------------------------+------------------------------------+
+     a_row < LookingAction        , endTask             , EndTask              , &sm::end                                                        >,
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanHandOnTable                           , &sm::stay_focus_action                                          >,
        row < LookingAction        , humanHandMove       , LookingNextAction    , &sm::focus_next_action      ,&sm::enable_next_action            >,
       //  +-----------------------+---------------------+-----------------------+----------------------------+------------------------------------+
+     a_row < LookingNextAction    , endTask             , EndTask              , &sm::end                                                        >,
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingNextAction    , humanActing         , LookingAction        , &sm::focus_action                                               >,
     a_irow < LookingNextAction    , humanHandOnTable                           , &sm::stay_focus_next_action                                     >,
@@ -517,7 +533,6 @@ private:
                     {
                         ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
-                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=red_cube_position_;
                             current_action_=msg->actions[i];
@@ -530,7 +545,6 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
-                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=black_cube_position_;
                             current_action_=msg->actions[i];
@@ -543,7 +557,6 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
-                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=blue_cube_position_;
                             current_action_=msg->actions[i];
@@ -555,7 +568,6 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
-                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=green_cube_position_;
                             current_action_=msg->actions[i];
@@ -567,7 +579,6 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
-                            //next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=placemat_position_;
                             current_action_ =msg->actions[i];
@@ -627,6 +638,8 @@ private:
                     } 
                 } 
             }   
+        } else {
+            state_machine_->process_event(endTask());
         }
     }
     catch (HeadManagerException& e )
@@ -688,6 +701,16 @@ public:
 };
 
 void ObserverStateMachine_::rest(humanNotNear const&)
+{
+  try
+  {
+    observer_ptr_->rest();
+  } catch (HeadManagerException& e ) {
+    ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
+  }
+}
+
+void ObserverStateMachine_::end(endTask const&)
 {
   try
   {
