@@ -75,7 +75,8 @@ struct humanHandOnTable{};
 struct humanHandNotOnTable{};
 struct humanActing{};
 struct Ack{};
-struct GoToNextAction{};
+struct humanHandStop{};
+struct humanHandMove{};
 
 static char const* const state_names[] = { "Waiting", "LookingHead", "LookingHand" , "LookingObject" , "LookingAction", "LookingNextAction" };
 /**
@@ -162,15 +163,12 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_hand(humanHandOnTable const&);
   void rest(humanNotNear const&); 
   void focus_action(humanActing const&);
-  void focus_next_action(GoToNextAction const&);
-  void ack(Ack const&);
+  void focus_next_action(humanHandMove const&);
+  void ack(humanHandStop const&);
   void stay_focus_action(humanHandOnTable const&);
   void stay_focus_next_action(humanHandOnTable const&);
   bool enable_ack(Ack const&);
   bool enable_ack_end(humanHandOnTable const&);
-  bool enable_ack_end_disengage(humanHandOnTable const&);
-  bool enable_next_action(GoToNextAction const&);
-  bool human_disengage(GoToNextAction const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -184,18 +182,18 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
        //  +----------------------+---------------------+----------------------+----------------------------+------------------------------------+
      a_row < LookingHead          , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingHead          , humanActing         , LookingAction        , &sm::focus_action                                               >,
-       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end_disengage      >,
+       row < LookingHead          , humanHandOnTable    , LookingNextAction    , &sm::stay_focus_next_action, &sm::enable_ack_end                >,
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+----------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanHandOnTable                           , &sm::stay_focus_action                                          >,
-       row < LookingAction        , GoToNextAction      , LookingNextAction    , &sm::focus_next_action     , &sm::human_disengage               >,
-       row < LookingAction        , Ack                 , LookingHead          , &sm::ack                   , &sm::enable_ack                    >,
+       row < LookingAction        , humanHandMove       , LookingNextAction    , &sm::focus_next_action                                          >,
       //  +-----------------------+---------------------+-----------------------+----------------------------+------------------------------------+
      a_row < LookingNextAction    , humanNotNear        , Waiting              , &sm::rest                                                       >,
      a_row < LookingNextAction    , humanActing         , LookingAction        , &sm::focus_action                                               >,
     a_irow < LookingNextAction    , humanHandOnTable                           , &sm::stay_focus_next_action                                     >,
-    a_row < LookingNextAction     , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >
+     a_row < LookingNextAction    , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
+     a_row < LookingNextAction    , humanHandStop       , LookingHead          , &sm::ack                                                        >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
 
@@ -227,6 +225,7 @@ public:
   supervisor_msgs::Action current_action_;
   supervisor_msgs::Action previous_action_;
   bool task_started_;
+  bool human_is_moving_;
 private:
   string my_id_; //!< robot id
   ros::NodeHandle node_; //!< node handler
@@ -377,37 +376,34 @@ private:
   {
       if (!msg->factList.empty())
       {
-        bool look_somewhere=false;
-        bool point_somewhere=false;
-        double max_look=0.0;
-        double max_point=0.0;
-        std::string focus_head;
-        std::string focus_pointing;
-        human_disengage_=false;
-        for (unsigned int i = 0; i < msg->factList.size(); ++i)
-        {
-          if (msg->factList[i].property=="IsLookingToward" 
-              && msg->factList[i].subjectId=="HERAKLES_HUMAN1")
-          {
-            if (msg->factList[i].doubleValue>max_look)
+            bool human_is_moving=false;
+            for (unsigned int i = 0; i < msg->factList.size(); ++i)
             {
-                max_look=msg->factList[i].doubleValue;
-                focus_head=msg->factList[i].targetId;
-                look_somewhere=true;
+              if (msg->factList[i].property=="IsMoving"
+                  && msg->factList[i].subjectId=="rightHand")
+                  {
+                    //ROS_INFO("HUMAN HAND MOVING");
+                    human_is_moving=true;
+                  }
             }
-          }
-          if(task_started_)
-          {
-            if(msg->factList[i].property=="Distance"
-               && msg->factList[i].subjectId=="rightHand"
-               && msg->factList[i].targetId=="PLACEMAT_RED"
-               && msg->factList[i].doubleValue>0.30 )
+            
+            if(human_is_moving)
             {
-               human_disengage_=true;
+                //ROS_INFO("[robot_observer] start time human hand stop");
+                stop_moving_start_time_=ros::Time::now();    
+            }else{
+                if(ros::Time::now()-stop_moving_start_time_>ros::Duration(2.0))
+                {
+                    //ROS_INFO("[robot_observer] HUMAN HAND STOP");
+                    state_machine_->process_event(humanHandStop());
+                    human_is_moving_=false;
+                } else {
+                    //ROS_INFO("[robot_observer] HUMAN HAND MOVING");
+                    state_machine_->process_event(humanHandMove());
+                    human_is_moving_=true;
+                }
             }
-          }
-        }
-     }
+       }
   }
   /****************************************************
    * @brief : Update the fact list provided by area_manager
@@ -521,6 +517,7 @@ private:
                     {
                         ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
+                            next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=red_cube_position_;
                             current_action_=msg->actions[i];
@@ -533,6 +530,7 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
+                            next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=black_cube_position_;
                             current_action_=msg->actions[i];
@@ -545,6 +543,7 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
+                            next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=blue_cube_position_;
                             current_action_=msg->actions[i];
@@ -556,6 +555,7 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
+                            next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=green_cube_position_;
                             current_action_=msg->actions[i];
@@ -567,6 +567,7 @@ private:
                             state_machine_->process_event(humanActing());
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
+                            next_action_=current_action_;
                             task_started_=true;
                             current_action_position_=placemat_position_;
                             current_action_ =msg->actions[i];
@@ -784,26 +785,7 @@ bool ObserverStateMachine_::enable_ack(Ack const&)
 
 bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 {
-  if(observer_ptr_->previous_action_.name=="place")
-    return(observer_ptr_->human_disengage_ && observer_ptr_->enable_event_);
-  else
-    return(observer_ptr_->enable_event_);
-}
-
-bool ObserverStateMachine_::enable_ack_end_disengage(humanHandOnTable const&)
-{
-  if(observer_ptr_->previous_action_.name=="place")
-    return(observer_ptr_->human_disengage_ && observer_ptr_->enable_event_);
-  else
-    return(observer_ptr_->enable_event_);
-}
-
-bool ObserverStateMachine_::human_disengage(GoToNextAction const&)
-{
-  if(observer_ptr_->previous_action_.name=="place")
-    return(observer_ptr_->human_disengage_ && observer_ptr_->enable_event_);
-  else
-    return(observer_ptr_->enable_event_);
+    return(observer_ptr_->human_disengage_ && observer_ptr_->human_is_moving_);
 }
 
 bool ObserverStateMachine_::enable_next_action(GoToNextAction const&)

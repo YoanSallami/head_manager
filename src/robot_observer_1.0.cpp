@@ -305,32 +305,36 @@ private:
    ****************************************************/
   void factListCallback(const toaster_msgs::FactList::ConstPtr& msg)
   {
-    bool human_is_moving=false;
-    for (unsigned int i = 0; i < msg->factList.size(); ++i)
-    {
-      if (msg->factList[i].property=="IsMoving"
-          && msg->factList[i].subjectId=="rightHand")
-          {
-            //ROS_INFO("HUMAN HAND MOVING");
-            human_is_moving=true;
-          }
-    }
-    
-    if(human_is_moving)
-    {
-        ROS_INFO("[robot_observer] start time human hand stop");
-        stop_moving_start_time_=ros::Time::now();    
-    }else{
-        if(ros::Time::now()-stop_moving_start_time_>ros::Duration(2.0))
-        {
-            ROS_INFO("[robot_observer] HUMAN HAND STOP");
-            state_machine_->process_event(humanHandStop());
-        } else {
-            ROS_INFO("[robot_observer] HUMAN HAND MOVING");
-            state_machine_->process_event(humanHandMove());
-        }
-    }
-    human_is_moving_=human_is_moving;
+      if (!msg->factList.empty())
+      {
+            bool human_is_moving=false;
+            for (unsigned int i = 0; i < msg->factList.size(); ++i)
+            {
+              if (msg->factList[i].property=="IsMoving"
+                  && msg->factList[i].subjectId=="rightHand")
+                  {
+                    //ROS_INFO("HUMAN HAND MOVING");
+                    human_is_moving=true;
+                  }
+            }
+            
+            if(human_is_moving)
+            {
+                //ROS_INFO("[robot_observer] start time human hand stop");
+                stop_moving_start_time_=ros::Time::now();    
+            }else{
+                if(ros::Time::now()-stop_moving_start_time_>ros::Duration(2.0))
+                {
+                    //ROS_INFO("[robot_observer] HUMAN HAND STOP");
+                    state_machine_->process_event(humanHandStop());
+                    human_is_moving_=false;
+                } else {
+                    //ROS_INFO("[robot_observer] HUMAN HAND MOVING");
+                    //state_machine_->process_event(humanHandMove());
+                    human_is_moving_=true;
+                }
+            }
+       }
   }
   /****************************************************
    * @brief : Update the fact list provided by area_manager
@@ -485,7 +489,7 @@ void ObserverStateMachine_::ack(humanHandStop const&)
   try
   {
     observer_ptr_->enable_event_=false;
-    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.5));
+    observer_ptr_->waiting_timer_.setPeriod(ros::Duration(1.0));
     observer_ptr_->waiting_timer_.start();
     observer_ptr_->focusHead();
   } catch (HeadManagerException& e ) {
