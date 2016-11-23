@@ -737,7 +737,7 @@ void ObserverStateMachine_::focus_action(humanActing const&)
   }
 }
 
-void ObserverStateMachine_::focus_next_action(GoToNextAction const& a)
+void ObserverStateMachine_::focus_next_action(humanHandMove const& a)
 {
   try
   {
