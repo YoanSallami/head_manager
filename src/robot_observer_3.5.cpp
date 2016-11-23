@@ -169,6 +169,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void stay_focus_next_action(humanHandOnTable const&);
   bool enable_ack(Ack const&);
   bool enable_ack_end(humanHandOnTable const&);
+  bool enable_next_action(humanHandMove const&);
   // Guard transition definition
 
   typedef ObserverStateMachine_ sm;
@@ -601,31 +602,25 @@ private:
                 {
                     if(msg->actions[i].actors[j] == "HERAKLES_HUMAN1")
                     {
-                        //ROS_INFO("[robot_observer] Action detected");
                         if(msg->actions[i].focusTarget=="RED_CUBE"){
                             next_action_position_=red_cube_position_;
                             next_action_=msg->actions[i];
-                            //state_machine_->process_event(GoToNextAction());
                         }
                         if(msg->actions[i].focusTarget=="BLACK_CUBE"){
                             next_action_position_=black_cube_position_;
                             next_action_=msg->actions[i];
-                            //state_machine_->process_event(GoToNextAction());
                         }
                         if(msg->actions[i].focusTarget=="BLUE_CUBE"){
                             next_action_position_=blue_cube_position_;
                             next_action_=msg->actions[i];
-                            //state_machine_->process_event(GoToNextAction());
                         }
                         if(msg->actions[i].focusTarget=="GREEN_CUBE2"){
                             next_action_position_=green_cube_position_;
                             next_action_=msg->actions[i];
-                            //state_machine_->process_event(GoToNextAction());
                         }
                         if(msg->actions[i].focusTarget=="PLACEMAT_RED"){
                             next_action_position_=placemat_position_;
                             next_action_=msg->actions[i];
-                            //state_machine_->process_event(GoToNextAction());
                         }
                     }
                 } 
@@ -676,10 +671,6 @@ public:
     point.header.stamp = ros::Time::now();
     point.point=current_action_position_;
     lookAt(point);
-    if(current_action_.ackNeeded)
-        state_machine_->process_event(Ack());
-    else
-        state_machine_->process_event(GoToNextAction());
   }
   
   void focusNextAction()
@@ -788,7 +779,7 @@ bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
     return(observer_ptr_->human_disengage_ && observer_ptr_->human_is_moving_);
 }
 
-bool ObserverStateMachine_::enable_next_action(GoToNextAction const&)
+bool ObserverStateMachine_::enable_next_action(humanHandMove const&)
 {
   return(observer_ptr_->enable_event_);
 }
