@@ -258,6 +258,7 @@ private:
   geometry_msgs::Point attention_point_; //!<
   ObserverStateMachine * state_machine_; //!<
   bool timer_on_; //!< 
+  ros::Time stop_moving_start_time_; //!<
   
   
 public:
@@ -707,11 +708,11 @@ void ObserverStateMachine_::stay_focus_action(humanNear const&)
   }
 }
 
-bool ObserverStateMachine_::enable_ack(Ack const&)
+bool ObserverStateMachine_::enable_ack(humanHandStop const&)
 {
   return(observer_ptr_->enable_event_);
 }
-bool ObserverStateMachine_::enable_nack(NAck const&)
+bool ObserverStateMachine_::enable_nack(humanHandMove const&)
 {
   return(observer_ptr_->enable_event_);
 }

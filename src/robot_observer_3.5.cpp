@@ -167,7 +167,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void ack(humanHandStop const&);
   void stay_focus_action(humanHandOnTable const&);
   void stay_focus_next_action(humanHandOnTable const&);
-  bool enable_ack(Ack const&);
+  bool enable_ack(humanHandStop const&);
   bool enable_ack_end(humanHandOnTable const&);
   bool enable_next_action(humanHandMove const&);
   // Guard transition definition
@@ -257,6 +257,7 @@ private:
   geometry_msgs::Point object_position_;
   geometry_msgs::Point placemat_position_;
   ObserverStateMachine * state_machine_; //!<
+  ros::Time stop_moving_start_time_; //!<
   bool timer_on_;
 
   
@@ -769,7 +770,7 @@ void ObserverStateMachine_::stay_focus_next_action(humanHandOnTable const& a)
   }
 }
 
-bool ObserverStateMachine_::enable_ack(Ack const&)
+bool ObserverStateMachine_::enable_ack(humanHandStop const&)
 {
   return(observer_ptr_->enable_event_);
 }
@@ -784,7 +785,7 @@ bool ObserverStateMachine_::enable_next_action(humanHandMove const&)
   return(observer_ptr_->enable_event_);
 }
 
-void ObserverStateMachine_::ack(Ack const&)
+void ObserverStateMachine_::ack(humanHandStop const&)
 {
   try
   {
