@@ -162,7 +162,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
   void focus_object(humanLookingObject const&);
   void focus_action(humanActing const&);
   void ack(humanHandStop const&);
-  void nack(NAck const&);
+  void nack(humanHandMove const&);
   void stay_focus(humanNear const&);
   void stay_focus_action(humanNear const&);
   bool enable_nack(humanHandMove const&);
@@ -191,7 +191,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
      a_row < LookingAction        , humanNotNear        , Waiting              , &sm::rest                                                       >,
     a_irow < LookingAction        , humanNear                                  , &sm::stay_focus_action                                          >,
-       row < LookingAction        , humanHandMove       , LookingHand          , &sm::nack                   , &sm::enable_nack                    >
+       row < LookingAction        , humanHandMove       , LookingHand          , &sm::nack                   , &sm::enable_nack                  >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
 
@@ -720,7 +720,7 @@ bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
   return(observer_ptr_->enable_event_ && observer_ptr_->human_is_moving_);
 }
 
-void ObserverStateMachine_::ack(Ack const&)
+void ObserverStateMachine_::ack(humanHandStop const&)
 {
   try
   {
@@ -733,7 +733,7 @@ void ObserverStateMachine_::ack(Ack const&)
   }
 }
 
-void ObserverStateMachine_::nack(NAck const&)
+void ObserverStateMachine_::nack(humanHandMove const&)
 {
   try
   {
