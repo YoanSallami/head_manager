@@ -221,7 +221,6 @@ public:
   FactList_t fact_area_list_; //!< fact list from area_manager
   ros::Timer waiting_timer_;
   bool enable_event_;
-  bool human_disengage_;
   supervisor_msgs::Action next_action_;
   supervisor_msgs::Action current_action_;
   supervisor_msgs::Action previous_action_;
@@ -323,7 +322,6 @@ public:
     state_machine_ = new ObserverStateMachine(boost::cref(this));
     state_machine_->start();
     ROS_INFO("[robot_observer] Starting state machine, node ready !");
-    human_disengage_=false;
   }
   /****************************************************
    * @brief : Default destructor
@@ -777,7 +775,7 @@ bool ObserverStateMachine_::enable_ack(humanHandStop const&)
 
 bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 {
-    return(observer_ptr_->human_disengage_ && observer_ptr_->human_is_moving_);
+    return(observer_ptr_->enable_event_ && observer_ptr_->human_is_moving_);
 }
 
 bool ObserverStateMachine_::enable_next_action(humanHandMove const&)
