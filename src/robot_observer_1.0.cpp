@@ -144,7 +144,7 @@ struct ObserverStateMachine_ : public msm::front::state_machine_def<ObserverStat
     a_irow < LookingHead          , humanNear                                  , &sm::focus_head                                                 >,
        //  +----------------------+-----------------+--------------------------+---------------------------+------------------------------------+
      a_row < LookingHand          , humanHandNotOnTable , LookingHead          , &sm::refocus_head                                               >,
-     a_row < LookingHand          , humanHandStop       , LookingHead          , &sm::ack                                                        >,
+     //a_row < LookingHand          , humanHandStop       , LookingHead          , &sm::ack                                                        >,
     a_irow < LookingHand          , humanHandOnTable                           , &sm::focus_hand                                                 >
       //  +-----------------------+---------------------+-----------------------+---------------------------+------------------------------------+
     > {};
@@ -481,7 +481,7 @@ void ObserverStateMachine_::focus_hand(humanHandOnTable const&)
 
 bool ObserverStateMachine_::enable_ack_end(humanHandOnTable const&)
 {
-  return(observer_ptr_->enable_event_ && observer_ptr_->human_is_moving_);
+  return(observer_ptr_->enable_event_)// && observer_ptr_->human_is_moving_);
 }
 
 void ObserverStateMachine_::ack(humanHandStop const&)
