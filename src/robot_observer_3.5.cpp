@@ -714,7 +714,7 @@ void ObserverStateMachine_::end(endTask const&)
 {
   try
   {
-    observer_ptr_->rest();
+    observer_ptr_->focusHead();
   } catch (HeadManagerException& e ) {
     ROS_ERROR("[robot_observer] Exception was caught : %s",e.description().c_str());
   }
