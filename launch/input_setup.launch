@@ -33,7 +33,7 @@
     <include file="$(find pr2_teleop)/launch/teleop_joystick.launch"/>
 
     <node pkg="rosservice" type="rosservice" name="monitor_all" args="call --wait /agent_monitor/monitor_all_agents 'monitorAll: true'"/>
-    <node pkg="rosservice" type="rosservice" name="monitor_agent" args="call --wait /agent_monitor/add_agent 'agentId: HERAKLES_HUMAN1'"/>
+    <node pkg="rosservice" type="rosservice" name="monitor_agent" args="call --wait /agent_monitor/add_agent '{'agentId': 'HERAKLES_HUMAN1'}'"/>
     <node pkg="rosservice" type="rosservice" name="monitor_joint0" args="call --wait /agent_monitor/add_joint_to_agent '{jointName: 'head', agentId: 'HERAKLES_HUMAN1'}'"/>
     <node pkg="rosservice" type="rosservice" name="monitor_joint1" args="call --wait /agent_monitor/add_joint_to_agent '{jointName: 'rightHand', agentId: 'HERAKLES_HUMAN1'}'"/>
     <node pkg="rosservice" type="rosservice" name="monitor_joint2" args="call --wait /agent_monitor/add_joint_to_agent '{jointName: 'laser_tilt_mount_link', agentId: 'pr2'}'"/>
